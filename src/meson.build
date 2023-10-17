@@ -1,11 +1,21 @@
 libbarbar_src = files(
   'barbar.c',
   'barbar-bar.c',
+  'barbar-disk.c',
+  'barbar-mpd.c',
+  'barbar-battery.c',
+  'barbar-clock.c',
+  'barbar-cpu.c',
 )
 
 libbarbar_headers = [
   'barbar.h',
   'barbar-bar.h',
+  'barbar-disk.h',
+  'barbar-mpd.h',
+  'barbar-battery.h',
+  'barbar-clock.h',
+  'barbar-cpu.h',
 ]
 
 # version_data = configuration_data()

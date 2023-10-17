@@ -26,7 +26,12 @@ thread_dep = dependency('threads')
 glib =  dependency('glib-2.0', version: '>=2.68')
 gobject = dependency('gobject-2.0')
 gio = dependency('gio-2.0')
+giounix = dependency('gio-unix-2.0')
+upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
+libgtop = dependency('libgtop-2.0', required: get_option('glibtop'))
+
 gtk = dependency('gtk4')
+libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
 
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         required: true,
@@ -39,6 +44,10 @@ deps = [
   gio,
   gtk,
   gtk_layer_shell_dep,
+  libmpdclient,
+  giounix,
+  upower_glib,
+  libgtop,
 ]
 
 LIBS = [glib, gio, gobject]

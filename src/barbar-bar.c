@@ -50,9 +50,9 @@ static GParamSpec *bar_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_set_property(GObject *object, guint property_id,
+static void g_barbar_bar_set_property(GObject *object, guint property_id,
                                   const GValue *value, GParamSpec *pspec) {
-  BarBarBar *bar = BarBar_Bar(object);
+  BarBarBar *bar = BARBAR_BAR(object);
 
   switch (property_id) {
   case PROP_LEFT_MARGIN:
@@ -75,10 +75,10 @@ static void g_barbar_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_get_property(GObject *object, guint property_id,
+static void g_barbar_bar_get_property(GObject *object, guint property_id,
                                   GValue *value, GParamSpec *pspec) {
 
-  BarBarBar *bar = BarBar_Bar(object);
+  BarBarBar *bar = BARBAR_BAR(object);
 
   switch (property_id) {
   case PROP_LEFT_MARGIN:
@@ -99,16 +99,13 @@ static void g_barbar_get_property(GObject *object, guint property_id,
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
-  // } else {
-  // 	G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-  // }
 }
 
 static void g_barbar_bar_class_init(BarBarBarClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
-  gobject_class->set_property = g_barbar_set_property;
-  gobject_class->get_property = g_barbar_get_property;
+  gobject_class->set_property = g_barbar_bar_set_property;
+  gobject_class->get_property = g_barbar_bar_get_property;
 
   bar_props[PROP_LEFT_MARGIN] = g_param_spec_uint(
       "left-margin", NULL, NULL, 0, G_MAXUINT, 0, G_PARAM_READWRITE);
@@ -130,7 +127,7 @@ static void activate(GtkApplication *app, void *data) {
   g_return_if_fail(app);
   g_return_if_fail(data);
 
-  BarBarBar *bar = BarBar_Bar(data);
+  BarBarBar *bar = BARBAR_BAR(data);
 
   // Create a normal GTK window however you like
   GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));

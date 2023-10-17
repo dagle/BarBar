@@ -51,7 +51,7 @@ typedef enum {
 
 #define BARBAR_TYPE_POSITION (g_barbar_position_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BarBar, Bar, GObject)
+G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GObject)
 
 BarBarBar *g_barbar_bar_new(void);
 

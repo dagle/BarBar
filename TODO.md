@@ -1,0 +1,3 @@
+- [ ] a format string thing
+- [ ] a widget class
+-- [ ] sub widgets
