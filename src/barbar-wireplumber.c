@@ -1,4 +1,5 @@
 #include "barbar-wireplumber.h"
+#include <stdio.h>
 
 struct _BarBarWireplumber {
   GObject parent;
@@ -12,7 +13,7 @@ struct _BarBarWireplumber {
 enum {
   PROP_0,
 
-  PROP_PATH,
+  PROP_DEVICE,
 
   NUM_PROPERTIES,
 };
@@ -69,7 +70,7 @@ static void g_barbar_wireplumber_class_init(BarBarWireplumberClass *class) {
 
   gobject_class->set_property = g_barbar_wireplumber_set_property;
   gobject_class->get_property = g_barbar_wireplumber_get_property;
-  wireplumber_props[PROP_PATH] =
+  wireplumber_props[PROP_DEVICE] =
       g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     wireplumber_props);
@@ -89,14 +90,22 @@ void g_barbar_wireplumber_update(BarBarWireplumber *wireplumber) {
 
   if (!wp_core_load_component(core, "libwireplumber-module-default-nodes-api",
                               "module", NULL, &error)) {
+	printf("NULL1\n");
     // throw std::runtime_error(error->message);
   }
 
   if (!wp_core_load_component(core, "libwireplumber-module-mixer-api", "module",
                               NULL, &error)) {
+	printf("NULL2\n");
     // throw std::runtime_error(error->message);
   }
-  wp_plugin_find(core, "default-nodes-api");
+  WpPlugin *pl = wp_plugin_find(core, "default-nodes-api");
+  if (!pl) {
+	  printf("NULL3\n");
+  }
+
+  g_signal_connect_swapped(om, "installed", G_CALLBACK(NULL), NULL);
+  printf("Success\n");
   //
   // g_ptr_array_add(apis_, wp_plugin_find(wp_core_, "default-nodes-api"));
   // g_ptr_array_add(apis_, ({

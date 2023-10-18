@@ -24,8 +24,29 @@ static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
+  g_return_if_fail(BARBAR_IS_CLOCK(clock));
+
+  printf("id: %s\n", identifier);
+  if (clock->timezone) {
+	  g_time_zone_unref(clock->timezone);
+  }
+  clock->timezone = g_time_zone_new_identifier(identifier);
+
+  g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_TZ]);
+}
+
 static void g_barbar_clock_set_property(GObject *object, guint property_id,
                                   const GValue *value, GParamSpec *pspec) {
+  BarBarClock *clock = BARBAR_CLOCK(object);
+
+  switch (property_id) {
+  case PROP_TZ:
+    g_barbar_clock_set_tz(clock, g_value_get_string(value));
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
 }
 
 static void g_barbar_clock_get_property(GObject *object, guint property_id,
@@ -38,7 +59,7 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
   gobject_class->set_property = g_barbar_clock_set_property;
   gobject_class->get_property = g_barbar_clock_get_property;
   clock_props[PROP_TZ] = g_param_spec_string(
-      "path", NULL, NULL, "/", G_PARAM_READWRITE);
+      "tz", NULL, NULL, NULL, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, clock_props);
 }
 
@@ -53,9 +74,8 @@ void g_barbar_clock_update(BarBarClock *clock) {
 		time = g_date_time_new_now_local();
 	}
 
-
-	char *str = g_date_time_format (time, "%s");
-	printf("%s\n", str);
+	char *str = g_date_time_format (time, "%F %k:%M:%S");
+	g_print("%s\n", str);
 
 	g_date_time_unref(time);
 }

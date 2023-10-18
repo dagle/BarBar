@@ -23,7 +23,7 @@ struct _BarBarMpd {
 enum {
   PROP_0,
 
-  PROP_PATH,
+  PROP_PLAYER,
 
   NUM_PROPERTIES,
 };
@@ -47,7 +47,7 @@ static void g_barbar_mpd_class_init(BarBarMpdClass *class) {
 
   gobject_class->set_property = g_barbar_mpd_set_property;
   gobject_class->get_property = g_barbar_mpd_get_property;
-  mpd_props[PROP_PATH] = g_param_spec_string(
+  mpd_props[PROP_PLAYER] = g_param_spec_string(
       "path", NULL, NULL, "/", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mpd_props);
 }

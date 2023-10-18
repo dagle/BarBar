@@ -14,7 +14,7 @@ struct _BarBarDisk {
 enum {
   PROP_0,
 
-  PROP_PATH,
+  PROP_DEVICE,
 
   NUM_PROPERTIES,
 };
@@ -32,7 +32,7 @@ static void g_barbar_disk_set_property(GObject *object, guint property_id,
   BarBarDisk *disk = BARBAR_DISK(object);
 
   switch (property_id) {
-  case PROP_PATH:
+  case PROP_DEVICE:
     g_barbar_disk_set_path(disk, g_value_get_string(value));
     break;
   default:
@@ -45,7 +45,7 @@ static void g_barbar_disk_get_property(GObject *object, guint property_id,
   BarBarDisk *disk = BARBAR_DISK(object);
 
   switch (property_id) {
-  case PROP_PATH:
+  case PROP_DEVICE:
     g_value_set_string(value, disk->path);
     break;
   default:
@@ -59,7 +59,7 @@ void g_barbar_disk_set_path(BarBarDisk *bar, const char *path) {
   g_free(bar->path);
   bar->path = g_strdup(path);
 
-  g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_PATH]);
+  g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_DEVICE]);
 }
 
 static void g_barbar_disk_class_init(BarBarDiskClass *class) {
@@ -67,7 +67,7 @@ static void g_barbar_disk_class_init(BarBarDiskClass *class) {
 
   gobject_class->set_property = g_barbar_disk_set_property;
   gobject_class->get_property = g_barbar_disk_get_property;
-  disk_props[PROP_PATH] =
+  disk_props[PROP_DEVICE] =
       g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, disk_props);
 }

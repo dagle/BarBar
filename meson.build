@@ -30,6 +30,8 @@ giounix = dependency('gio-unix-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
+playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
+wayland_client = dependency('wayland-client')
 
 gtk = dependency('gtk4')
 libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
@@ -50,6 +52,8 @@ deps = [
   upower_glib,
   libgtop,
   libwireplumber,
+  playerctl,
+  wayland_client,
 ]
 
 LIBS = [glib, gio, gobject]

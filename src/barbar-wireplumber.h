@@ -38,12 +38,7 @@ G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
                      WIREPLUMBER, GObject)
 
 void g_barbar_wireplumber_update(BarBarWireplumber *wireplumber);
-//
-// BarBarBar *g_barbar_bar_new(void);
-//
-// int g_barbar_run(BarBarBar *bar, int argc, char **argv);
-// int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv);
-//
+
 G_END_DECLS
 
 #endif /* _BARBAR_BAR_H_ */

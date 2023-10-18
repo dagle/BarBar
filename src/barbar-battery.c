@@ -8,14 +8,13 @@ struct _BarBarBattery {
   // TODO:This should be in parent
   char *label;
 
-  char *path;
-  struct mpd_connection *connection;
+  char *device;
 };
 
 enum {
   PROP_0,
 
-  PROP_PATH,
+  PROP_DEVICE,
 
   NUM_PROPERTIES,
 };
@@ -40,8 +39,8 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
 
   gobject_class->set_property = g_barbar_battery_set_property;
   gobject_class->get_property = g_barbar_battery_get_property;
-  battery_props[PROP_PATH] = g_param_spec_string(
-      "path", NULL, NULL, "/", G_PARAM_READWRITE);
+  battery_props[PROP_DEVICE] = g_param_spec_string(
+      "device", NULL, NULL, NULL, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, battery_props);
 }
 

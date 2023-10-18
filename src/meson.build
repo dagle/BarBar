@@ -7,6 +7,8 @@ libbarbar_src = files(
   'barbar-clock.c',
   'barbar-cpu.c',
   'barbar-wireplumber.c',
+  'barbar-mpris2.c',
+  'barbar-river.c',
 )
 
 libbarbar_headers = [
@@ -18,7 +20,12 @@ libbarbar_headers = [
   'barbar-clock.h',
   'barbar-cpu.h',
   'barbar-wireplumber.h',
+  'barbar-mpris2.h',
+  'barbar-river.h',
 ]
+
+wl_mod = import('unstable-wayland')
+river_status = wl_mod.scan_xml('../protocol/river-status-unstable-v1.xml')
 
 # version_data = configuration_data()
 # version_data.set('GMIME_MAJOR_VERSION', GMIME_MAJOR_VERSION)
@@ -37,7 +44,7 @@ executable('testbar',
   dependencies: deps
 )
 
-libbarbar = library(barbar_package, libbarbar_src, dependencies : deps, install: true)
+libbarbar = library(barbar_package, libbarbar_src, river_status, dependencies : deps, install: true)
 
 pkg = import('pkgconfig')
 gnome = import('gnome')
