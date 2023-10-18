@@ -1,6 +1,6 @@
 #include "barbar-disk.h"
+#include <stdio.h>
 #include <sys/statvfs.h>
-#include <gtk4-layer-shell.h>
 
 struct _BarBarDisk {
   GObject parent;
@@ -25,10 +25,10 @@ static GParamSpec *disk_props[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarDisk, g_barbar_disk, G_TYPE_OBJECT)
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char* path);
+void g_barbar_disk_set_path(BarBarDisk *bar, const char *path);
 
 static void g_barbar_disk_set_property(GObject *object, guint property_id,
-                                  const GValue *value, GParamSpec *pspec) {
+                                       const GValue *value, GParamSpec *pspec) {
   BarBarDisk *disk = BARBAR_DISK(object);
 
   switch (property_id) {
@@ -41,25 +41,25 @@ static void g_barbar_disk_set_property(GObject *object, guint property_id,
 }
 
 static void g_barbar_disk_get_property(GObject *object, guint property_id,
-                                  GValue *value, GParamSpec *pspec) {
+                                       GValue *value, GParamSpec *pspec) {
   BarBarDisk *disk = BARBAR_DISK(object);
 
   switch (property_id) {
   case PROP_PATH:
-	g_value_set_string(value, disk->path);
+    g_value_set_string(value, disk->path);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char* path) {
-	g_return_if_fail(BARBAR_IS_DISK(bar));
+void g_barbar_disk_set_path(BarBarDisk *bar, const char *path) {
+  g_return_if_fail(BARBAR_IS_DISK(bar));
 
-	g_free(bar->path);
-	bar->path = g_strdup(path);
+  g_free(bar->path);
+  bar->path = g_strdup(path);
 
-	g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_PATH]);
+  g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_PATH]);
 }
 
 static void g_barbar_disk_class_init(BarBarDiskClass *class) {
@@ -67,13 +67,12 @@ static void g_barbar_disk_class_init(BarBarDiskClass *class) {
 
   gobject_class->set_property = g_barbar_disk_set_property;
   gobject_class->get_property = g_barbar_disk_get_property;
-  disk_props[PROP_PATH] = g_param_spec_string(
-      "path", NULL, NULL, "/", G_PARAM_READWRITE);
+  disk_props[PROP_PATH] =
+      g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, disk_props);
 }
 
-static void g_barbar_disk_init(BarBarDisk *self) {
-}
+static void g_barbar_disk_init(BarBarDisk *self) {}
 
 void g_barbar_disk_update(BarBarDisk *disk) {
   struct statvfs stats;
@@ -81,7 +80,7 @@ void g_barbar_disk_update(BarBarDisk *disk) {
   int err = statvfs(disk->path, &stats);
 
   if (err) {
-	  return;
+    return;
   }
 
   printf("percentage_free: %lu%%\n", stats.f_bavail * 100 / stats.f_blocks);
@@ -121,13 +120,14 @@ void g_barbar_disk_update(BarBarDisk *disk) {
 //
 //   divisor = calc_specific_divisor(unit_);
 //   specific_free = (stats.f_bavail * stats.f_frsize) / divisor;
-//   specific_used = ((stats.f_blocks - stats.f_bfree) * stats.f_frsize) / divisor;
-//   specific_total = (stats.f_blocks * stats.f_frsize) / divisor;
+//   specific_used = ((stats.f_blocks - stats.f_bfree) * stats.f_frsize) /
+//   divisor; specific_total = (stats.f_blocks * stats.f_frsize) / divisor;
 //
 //   auto free = pow_format(stats.f_bavail * stats.f_frsize, "B", true);
-//   auto used = pow_format((stats.f_blocks - stats.f_bfree) * stats.f_frsize, "B", true);
-//   auto total = pow_format(stats.f_blocks * stats.f_frsize, "B", true);
-//   auto percentage_used = (stats.f_blocks - stats.f_bfree) * 100 / stats.f_blocks;
+//   auto used = pow_format((stats.f_blocks - stats.f_bfree) * stats.f_frsize,
+//   "B", true); auto total = pow_format(stats.f_blocks * stats.f_frsize, "B",
+//   true); auto percentage_used = (stats.f_blocks - stats.f_bfree) * 100 /
+//   stats.f_blocks;
 //
 //   auto format = format_;
 //   auto state = getState(percentage_used);
@@ -140,24 +140,28 @@ void g_barbar_disk_update(BarBarDisk *disk) {
 //   } else {
 //     event_box_.show();
 //     label_.set_markup(fmt::format(
-//         fmt::runtime(format), stats.f_bavail * 100 / stats.f_blocks, fmt::arg("free", free),
-//         fmt::arg("percentage_free", stats.f_bavail * 100 / stats.f_blocks), fmt::arg("used", used),
-//         fmt::arg("percentage_used", percentage_used), fmt::arg("total", total),
-//         fmt::arg("path", path_), fmt::arg("specific_free", specific_free),
-//         fmt::arg("specific_used", specific_used), fmt::arg("specific_total", specific_total)));
+//         fmt::runtime(format), stats.f_bavail * 100 / stats.f_blocks,
+//         fmt::arg("free", free), fmt::arg("percentage_free", stats.f_bavail *
+//         100 / stats.f_blocks), fmt::arg("used", used),
+//         fmt::arg("percentage_used", percentage_used), fmt::arg("total",
+//         total), fmt::arg("path", path_), fmt::arg("specific_free",
+//         specific_free), fmt::arg("specific_used", specific_used),
+//         fmt::arg("specific_total", specific_total)));
 //   }
 //
 //   if (tooltipEnabled()) {
-//     std::string tooltip_format = "{used} used out of {total} on {path} ({percentage_used}%)";
-//     if (config_["tooltip-format"].isString()) {
+//     std::string tooltip_format = "{used} used out of {total} on {path}
+//     ({percentage_used}%)"; if (config_["tooltip-format"].isString()) {
 //       tooltip_format = config_["tooltip-format"].asString();
 //     }
 //     label_.set_tooltip_text(fmt::format(
-//         fmt::runtime(tooltip_format), stats.f_bavail * 100 / stats.f_blocks, fmt::arg("free", free),
-//         fmt::arg("percentage_free", stats.f_bavail * 100 / stats.f_blocks), fmt::arg("used", used),
-//         fmt::arg("percentage_used", percentage_used), fmt::arg("total", total),
-//         fmt::arg("path", path_), fmt::arg("specific_free", specific_free),
-//         fmt::arg("specific_used", specific_used), fmt::arg("specific_total", specific_total)));
+//         fmt::runtime(tooltip_format), stats.f_bavail * 100 / stats.f_blocks,
+//         fmt::arg("free", free), fmt::arg("percentage_free", stats.f_bavail *
+//         100 / stats.f_blocks), fmt::arg("used", used),
+//         fmt::arg("percentage_used", percentage_used), fmt::arg("total",
+//         total), fmt::arg("path", path_), fmt::arg("specific_free",
+//         specific_free), fmt::arg("specific_used", specific_used),
+//         fmt::arg("specific_total", specific_total)));
 //   }
 //   // Call parent update
 //   ALabel::update();

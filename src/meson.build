@@ -6,6 +6,7 @@ libbarbar_src = files(
   'barbar-battery.c',
   'barbar-clock.c',
   'barbar-cpu.c',
+  'barbar-wireplumber.c',
 )
 
 libbarbar_headers = [
@@ -16,6 +17,7 @@ libbarbar_headers = [
   'barbar-battery.h',
   'barbar-clock.h',
   'barbar-cpu.h',
+  'barbar-wireplumber.h',
 ]
 
 # version_data = configuration_data()
