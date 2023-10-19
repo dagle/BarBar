@@ -18,6 +18,7 @@ project(
 
 # barbar_package = 'barbar-@0@.0'.format(GMIME_MAJOR_VERSION)
 cc = meson.get_compiler('c')
+m_dep = cc.find_library('m', required : true)
 
 barbar_package = 'barbar-0.0.1'
 conf_data = configuration_data()
@@ -32,6 +33,7 @@ libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
+template_glib = dependency('template-glib-1.0')
 
 gtk = dependency('gtk4')
 libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
@@ -54,6 +56,7 @@ deps = [
   libwireplumber,
   playerctl,
   wayland_client,
+  m_dep,
 ]
 
 LIBS = [glib, gio, gobject]

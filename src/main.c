@@ -7,16 +7,18 @@
 #include "barbar-disk.h"
 #include "barbar-mpd.h"
 #include "barbar-mpris2.h"
+#include "barbar-river.h"
+#include "barbar-temperature.h"
 #include "barbar-wireplumber.h"
 
 int
 main (int argc, char **argv)
 {
-	BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
+	BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, NULL);
 	g_barbar_disk_update(disk);
 
-	BarBarMpd *mpd = g_object_new(BARBAR_TYPE_MPD, NULL);
-	g_barbar_mpd_update(mpd);
+	// BarBarMpd *mpd = g_object_new(BARBAR_TYPE_MPD, NULL);
+	// g_barbar_mpd_update(mpd);
 
 	BarBarBattery *bat = g_object_new(BARBAR_TYPE_BATTERY, NULL);
 	g_barbar_battery_update(bat);
@@ -32,6 +34,14 @@ main (int argc, char **argv)
 
 	BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, "player", "mpd", NULL);
 	g_barbar_mpris_update(mpris);
+
+	// TODO: we can't can't test this one until we actually make things into widgets!
+
+	// BarBarRiver *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
+	// g_barbar_river_update(river);
+
+	BarBarTemperature *temp = g_object_new(BARBAR_TYPE_TEMPERATURE, NULL);
+	g_barbar_temperature_update(temp);
 
 	// BarBarBar *bar = g_barbar_bar_new ();
 	// int status = g_barbar_run(bar, argc, argv);

@@ -72,7 +72,9 @@ static void g_barbar_disk_class_init(BarBarDiskClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, disk_props);
 }
 
-static void g_barbar_disk_init(BarBarDisk *self) {}
+static void g_barbar_disk_init(BarBarDisk *self) {
+	self->path = strdup("/");
+}
 
 void g_barbar_disk_update(BarBarDisk *disk) {
   struct statvfs stats;

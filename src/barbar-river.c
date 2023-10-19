@@ -8,6 +8,12 @@
 
 struct _BarBarRiver {
   GObject parent;
+
+  struct zriver_status_manager_v1 *status_manager;
+  struct zriver_output_status_v1 *output_status;
+
+  // struct zriver_control_v1 *control_;
+  // struct wl_seat *seat_;
 };
 
 enum {
@@ -17,6 +23,8 @@ enum {
 
   NUM_PROPERTIES,
 };
+
+// static struct wl_registry *wl_registry_global = NULL;
 
 G_DEFINE_TYPE(BarBarRiver, g_barbar_river, G_TYPE_OBJECT)
 
@@ -57,45 +65,75 @@ static void g_barbar_river_class_init(BarBarRiverClass *class) {
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
-                                   uint32_t version) {
-  BarBarRiver *river = BARBAR_RIVER(data);
-  if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
-    // layout_manager =
-    //     wl_registry_bind(registry, name, &river_layout_manager_v3_interface,
-    //     2);
-  } else if (strcmp(interface, wl_output_interface.name) == 0) {
-    struct wl_output *wl_output =
-        wl_registry_bind(registry, name, &wl_output_interface, 4);
-
-    // GriverOutput *output = create_output(ctx, wl_output, name);
-    // g_signal_emit(ctx, griver_signals[GRIVER_ADD_OUTPUT], 0, output);
-  }
+								   uint32_t version) {
+	BarBarRiver *river = BARBAR_RIVER(data);
+	if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
+		if (version < ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
+			river->status_manager = wl_registry_bind(registry, name, 
+					&zriver_status_manager_v1_interface, version);
+		}
+	}
 }
 
-static void registry_handle_global_remove(void *data,
-                                          struct wl_registry *registry,
-                                          uint32_t name) {
-  BarBarRiver *river = BARBAR_RIVER(data);
-  // GriverContext *ctx = GRIVER_CONTEXT(data);
-  // GriverContextPrivate *priv = g_river_context_get_instance_private(ctx);
-  // GriverOutput *output = output_from_global_name(priv, name);
-  // if (output != NULL) {
-  //   g_signal_emit(ctx, griver_signals[GRIVER_REMOVE_OUTPUT], 0, output);
-  //   priv->outputs = g_list_remove(priv->outputs, output);
-  //   g_object_unref(output);
-  // }
+static void registry_handle_global_remove(void *_data,
+                                          struct wl_registry *_registry,
+                                          uint32_t _name) {
+  (void)_data;
+  (void)_registry;
+  (void)_name;
 }
 
-static const struct wl_registry_listener registry_listener = {
+static const struct wl_registry_listener wl_registry_listener = {
     .global = registry_handle_global,
     .global_remove = registry_handle_global_remove,
 };
 
+static void listen_focused_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
+                                uint32_t tags) {
+	g_print("focused\n");
+}
+
+static void listen_view_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
+                             struct wl_array *tags) {
+	g_print("view\n");
+}
+
+static void listen_urgent_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
+                               uint32_t tags) {
+	g_print("urgent\n");
+}
+
+static const struct zriver_output_status_v1_listener output_status_listener = {
+    .focused_tags = listen_focused_tags,
+    .view_tags = listen_view_tags,
+    .urgent_tags = listen_urgent_tags,
+};
+
 static void g_barbar_river_init(BarBarRiver *self) {
+  GdkDisplay *gdk_display = gdk_display_get_default ();
+  g_return_if_fail (gdk_display);
+  g_return_if_fail (GDK_IS_WAYLAND_DISPLAY (gdk_display));
+
   GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self));
   GtkWindow *window = GTK_WINDOW(root);
   GdkMonitor *monitor = gtk_layer_get_monitor(window);
   struct wl_output *output = gdk_wayland_monitor_get_wl_output(monitor);
+  
+  struct wl_display *wl_display = gdk_wayland_display_get_wl_display (gdk_display);
+  struct wl_registry *wl_registry_global = wl_display_get_registry (wl_display);
+
+  wl_registry_add_listener (wl_registry_global, &wl_registry_listener, NULL);
+  wl_display_roundtrip (wl_display);
+
+  if (!self->status_manager) {
+	  return;
+  }
+
+  struct zriver_output_status_v1 *output_status = zriver_status_manager_v1_get_river_output_status(self->status_manager, output);
+
+  zriver_output_status_v1_add_listener(output_status, &output_status_listener, self);
+  zriver_status_manager_v1_destroy(self->status_manager);
+  self->status_manager = NULL;
 
   // struct wl_display *wl_display = wl_display_connect(NULL);
   // struct wl_registry *wl_registry = NULL;

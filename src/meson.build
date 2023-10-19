@@ -9,6 +9,7 @@ libbarbar_src = files(
   'barbar-wireplumber.c',
   'barbar-mpris2.c',
   'barbar-river.c',
+  'barbar-temperature.c'
 )
 
 libbarbar_headers = [
@@ -22,6 +23,7 @@ libbarbar_headers = [
   'barbar-wireplumber.h',
   'barbar-mpris2.h',
   'barbar-river.h',
+  'barbar-temperature.h'
 ]
 
 wl_mod = import('unstable-wayland')

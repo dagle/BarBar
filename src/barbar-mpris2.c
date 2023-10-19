@@ -16,7 +16,7 @@ struct _BarBarMpris {
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  PROP_PLAYER,
 
   NUM_PROPERTIES,
 };
@@ -33,7 +33,7 @@ void g_barbar_mpris_set_player(BarBarMpris *mpris, const char *player) {
   g_free(mpris->player);
   mpris->player = g_strdup(player);
 
-  g_object_notify_by_pspec(G_OBJECT(mpris), mpris_props[PROP_DEVICE]);
+  g_object_notify_by_pspec(G_OBJECT(mpris), mpris_props[PROP_PLAYER]);
 }
 
 static void g_barbar_mpris_set_property(GObject *object, guint property_id,
@@ -41,7 +41,7 @@ static void g_barbar_mpris_set_property(GObject *object, guint property_id,
   BarBarMpris *mpris = BARBAR_MPRIS(object);
 
   switch (property_id) {
-  case PROP_DEVICE:
+  case PROP_PLAYER:
     g_barbar_mpris_set_player(mpris, g_value_get_string(value));
     break;
   default:
@@ -58,7 +58,7 @@ static void g_barbar_mpris_class_init(BarBarMprisClass *class) {
 
   gobject_class->set_property = g_barbar_mpris_set_property;
   gobject_class->get_property = g_barbar_mpris_get_property;
-  mpris_props[PROP_DEVICE] = g_param_spec_string(
+  mpris_props[PROP_PLAYER] = g_param_spec_string(
       "player", NULL, NULL, "mpd", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mpris_props);
 }
