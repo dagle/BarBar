@@ -40,7 +40,7 @@ river_status = wl_mod.scan_xml('../protocol/river-status-unstable-v1.xml')
 
 
 executable('testbar',
-  libbarbar_src + 'main.c',
+  libbarbar_src + 'main.c', river_status,
   dependencies: deps
 )
 

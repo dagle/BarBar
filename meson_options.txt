@@ -11,4 +11,3 @@ option('libgtop', type : 'boolean', value: true, description: 'Enable top suppor
 option('wireplumber', type : 'boolean', value: true, description: 'Enable top support')
 option('introspection', type : 'boolean', value : true)
 option('vala', type : 'boolean', value : true)
-option('mpris', type: 'feature', value: 'auto', description: 'Enable support for mpris')
