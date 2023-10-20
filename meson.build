@@ -62,7 +62,7 @@ deps = [
 LIBS = [glib, gio, gobject]
 # wayland_client = dependency('wayland-client')
 # wayland_cursor = dependency('wayland-cursor')
-# wayland_protos = dependency('wayland-protocols')
+wayland_protos = dependency('wayland-protocols')
 # gtkmm = dependency('gtkmm-3.0', version : ['>=3.22.0'])
 # dbusmenu_gtk = dependency('dbusmenu-gtk3-0.4', required: get_option('dbusmenu-gtk'))
 # giounix = dependency('gio-unix-2.0', required: (get_option('dbusmenu-gtk').enabled() or
@@ -92,6 +92,7 @@ LIBS = [glib, gio, gobject]
 #   configuration : conf_data
 # )
 
+subdir('protocol')
 subdir('src')
 
 summary({'Install Prefix': get_option('prefix'),
@@ -99,9 +100,6 @@ summary({'Install Prefix': get_option('prefix'),
         'Documentation': get_option('gtk_doc'),
         'Profiling enabled': false, #TODO
         'Coverage enabled': false, #TODO
-        # 'PGP/MIME support': get_option('crypto'),
-        # 'S/MIME support': get_option('crypto'),
-        # 'libidn2 support': libidn2.found(),
         'GObject introspection': get_option('introspection'),
         'Vala bindings': get_option('vala'),
         }, section: 'Configuration')
