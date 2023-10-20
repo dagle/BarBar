@@ -25,7 +25,7 @@ static GParamSpec *disk_props[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarDisk, g_barbar_disk, G_TYPE_OBJECT)
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char *path);
+void g_barbar_cmd_set_cmd(BarBarDisk *bar, const char *path);
 
 static void g_barbar_disk_set_property(GObject *object, guint property_id,
                                        const GValue *value, GParamSpec *pspec) {
@@ -33,7 +33,7 @@ static void g_barbar_disk_set_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_DEVICE:
-    g_barbar_disk_set_path(disk, g_value_get_string(value));
+    g_barbar_cmd_set_cmd(disk, g_value_get_string(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -53,7 +53,7 @@ static void g_barbar_disk_get_property(GObject *object, guint property_id,
   }
 }
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char *path) {
+void g_barbar_cmd_set_cmd(BarBarDisk *bar, const char *path) {
   g_return_if_fail(BARBAR_IS_DISK(bar));
 
   g_free(bar->path);
@@ -72,9 +72,7 @@ static void g_barbar_disk_class_init(BarBarDiskClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, disk_props);
 }
 
-static void g_barbar_disk_init(BarBarDisk *self) {
-	self->path = strdup("/");
-}
+static void g_barbar_disk_init(BarBarDisk *self) { self->path = strdup("/"); }
 
 void g_barbar_disk_update(BarBarDisk *disk) {
   struct statvfs stats;
