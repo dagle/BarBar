@@ -92,7 +92,7 @@ wayland_protos = dependency('wayland-protocols')
 #   configuration : conf_data
 # )
 
-subdir('protocol')
+# subdir('protocol')
 subdir('src')
 
 summary({'Install Prefix': get_option('prefix'),

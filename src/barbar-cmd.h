@@ -22,25 +22,21 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_TRAY_H_
-#define _BARBAR_TRAY_H_
+#ifndef _BARBAR_CMD_H_
+#define _BARBAR_CMD_H_
 
-#include "status-notifier.h"
 #include <glib-object.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-// This module is only called tray, it's really a status-notifier
-// The difference is that you can have multiple status-notifiers for
-// one or more bars.
-#define BARBAR_TYPE_TRAY (g_barbar_tray_get_type())
+#define BARBAR_TYPE_CMD (g_barbar_cmd_get_type())
 
 // TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GObject)
+G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, GObject)
 
-void g_barbar_tray_update(BarBarTray *self);
+void g_barbar_cmd_update(BarBarCmd *self);
 
 G_END_DECLS
 
-#endif /* _BARBAR_TRAY_H_ */
+#endif /* _BARBAR_CMD_H_ */
