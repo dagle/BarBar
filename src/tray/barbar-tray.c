@@ -20,7 +20,7 @@ struct _BarBarTray {
 enum {
   PROP_0,
 
-  // PROP_STATES,
+  PROP_STATES,
 
   NUM_PROPERTIES,
 };
@@ -30,8 +30,6 @@ G_DEFINE_TYPE(BarBarTray, g_barbar_tray, G_TYPE_OBJECT)
 static GParamSpec *tray_props[NUM_PROPERTIES] = {
     NULL,
 };
-
-static GParamSpec *elem = NULL;
 
 static void g_barbar_tray_set_property(GObject *object, guint property_id,
                                        const GValue *value, GParamSpec *pspec) {
@@ -56,11 +54,9 @@ static void g_barbar_tray_class_init(BarBarTrayClass *class) {
 
   gobject_class->set_property = g_barbar_tray_set_property;
   gobject_class->get_property = g_barbar_tray_get_property;
-  elem = g_param_spec_double("critical-temp", NULL, NULL, 0.0, 300.0, 80.0,
-                             G_PARAM_CONSTRUCT);
-  // tray_props[PROP_STATES] = g_param_spec_value_array(
-  //     "states", NULL, NULL, elem, G_PARAM_READWRITE);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, tray_props);
+  // tray_props[PROP_STATES] = g_param_spec_double("critical-temp", NULL, NULL, 0.0, 300.0, 80.0,
+  //                            G_PARAM_CONSTRUCT);
+  // g_object_class_install_properties(gobject_class, NUM_PROPERTIES, tray_props);
 }
 
 static void g_barbar_tray_init(BarBarTray *self) {}

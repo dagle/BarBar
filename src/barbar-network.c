@@ -25,8 +25,6 @@ static GParamSpec *network_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static GParamSpec *elem = NULL;
-
 static void g_barbar_network_set_property(GObject *object, guint property_id,
                                           const GValue *value,
                                           GParamSpec *pspec) {}
@@ -50,10 +48,8 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
 
   gobject_class->set_property = g_barbar_network_set_property;
   gobject_class->get_property = g_barbar_network_get_property;
-  elem = g_param_spec_double("critical-temp", NULL, NULL, 0.0, 300.0, 80.0,
-                             G_PARAM_CONSTRUCT);
-  // network_props[PROP_STATES] = g_param_spec_value_array(
-  //     "states", NULL, NULL, elem, G_PARAM_READWRITE);
+  // network_props[PROP_STATES] = g_param_spec_double("critical-temp", NULL, NULL, 0.0, 300.0, 80.0,
+  //                            G_PARAM_CONSTRUCT);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     network_props);
 }

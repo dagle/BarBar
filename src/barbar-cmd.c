@@ -25,8 +25,6 @@ static GParamSpec *cmd_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static GParamSpec *elem = NULL;
-
 void g_barbar_cmd_set_cmd(BarBarCmd *self, const char *cmd) {
   g_return_if_fail(BARBAR_IS_CMD(self));
 
@@ -58,8 +56,6 @@ static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
 
   gobject_class->set_property = g_barbar_cmd_set_property;
   gobject_class->get_property = g_barbar_cmd_get_property;
-  elem = g_param_spec_double("critical-temp", NULL, NULL, 0.0, 300.0, 80.0,
-                             G_PARAM_CONSTRUCT);
   cmd_props[PROP_CMD] =
       g_param_spec_string("states", NULL, NULL, NULL, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, cmd_props);

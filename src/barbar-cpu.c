@@ -18,7 +18,7 @@ struct _BarBarCpu {
 enum {
   PROP_0,
 
-  // PROP_STATES,
+  PROP_STATES,
 
   NUM_PROPERTIES,
 };
@@ -28,8 +28,6 @@ G_DEFINE_TYPE(BarBarCpu, g_barbar_cpu, G_TYPE_OBJECT)
 static GParamSpec *cpu_props[NUM_PROPERTIES] = {
     NULL,
 };
-
-static GParamSpec *elem = NULL;
 
 static void g_barbar_cpu_set_property(GObject *object, guint property_id,
                                   const GValue *value, GParamSpec *pspec) {
@@ -76,10 +74,8 @@ static void g_barbar_cpu_class_init(BarBarCpuClass *class) {
 
   gobject_class->set_property = g_barbar_cpu_set_property;
   gobject_class->get_property = g_barbar_cpu_get_property;
-  elem = g_param_spec_double(
+  cpu_props[PROP_STATES] = g_param_spec_double(
       "critical-temp", NULL, NULL, 0.0, 300.0, 80.0, G_PARAM_CONSTRUCT);
-  // cpu_props[PROP_STATES] = g_param_spec_value_array(
-  //     "states", NULL, NULL, elem, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, cpu_props);
 }
 
