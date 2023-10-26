@@ -1,4 +1,5 @@
 #include "barbar-bar.h"
+#include "barbar-clock.h"
 #include <gtk4-layer-shell.h>
 
 struct _BarBarBar {
@@ -51,7 +52,7 @@ static GParamSpec *bar_props[NUM_PROPERTIES] = {
 };
 
 static void g_barbar_bar_set_property(GObject *object, guint property_id,
-                                  const GValue *value, GParamSpec *pspec) {
+                                      const GValue *value, GParamSpec *pspec) {
   BarBarBar *bar = BARBAR_BAR(object);
 
   switch (property_id) {
@@ -76,7 +77,7 @@ static void g_barbar_bar_set_property(GObject *object, guint property_id,
 }
 
 static void g_barbar_bar_get_property(GObject *object, guint property_id,
-                                  GValue *value, GParamSpec *pspec) {
+                                      GValue *value, GParamSpec *pspec) {
 
   BarBarBar *bar = BARBAR_BAR(object);
 
@@ -123,6 +124,19 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
 
 static void g_barbar_bar_init(BarBarBar *self) {}
 
+static gboolean g_barbar_clock_udate2(gpointer data) {
+  GtkLabel *label = GTK_LABEL(data);
+  GDateTime *time;
+  time = g_date_time_new_now_local();
+
+  char *str = g_date_time_format(time, "%F %k:%M:%S");
+  // g_print("%s\n", str);
+  gtk_label_set_text(label, str);
+
+  g_date_time_unref(time);
+  return G_SOURCE_CONTINUE;
+}
+
 static void activate(GtkApplication *app, void *data) {
   g_return_if_fail(app);
   g_return_if_fail(data);
@@ -166,12 +180,16 @@ static void activate(GtkApplication *app, void *data) {
   }
 
   // Set up a widget
-  GtkWidget *label = gtk_label_new("");
-  gtk_label_set_markup(GTK_LABEL(label), "<span font_desc=\"10.0\">"
-                                         "GTK Layer\nShell example!"
-                                         "</span>");
-  gtk_window_set_child(gtk_window, label);
+  // GtkWidget *clock = gtk_label_new("");
+  BarBarClock *clock2 =
+      g_object_new(BARBAR_TYPE_CLOCK, "tz", "Europe/Stockholm", NULL);
+
+  g_timeout_add_full(0, 1000, g_barbar_clock_udate2, clock, NULL);
+
+  gtk_window_set_child(gtk_window, GTK_WIDGET(clock2));
   gtk_window_present(gtk_window);
+
+  g_barbar_clock_start(clock2);
 }
 
 /**
@@ -181,7 +199,7 @@ static void activate(GtkApplication *app, void *data) {
  * @argv: The argv from main()
  * Returns: The exit status.
  */
-int g_barbar_run(BarBarBar *bar, int argc, char **argv) {
+int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *widget) {
   GtkApplication *app = gtk_application_new(
       "com.github.wmww.gtk4-layer-shell.example", G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(app, "activate", G_CALLBACK(activate), bar);
@@ -202,7 +220,7 @@ int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv) { return 0; }
 BarBarBar *g_barbar_bar_new(void) {
   BarBarBar *bar;
 
-  bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_LEFT, NULL);
+  bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM, NULL);
 
   return bar;
 }

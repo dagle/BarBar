@@ -27,15 +27,16 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_CLOCK (g_barbar_clock_get_type())
 
 // TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarClock, g_barbar_clock, BARBAR, CLOCK, GObject)
+G_DECLARE_FINAL_TYPE(BarBarClock, g_barbar_clock, BARBAR, CLOCK, GtkWidget)
 
-void g_barbar_clock_update(BarBarClock *clock);
+void g_barbar_clock_start(BarBarClock *clock);
 
 G_END_DECLS
 

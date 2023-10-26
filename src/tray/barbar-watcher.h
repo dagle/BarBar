@@ -37,9 +37,12 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_STATUS_WATCHER (g_barbar_status_watcher_get_type())
 
 // TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, BARBAR, STATUS_WATCHER, GObject)
+G_DECLARE_FINAL_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, BARBAR,
+                     STATUS_WATCHER, GObject)
 
 void g_barbar_status_watcher_update(BarBarStatusWatcher *self);
+
+BarBarStatusWatcher *g_barbar_status_watcher_new(void);
 
 G_END_DECLS
 

@@ -4,8 +4,8 @@
 struct _BarBarClock {
   GObject parent;
 
-  // TODO:This should be in parent
-  char *label;
+  GtkLabel *label;
+  char *format;
 
   GTimeZone *timezone;
 };
@@ -18,7 +18,7 @@ enum {
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarClock, g_barbar_clock, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarClock, g_barbar_clock, GTK_TYPE_WIDGET)
 
 static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
@@ -29,7 +29,7 @@ void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
 
   printf("id: %s\n", identifier);
   if (clock->timezone) {
-	  g_time_zone_unref(clock->timezone);
+    g_time_zone_unref(clock->timezone);
   }
   clock->timezone = g_time_zone_new_identifier(identifier);
 
@@ -37,7 +37,8 @@ void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
 }
 
 static void g_barbar_clock_set_property(GObject *object, guint property_id,
-                                  const GValue *value, GParamSpec *pspec) {
+                                        const GValue *value,
+                                        GParamSpec *pspec) {
   BarBarClock *clock = BARBAR_CLOCK(object);
 
   switch (property_id) {
@@ -50,32 +51,39 @@ static void g_barbar_clock_set_property(GObject *object, guint property_id,
 }
 
 static void g_barbar_clock_get_property(GObject *object, guint property_id,
-                                  GValue *value, GParamSpec *pspec) {
-}
+                                        GValue *value, GParamSpec *pspec) {}
 
 static void g_barbar_clock_class_init(BarBarClockClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
   gobject_class->set_property = g_barbar_clock_set_property;
   gobject_class->get_property = g_barbar_clock_get_property;
-  clock_props[PROP_TZ] = g_param_spec_string(
-      "tz", NULL, NULL, NULL, G_PARAM_READWRITE);
+  clock_props[PROP_TZ] =
+      g_param_spec_string("tz", NULL, NULL, NULL, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, clock_props);
 }
 
 static void g_barbar_clock_init(BarBarClock *self) {
+  self->label = g_object_new(GTK_TYPE_LABEL, NULL);
 }
 
-void g_barbar_clock_update(BarBarClock *clock) {
-	GDateTime *time;
-	if (clock->timezone) {
-		time = g_date_time_new_now(clock->timezone);
-	} else {
-		time = g_date_time_new_now_local();
-	}
+static gboolean g_barbar_clock_udate(gpointer data) {
+  BarBarClock *clock = BARBAR_CLOCK(data);
+  GDateTime *time;
+  if (clock->timezone) {
+    time = g_date_time_new_now(clock->timezone);
+  } else {
+    time = g_date_time_new_now_local();
+  }
 
-	char *str = g_date_time_format (time, "%F %k:%M:%S");
-	g_print("%s\n", str);
+  char *str = g_date_time_format(time, "%F %k:%M:%S");
+  // g_print("%s\n", str);
+  gtk_label_set_text(clock->label, str);
 
-	g_date_time_unref(time);
+  g_date_time_unref(time);
+  return G_SOURCE_CONTINUE;
+}
+
+void g_barbar_clock_start(BarBarClock *clock) {
+  g_timeout_add_full(0, 1000, g_barbar_clock_udate, clock, NULL);
 }
