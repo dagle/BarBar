@@ -1,5 +1,6 @@
 #include "barbar-bar.h"
 #include "barbar-clock.h"
+#include "barbar-disk.h"
 #include <gtk4-layer-shell.h>
 
 struct _BarBarBar {
@@ -102,11 +103,20 @@ static void g_barbar_bar_get_property(GObject *object, guint property_id,
   }
 }
 
+static void g_barbar_bar_constructed(GObject *object) {
+  BarBarBar *self = BARBAR_BAR(object);
+  G_OBJECT_CLASS(g_barbar_bar_parent_class)->constructed(object);
+
+  self->pos = BARBAR_POS_TOP;
+  self->height = 20;
+}
+
 static void g_barbar_bar_class_init(BarBarBarClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
   gobject_class->set_property = g_barbar_bar_set_property;
   gobject_class->get_property = g_barbar_bar_get_property;
+  gobject_class->constructed = g_barbar_bar_constructed;
 
   bar_props[PROP_LEFT_MARGIN] = g_param_spec_uint(
       "left-margin", NULL, NULL, 0, G_MAXUINT, 0, G_PARAM_READWRITE);
@@ -145,6 +155,7 @@ static void activate(GtkApplication *app, void *data) {
 
   // Create a normal GTK window however you like
   GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
+  gtk_window_set_default_size(gtk_window, 0, bar->height);
 
   // Before the window is first realized, set it up to be a layer surface
   gtk_layer_init_for_window(gtk_window);
@@ -160,7 +171,7 @@ static void activate(GtkApplication *app, void *data) {
                        bar->right_margin);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, bar->top_margin);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM,
-                       bar->bottom_margin); // 0
+                       bar->bottom_margin);
   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
     gtk_layer_set_anchor(gtk_window, i, TRUE);
   }
@@ -181,15 +192,20 @@ static void activate(GtkApplication *app, void *data) {
 
   // Set up a widget
   // GtkWidget *clock = gtk_label_new("");
-  BarBarClock *clock2 =
-      g_object_new(BARBAR_TYPE_CLOCK, "tz", "Europe/Stockholm", NULL);
+  BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, "tz", "Europe/Stockholm",
+                                    "interval", 1000, NULL);
 
-  g_timeout_add_full(0, 1000, g_barbar_clock_udate2, clock, NULL);
+  BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
 
-  gtk_window_set_child(gtk_window, GTK_WIDGET(clock2));
+  GtkWidget *bbb = gtk_action_bar_new();
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
+
+  gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
   gtk_window_present(gtk_window);
 
-  g_barbar_clock_start(clock2);
+  g_barbar_clock_start(clock);
+  g_barbar_disk_start(disk);
 }
 
 /**

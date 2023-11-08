@@ -27,13 +27,13 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_MEM (g_barbar_mem_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, GObject)
+G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, GtkWidget)
 
 void g_barbar_mem_update(BarBarMem *self);
 

@@ -44,6 +44,53 @@ void g_barbar_status_watcher_bus_acquired_handler2(GDBusConnection *connection,
                                    &error);
 }
 
+G_DECLARE_FINAL_TYPE(MyCustomWidget, my_custom_widget, MY, CUSTOM_WIDGET,
+                     GtkWidget)
+
+#define MY_TYPE_CUSTOM_WIDGET (my_custom_widget_get_type())
+
+struct _MyCustomWidget {
+  GtkWidget parent_instance;
+  // Add your custom fields here
+};
+
+G_DEFINE_TYPE(MyCustomWidget, my_custom_widget, GTK_TYPE_WIDGET)
+
+static void my_custom_widget_class_init(MyCustomWidgetClass *class) {
+  // Perform class initialization here
+}
+
+static void my_custom_widget_init(MyCustomWidget *self) {
+  // Perform instance initialization here
+}
+
+MyCustomWidget *my_custom_widget_new(void) {
+  return g_object_new(MY_TYPE_CUSTOM_WIDGET, NULL);
+}
+static void activate(GtkApplication *app, void *data) {
+  MyCustomWidget *widget = my_custom_widget_new();
+  BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, NULL);
+
+  GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
+  gtk_window_set_child(gtk_window, widget);
+  gtk_window_present(gtk_window);
+}
+
+// int main(int argc, char *argv[]) {
+//   GtkApplication *app = gtk_application_new(
+//       "com.github.wmww.gtk4-layer-shell.example",
+//       G_APPLICATION_DEFAULT_FLAGS);
+//   g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+//   int status = g_application_run(G_APPLICATION(app), argc, argv);
+//   g_object_unref(app);
+//   return status;
+//
+//   // MyCustomWidget *widget = my_custom_widget_new();
+//   // gtk_widget_show(GTK_WIDGET(widget));
+//
+//   // Perform your application logic here
+// }
+
 int main(int argc, char **argv) {
   // BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, NULL);
   // g_barbar_disk_update(disk);
@@ -81,10 +128,12 @@ int main(int argc, char **argv) {
   // loop = g_main_loop_new(NULL, FALSE);
   //
   //    g_bus_own_name(G_BUS_TYPE_SESSION,
-  // 					   "org.kde.StatusNotifierWatcher",
-  // 					   G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT
-  // | G_BUS_NAME_OWNER_FLAGS_REPLACE, 					   NULL,
-  // 					   g_barbar_status_watcher_bus_acquired_handler2,
+  // "org.kde.StatusNotifierWatcher",
+  //
+  // G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT
+  // | G_BUS_NAME_OWNER_FLAGS_REPLACE, NULL,
+  //
+  // g_barbar_status_watcher_bus_acquired_handler2,
   // 					   NULL,
   // 					   NULL,
   // 					   NULL);
@@ -93,5 +142,4 @@ int main(int argc, char **argv) {
   BarBarBar *bar = g_barbar_bar_new();
   int status = g_barbar_run(bar, argc, argv, NULL);
   return status;
-  // return 0;
 }

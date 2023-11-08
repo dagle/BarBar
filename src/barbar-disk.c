@@ -3,10 +3,9 @@
 #include <sys/statvfs.h>
 
 struct _BarBarDisk {
-  GObject parent;
+  GtkWidget parent_instance;
 
-  // TODO:This should be in parent
-  char *label;
+  GtkWidget *label;
 
   char *path;
 };
@@ -23,9 +22,18 @@ static GParamSpec *disk_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-G_DEFINE_TYPE(BarBarDisk, g_barbar_disk, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarDisk, g_barbar_disk, GTK_TYPE_WIDGET)
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char *path);
+static void g_barbar_disk_constructed(GObject *object);
+
+static void g_barbar_disk_set_path(BarBarDisk *bar, const char *path) {
+  g_return_if_fail(BARBAR_IS_DISK(bar));
+
+  g_free(bar->path);
+  bar->path = g_strdup(path);
+
+  g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_DEVICE]);
+}
 
 static void g_barbar_disk_set_property(GObject *object, guint property_id,
                                        const GValue *value, GParamSpec *pspec) {
@@ -53,37 +61,63 @@ static void g_barbar_disk_get_property(GObject *object, guint property_id,
   }
 }
 
-void g_barbar_disk_set_path(BarBarDisk *bar, const char *path) {
-  g_return_if_fail(BARBAR_IS_DISK(bar));
-
-  g_free(bar->path);
-  bar->path = g_strdup(path);
-
-  g_object_notify_by_pspec(G_OBJECT(bar), disk_props[PROP_DEVICE]);
-}
-
 static void g_barbar_disk_class_init(BarBarDiskClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_disk_set_property;
   gobject_class->get_property = g_barbar_disk_get_property;
+  gobject_class->constructed = g_barbar_disk_constructed;
   disk_props[PROP_DEVICE] =
-      g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
+      g_param_spec_string("path", NULL, NULL, NULL, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, disk_props);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
-static void g_barbar_disk_init(BarBarDisk *self) { self->path = strdup("/"); }
+static void g_barbar_disk_init(BarBarDisk *self) {}
 
-void g_barbar_disk_update(BarBarDisk *disk) {
+static void g_barbar_disk_constructed(GObject *object) {
+  BarBarDisk *disk = BARBAR_DISK(object);
+
+  G_OBJECT_CLASS(g_barbar_disk_parent_class)->constructed(object);
+
+  disk->label = gtk_label_new("");
+  gtk_widget_set_parent(disk->label, GTK_WIDGET(disk));
+}
+
+GtkWidget *g_barbar_disk_new(char *path) {
+  GtkWidget *disk = g_object_new(BARBAR_TYPE_DISK, "path", path);
+  return disk;
+}
+
+static gboolean g_barbar_disk_update(gpointer data) {
+  BarBarDisk *disk = BARBAR_DISK(data);
   struct statvfs stats;
 
   int err = statvfs(disk->path, &stats);
 
   if (err) {
-    return;
+    return G_SOURCE_REMOVE;
   }
 
-  printf("percentage_free: %lu%%\n", stats.f_bavail * 100 / stats.f_blocks);
+  // g_barbar_clock_update(disk);
+  // printf("percentage_free: %lu%%\n", stats.f_bavail * 100 / stats.f_blocks);
+  gchar *str = g_strdup_printf("percentage_free: %lu%%\n",
+                               stats.f_bavail * 100 / stats.f_blocks);
+
+  gtk_label_set_text(GTK_LABEL(disk->label), str);
+
+  g_free(str);
+
+  return G_SOURCE_CONTINUE;
+}
+
+void g_barbar_disk_start(BarBarDisk *disk) {
+  // if (clock->source_id > 0) {
+  //   g_source_remove(clock->source_id);
+  // }
+  g_barbar_disk_update(disk);
+  g_timeout_add_full(0, 30 * 1000, g_barbar_disk_update, disk, NULL);
 }
 
 // auto waybar::modules::Disk::update() -> void {

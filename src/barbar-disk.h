@@ -27,21 +27,17 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_DISK (g_barbar_disk_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarDisk, g_barbar_disk, BARBAR, DISK, GObject)
+G_DECLARE_FINAL_TYPE(BarBarDisk, g_barbar_disk, BARBAR, DISK, GtkWidget)
 
-void g_barbar_disk_update(BarBarDisk *disk);
-//
-// BarBarBar *g_barbar_bar_new(void);
-//
-// int g_barbar_run(BarBarBar *bar, int argc, char **argv);
-// int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv);
-//
+void g_barbar_disk_start(BarBarDisk *disk);
+GtkWidget *g_barbar_disk_new(char *path);
+
 G_END_DECLS
 
 #endif /* _BARBAR_BAR_H_ */
