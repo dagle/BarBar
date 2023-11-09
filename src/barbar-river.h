@@ -27,15 +27,15 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_RIVER (g_barbar_river_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarRiver, g_barbar_river, BARBAR, RIVER, GObject)
+G_DECLARE_FINAL_TYPE(BarBarRiver, g_barbar_river, BARBAR, RIVER, GtkWidget)
 
-void g_barbar_river_update(BarBarRiver *river);
+void g_barbar_river_start(BarBarRiver *river);
 
 G_END_DECLS
 

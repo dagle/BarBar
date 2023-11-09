@@ -1,6 +1,7 @@
 #include "barbar-bar.h"
 #include "barbar-clock.h"
 #include "barbar-disk.h"
+#include "barbar-river.h"
 #include <gtk4-layer-shell.h>
 
 struct _BarBarBar {
@@ -196,10 +197,12 @@ static void activate(GtkApplication *app, void *data) {
                                     "interval", 1000, NULL);
 
   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
+  BarBarDisk *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(river));
 
   gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
   gtk_window_present(gtk_window);

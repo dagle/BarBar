@@ -7,11 +7,12 @@
 #include <wayland-client.h>
 
 struct _BarBarRiver {
-  GObject parent;
+  GtkWidget parent_instance;
 
   struct zriver_status_manager_v1 *status_manager;
   struct zriver_output_status_v1 *output_status;
 
+  GtkWidget *buttons[9];
   // struct zriver_control_v1 *control_;
   // struct wl_seat *seat_;
 };
@@ -26,11 +27,13 @@ enum {
 
 // static struct wl_registry *wl_registry_global = NULL;
 
-G_DEFINE_TYPE(BarBarRiver, g_barbar_river, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarRiver, g_barbar_river, GTK_TYPE_WIDGET)
 
 static GParamSpec *river_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static void g_barbar_river_constructed(GObject *object);
 
 static void g_barbar_river_set_property(GObject *object, guint property_id,
                                         const GValue *value,
@@ -43,36 +46,39 @@ static guint click_signal;
 
 static void g_barbar_river_class_init(BarBarRiverClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_river_set_property;
   gobject_class->get_property = g_barbar_river_get_property;
+  gobject_class->constructed = g_barbar_river_constructed;
   river_props[PROP_DEVICE] =
-      g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
+      g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, river_props);
 
-  /* TODO: */
-  click_signal = g_signal_new(
-      "click-signal", G_TYPE_FROM_CLASS(class),
-      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-      0 /* class offset.Subclass cannot override the class handler (default
-           handler). */
-      ,
-      NULL /* accumulator */, NULL /* accumulator data */,
-      NULL /* C marshaller. g_cclosure_marshal_generic() will be used */,
-      G_TYPE_NONE /* return_type */, 0 /* n_params */
-  );
+  // click_signal = g_signal_new(
+  //     "click-signal", G_TYPE_FROM_CLASS(class),
+  //     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+  //     0 /* class offset.Subclass cannot override the class handler (default
+  //          handler). */
+  //     ,
+  //     NULL /* accumulator */, NULL /* accumulator data */,
+  //     NULL /* C marshaller. g_cclosure_marshal_generic() will be used */,
+  //     G_TYPE_NONE /* return_type */, 0 /* n_params */
+  // );
+
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
-								   uint32_t version) {
-	BarBarRiver *river = BARBAR_RIVER(data);
-	if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
-		if (version < ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
-			river->status_manager = wl_registry_bind(registry, name, 
-					&zriver_status_manager_v1_interface, version);
-		}
-	}
+                                   uint32_t version) {
+  BarBarRiver *river = BARBAR_RIVER(data);
+  if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
+    if (version < ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
+      river->status_manager = wl_registry_bind(
+          registry, name, &zriver_status_manager_v1_interface, version);
+    }
+  }
 }
 
 static void registry_handle_global_remove(void *_data,
@@ -88,19 +94,25 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-static void listen_focused_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
-                                uint32_t tags) {
-	g_print("focused\n");
+static void
+listen_focused_tags(void *data,
+                    struct zriver_output_status_v1 *zriver_output_status_v1,
+                    uint32_t tags) {
+  g_print("focused\n");
 }
 
-static void listen_view_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
-                             struct wl_array *tags) {
-	g_print("view\n");
+static void
+listen_view_tags(void *data,
+                 struct zriver_output_status_v1 *zriver_output_status_v1,
+                 struct wl_array *tags) {
+  g_print("view\n");
 }
 
-static void listen_urgent_tags(void *data, struct zriver_output_status_v1 *zriver_output_status_v1,
-                               uint32_t tags) {
-	g_print("urgent\n");
+static void
+listen_urgent_tags(void *data,
+                   struct zriver_output_status_v1 *zriver_output_status_v1,
+                   uint32_t tags) {
+  g_print("urgent\n");
 }
 
 static const struct zriver_output_status_v1_listener output_status_listener = {
@@ -109,43 +121,57 @@ static const struct zriver_output_status_v1_listener output_status_listener = {
     .urgent_tags = listen_urgent_tags,
 };
 
-static void g_barbar_river_init(BarBarRiver *self) {
-  GdkDisplay *gdk_display = gdk_display_get_default ();
-  g_return_if_fail (gdk_display);
-  g_return_if_fail (GDK_IS_WAYLAND_DISPLAY (gdk_display));
-
-  GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(self));
-  GtkWindow *window = GTK_WINDOW(root);
-  GdkMonitor *monitor = gtk_layer_get_monitor(window);
-  struct wl_output *output = gdk_wayland_monitor_get_wl_output(monitor);
-  
-  struct wl_display *wl_display = gdk_wayland_display_get_wl_display (gdk_display);
-  struct wl_registry *wl_registry_global = wl_display_get_registry (wl_display);
-
-  wl_registry_add_listener (wl_registry_global, &wl_registry_listener, NULL);
-  wl_display_roundtrip (wl_display);
-
-  if (!self->status_manager) {
-	  return;
+static void g_barbar_river_init(BarBarRiver *self) {}
+static void g_barbar_river_constructed(GObject *object) {
+  BarBarRiver *river = BARBAR_RIVER(object);
+  char str[2];
+  for (int i = 0; i < 9; i++) {
+    sprintf(str, "%d", i + 1);
+    river->buttons[i] = gtk_button_new_with_label(str);
+    gtk_widget_set_parent(river->buttons[i], GTK_WIDGET(river));
   }
-
-  struct zriver_output_status_v1 *output_status = zriver_status_manager_v1_get_river_output_status(self->status_manager, output);
-
-  zriver_output_status_v1_add_listener(output_status, &output_status_listener, self);
-  zriver_status_manager_v1_destroy(self->status_manager);
-  self->status_manager = NULL;
-
-  // struct wl_display *wl_display = wl_display_connect(NULL);
-  // struct wl_registry *wl_registry = NULL;
-  //
-  // wl_registry = wl_display_get_registry(wl_display);
-  // wl_registry_add_listener(wl_registry, &registry_listener, self);
-  // wl_display_roundtrip(wl_display);
-  //
-  // if (wl_display_roundtrip(wl_display) < 0) {
-  //   g_printerr("initial roundtrip failed\n");
-  //   return false;
-  // }
 }
 
-void g_barbar_river_update(BarBarRiver *river) {}
+void g_barbar_river_start(BarBarRiver *river) {
+  GdkDisplay *gdk_display = gdk_display_get_default();
+  g_return_if_fail(gdk_display);
+  g_return_if_fail(GDK_IS_WAYLAND_DISPLAY(gdk_display));
+
+  GtkRoot *root = gtk_widget_get_root(GTK_WIDGET(river));
+  GtkWindow *window = GTK_WINDOW(root);
+  GdkMonitor *monitor = gtk_layer_get_monitor(window);
+  struct wl_registry *wl_registry = NULL;
+
+  struct wl_output *output = gdk_wayland_monitor_get_wl_output(monitor);
+
+  struct wl_display *wl_display =
+      gdk_wayland_display_get_wl_display(gdk_display);
+  struct wl_registry *wl_registry_global = wl_display_get_registry(wl_display);
+
+  wl_registry_add_listener(wl_registry_global, &wl_registry_listener, NULL);
+  wl_display_roundtrip(wl_display);
+
+  if (!river->status_manager) {
+    return;
+  }
+
+  struct zriver_output_status_v1 *output_status =
+      zriver_status_manager_v1_get_river_output_status(river->status_manager,
+                                                       output);
+
+  zriver_output_status_v1_add_listener(output_status, &output_status_listener,
+                                       river);
+  zriver_status_manager_v1_destroy(river->status_manager);
+  river->status_manager = NULL;
+
+  // struct wl_display *wl_display = wl_display_connect(NULL);
+
+  wl_registry = wl_display_get_registry(wl_display);
+  wl_registry_add_listener(wl_registry, &registry_listener, self);
+  wl_display_roundtrip(wl_display);
+
+  if (wl_display_roundtrip(wl_display) < 0) {
+    g_printerr("initial roundtrip failed\n");
+    return false;
+  }
+}
