@@ -197,7 +197,7 @@ static void activate(GtkApplication *app, void *data) {
                                     "interval", 1000, NULL);
 
   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
-  BarBarDisk *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
+  BarBarRiver *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
@@ -209,6 +209,7 @@ static void activate(GtkApplication *app, void *data) {
 
   g_barbar_clock_start(clock);
   g_barbar_disk_start(disk);
+  g_barbar_river_start(river);
 }
 
 /**

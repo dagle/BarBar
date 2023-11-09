@@ -30,6 +30,7 @@ libbarbar_headers = [
 
 wl_mod = import('unstable-wayland')
 river_status = wl_mod.scan_xml('../protocol/river-status-unstable-v1.xml')
+river_control = wl_mod.scan_xml('../protocol/river-control-unstable-v1.xml')
 
 dbus_prots = [
   '../protocol/dbus-menu.xml',
@@ -45,11 +46,11 @@ gdbus_src = gnome.gdbus_codegen('status-notifier',
 )
 
 executable('testbar',
-  libbarbar_src + 'main.c', river_status, gdbus_src,
+  libbarbar_src + 'main.c', river_status, gdbus_src, river_control,
   dependencies: deps
 )
 
-libbarbar = library(barbar_package, libbarbar_src, river_status, gdbus_src,
+libbarbar = library(barbar_package, libbarbar_src, river_status, river_control, gdbus_src,
   dependencies : deps, install: true)
 
 pkg = import('pkgconfig')
