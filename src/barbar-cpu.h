@@ -27,6 +27,7 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -35,7 +36,7 @@ G_BEGIN_DECLS
 // TODO: This shouldn't have GObject as parent
 G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, GObject)
 
-void g_barbar_cpu_update(BarBarCpu *self);
+void g_barbar_cpu_start(BarBarCpu *self);
 
 G_END_DECLS
 

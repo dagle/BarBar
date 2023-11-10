@@ -148,7 +148,7 @@ listen_focused_tags(void *data,
     if ((1 << i) & tags) {
       gtk_widget_add_css_class(river->buttons[i], "focused");
     } else {
-      gtk_widget_remove_css_class(river->buttons[i], "unfocused");
+      gtk_widget_remove_css_class(river->buttons[i], "focused");
     }
   }
 }
@@ -243,7 +243,7 @@ static void g_barbar_river_constructed(GObject *object) {
   for (uint32_t i = 0; i < 9; i++) {
     sprintf(str, "%d", i + 1);
     btn = gtk_button_new_with_label(str);
-    gtk_widget_add_css_class(btn, "tag");
+    // gtk_widget_set_name(btn, "tags");
     gtk_widget_set_parent(btn, GTK_WIDGET(river));
     g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
     river->buttons[i] = btn;

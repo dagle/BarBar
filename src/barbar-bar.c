@@ -1,5 +1,6 @@
 #include "barbar-bar.h"
 #include "barbar-clock.h"
+#include "barbar-cpu.h"
 #include "barbar-disk.h"
 #include "barbar-river.h"
 #include <gtk4-layer-shell.h>
@@ -26,6 +27,7 @@ enum {
   PROP_RIGHT_MARGIN,
   PROP_TOP_MARGIN,
   PROP_BOTTOM_MARGIN,
+  PROP_BAR_HEIGHT,
 
   PROP_BAR_POS,
   NUM_PROPERTIES,
@@ -73,6 +75,9 @@ static void g_barbar_bar_set_property(GObject *object, guint property_id,
   case PROP_BAR_POS:
     bar->pos = g_value_get_enum(value);
     break;
+  case PROP_BAR_HEIGHT:
+    bar->height = g_value_get_uint(value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -98,6 +103,9 @@ static void g_barbar_bar_get_property(GObject *object, guint property_id,
     break;
   case PROP_BAR_POS:
     g_value_set_enum(value, bar->pos);
+    break;
+  case PROP_BAR_HEIGHT:
+    g_value_set_uint(value, bar->height);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -127,6 +135,8 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
       "top-margin", NULL, NULL, 0, G_MAXUINT, 0, G_PARAM_READWRITE);
   bar_props[PROP_BOTTOM_MARGIN] = g_param_spec_uint(
       "bottom-margin", NULL, NULL, 0, G_MAXUINT, 0, G_PARAM_READWRITE);
+  bar_props[PROP_BAR_HEIGHT] = g_param_spec_uint(
+      "bar-height", NULL, NULL, 0, G_MAXUINT, 20, G_PARAM_READWRITE);
   bar_props[PROP_BAR_POS] =
       g_param_spec_enum("bar-pos", NULL, NULL, BARBAR_TYPE_POSITION,
                         BARBAR_POS_TOP, G_PARAM_READWRITE);
@@ -134,19 +144,6 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
 }
 
 static void g_barbar_bar_init(BarBarBar *self) {}
-
-static gboolean g_barbar_clock_udate2(gpointer data) {
-  GtkLabel *label = GTK_LABEL(data);
-  GDateTime *time;
-  time = g_date_time_new_now_local();
-
-  char *str = g_date_time_format(time, "%F %k:%M:%S");
-  // g_print("%s\n", str);
-  gtk_label_set_text(label, str);
-
-  g_date_time_unref(time);
-  return G_SOURCE_CONTINUE;
-}
 
 static void activate(GtkApplication *app, void *data) {
   g_return_if_fail(app);
@@ -190,19 +187,34 @@ static void activate(GtkApplication *app, void *data) {
     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
     break;
   }
+  // gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
+  // gtk_window_set_resizable(gtk_window, FALSE);
 
-  // Set up a widget
-  // GtkWidget *clock = gtk_label_new("");
+  GtkCssProvider *css_provider;
+  GdkDisplay *display;
+
+  display = gtk_widget_get_display(GTK_WIDGET(gtk_window));
+
+  css_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_path(css_provider,
+                                  "/home/dagle/.config/barbar/style.css");
+
+  gtk_style_context_add_provider_for_display(display,
+                                             GTK_STYLE_PROVIDER(css_provider),
+                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
+
   BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, "tz", "Europe/Stockholm",
                                     "interval", 1000, NULL);
 
   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
   BarBarRiver *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
+  BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(river));
+  // css_provider = Gtk::CssProvider::create();
 
   gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
   gtk_window_present(gtk_window);
@@ -210,6 +222,7 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_clock_start(clock);
   g_barbar_disk_start(disk);
   g_barbar_river_start(river);
+  g_barbar_cpu_update(cpu);
 }
 
 /**
@@ -220,8 +233,8 @@ static void activate(GtkApplication *app, void *data) {
  * Returns: The exit status.
  */
 int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *widget) {
-  GtkApplication *app = gtk_application_new(
-      "com.github.wmww.gtk4-layer-shell.example", G_APPLICATION_DEFAULT_FLAGS);
+  GtkApplication *app =
+      gtk_application_new("com.github.barbar", G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(app, "activate", G_CALLBACK(activate), bar);
   int status = g_application_run(G_APPLICATION(app), argc, argv);
   g_object_unref(app);
@@ -240,7 +253,8 @@ int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv) { return 0; }
 BarBarBar *g_barbar_bar_new(void) {
   BarBarBar *bar;
 
-  bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM, NULL);
+  bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM,
+                     "bar-height", 15, NULL);
 
   return bar;
 }
