@@ -35,8 +35,8 @@ static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
 };
 
 static void g_barbar_river_tag_constructed(GObject *object);
-void default_clicked_handler(BarBarRiverTag *river, guint tag,
-                             gpointer user_data);
+static void default_clicked_handler(BarBarRiverTag *river, guint tag,
+                                    gpointer user_data);
 
 static void g_barbar_river_tag_set_property(GObject *object, guint property_id,
                                             const GValue *value,
@@ -194,8 +194,8 @@ void clicked(GtkButton *self, gpointer user_data) {
   g_signal_emit(river, click_signal, 0, tag);
 }
 
-void default_clicked_handler(BarBarRiverTag *river, guint tag,
-                             gpointer user_data) {
+static void default_clicked_handler(BarBarRiverTag *river, guint tag,
+                                    gpointer user_data) {
   struct zriver_command_callback_v1 *callback;
   char buf[4];
 

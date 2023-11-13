@@ -112,7 +112,6 @@ static void listen_mode(void *data,
                         struct zriver_seat_status_v1 *zriver_seat_status_v1,
                         const char *name) {
   BarBarRiverMode *mode = BARBAR_RIVER_MODE(data);
-  printf("Mode set: %s\n", name);
   gtk_label_set_text(GTK_LABEL(mode->label), name);
 }
 

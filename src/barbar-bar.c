@@ -4,10 +4,14 @@
 #include "barbar-disk.h"
 #include "barbar-inhibitor.h"
 #include "barbar-mpris2.h"
+
 #include "river/barbar-river-layout.h"
 #include "river/barbar-river-mode.h"
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
+
+#include "sway/barbar-sway-workspace.h"
+
 #include <gtk4-layer-shell.h>
 
 struct _BarBarBar {
@@ -212,13 +216,17 @@ static void activate(GtkApplication *app, void *data) {
                                     "interval", 1000, NULL);
 
   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
-  BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
   BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
   BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
   BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
-  BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
-  BarBarRiverLayout *layout = g_object_new(BARBAR_TYPE_RIVER_LAYOUT, NULL);
-  BarBarRiverMode *mode = g_object_new(BARBAR_TYPE_RIVER_MODE, NULL);
+
+  // BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
+  // BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
+  // BarBarRiverLayout *layout = g_object_new(BARBAR_TYPE_RIVER_LAYOUT, NULL);
+  // BarBarRiverMode *mode = g_object_new(BARBAR_TYPE_RIVER_MODE, NULL);
+
+  BarBarSwayWorkspace *workspace =
+      g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
@@ -226,24 +234,28 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(cpu));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(view));
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(mode));
-  // css_provider = Gtk::CssProvider::create();
+
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(view));
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(mode));
+  //
 
   gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
   gtk_window_present(gtk_window);
 
   g_barbar_clock_start(clock);
   g_barbar_disk_start(disk);
-  g_barbar_river_tag_start(tags);
-  g_barbar_river_view_start(view);
-  g_barbar_river_layout_start(layout);
-  g_barbar_river_mode_start(mode);
   g_barbar_cpu_start(cpu);
   g_barbar_mpris_start(mpris);
   g_barbar_inhibitor_start(inhibitor);
+
+  g_barbar_sway_workspace_start(workspace);
+
+  // g_barbar_river_tag_start(tags);
+  // g_barbar_river_view_start(view);
+  // g_barbar_river_layout_start(layout);
+  // g_barbar_river_mode_start(mode);
 }
 
 /**
