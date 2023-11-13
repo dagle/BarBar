@@ -5,7 +5,6 @@
 #include "barbar-disk.h"
 #include "barbar-mpd.h"
 #include "barbar-mpris2.h"
-#include "barbar-river.h"
 #include "barbar-temperature.h"
 #include "barbar-wireplumber.h"
 #include <gtk/gtk.h>

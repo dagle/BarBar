@@ -1,4 +1,4 @@
-#include "barbar-river.h"
+#include "river/barbar-river-tags.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -9,7 +9,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-struct _BarBarRiver {
+struct _BarBarRiverTag {
   GtkWidget parent_instance;
 
   struct zriver_status_manager_v1 *status_manager;
@@ -18,8 +18,6 @@ struct _BarBarRiver {
   struct wl_seat *seat;
 
   GtkWidget *buttons[9];
-  // struct zriver_control_v1 *control_;
-  // struct wl_seat *seat_;
 };
 
 enum {
@@ -30,36 +28,36 @@ enum {
   NUM_PROPERTIES,
 };
 
-// static struct wl_registry *wl_registry_global = NULL;
+G_DEFINE_TYPE(BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET)
 
-G_DEFINE_TYPE(BarBarRiver, g_barbar_river, GTK_TYPE_WIDGET)
-
-static GParamSpec *river_props[NUM_PROPERTIES] = {
+static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_river_constructed(GObject *object);
-void default_clicked_handler(BarBarRiver *river, guint tag, gpointer user_data);
+static void g_barbar_river_tag_constructed(GObject *object);
+void default_clicked_handler(BarBarRiverTag *river, guint tag,
+                             gpointer user_data);
 
-static void g_barbar_river_set_property(GObject *object, guint property_id,
-                                        const GValue *value,
-                                        GParamSpec *pspec) {}
+static void g_barbar_river_tag_set_property(GObject *object, guint property_id,
+                                            const GValue *value,
+                                            GParamSpec *pspec) {}
 
-static void g_barbar_river_get_property(GObject *object, guint property_id,
-                                        GValue *value, GParamSpec *pspec) {}
+static void g_barbar_river_tag_get_property(GObject *object, guint property_id,
+                                            GValue *value, GParamSpec *pspec) {}
 
 static guint click_signal;
 
-static void g_barbar_river_class_init(BarBarRiverClass *class) {
+static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
-  gobject_class->set_property = g_barbar_river_set_property;
-  gobject_class->get_property = g_barbar_river_get_property;
-  gobject_class->constructed = g_barbar_river_constructed;
-  river_props[PROP_DEVICE] =
+  gobject_class->set_property = g_barbar_river_tag_set_property;
+  gobject_class->get_property = g_barbar_river_tag_get_property;
+  gobject_class->constructed = g_barbar_river_tag_constructed;
+  river_tags_props[PROP_DEVICE] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, river_props);
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
+                                    river_tags_props);
 
   click_signal = g_signal_new_class_handler(
       "clicked", G_TYPE_FROM_CLASS(class),
@@ -68,13 +66,13 @@ static void g_barbar_river_class_init(BarBarRiverClass *class) {
       G_TYPE_UINT);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  gtk_widget_class_set_css_name(widget_class, "river");
+  gtk_widget_class_set_css_name(widget_class, "river-tag");
 }
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
                                    uint32_t version) {
-  BarBarRiver *river = BARBAR_RIVER(data);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
   if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
     if (version >= ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
       river->status_manager = wl_registry_bind(
@@ -122,28 +120,10 @@ static const struct zriver_command_callback_v1_listener
 };
 
 static void
-listen_focused_output(void *data,
-                      struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                      struct wl_output *output) {}
-
-static void
-listen_unfocused_output(void *data,
-                        struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                        struct wl_output *output) {}
-
-void listen_focused_view(void *data,
-                         struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                         const char *title) {}
-
-void listen_mode(void *data,
-                 struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                 const char *name) {}
-
-static void
 listen_focused_tags(void *data,
                     struct zriver_output_status_v1 *zriver_output_status_v1,
                     uint32_t tags) {
-  BarBarRiver *river = BARBAR_RIVER(data);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
   for (size_t i = 0; i < 9; ++i) {
     if ((1 << i) & tags) {
       gtk_widget_add_css_class(river->buttons[i], "focused");
@@ -157,7 +137,7 @@ static void
 listen_view_tags(void *data,
                  struct zriver_output_status_v1 *zriver_output_status_v1,
                  struct wl_array *tag_array) {
-  BarBarRiver *river = BARBAR_RIVER(data);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
   uint32_t *tag;
   uint32_t tags = 0;
   wl_array_for_each(tag, tag_array) { tags |= *tag; }
@@ -175,7 +155,7 @@ static void
 listen_urgent_tags(void *data,
                    struct zriver_output_status_v1 *zriver_output_status_v1,
                    uint32_t tags) {
-  BarBarRiver *river = BARBAR_RIVER(data);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
   for (size_t i = 0; i < 9; ++i) {
     if ((1 << i) & tags) {
       gtk_widget_add_css_class(river->buttons[i], "urgent");
@@ -200,15 +180,8 @@ static const struct zriver_output_status_v1_listener output_status_listener = {
     .layout_name_clear = layout_name_clear,
 };
 
-static const struct zriver_seat_status_v1_listener seat_status_listener_impl = {
-    .focused_output = listen_focused_output,
-    .unfocused_output = listen_unfocused_output,
-    .focused_view = listen_focused_view,
-    .mode = listen_mode,
-};
-
 void clicked(GtkButton *self, gpointer user_data) {
-  BarBarRiver *river = BARBAR_RIVER(user_data);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(user_data);
 
   guint tag;
   for (int i = 0; i < 9; i++) {
@@ -221,7 +194,7 @@ void clicked(GtkButton *self, gpointer user_data) {
   g_signal_emit(river, click_signal, 0, tag);
 }
 
-void default_clicked_handler(BarBarRiver *river, guint tag,
+void default_clicked_handler(BarBarRiverTag *river, guint tag,
                              gpointer user_data) {
   struct zriver_command_callback_v1 *callback;
   char buf[4];
@@ -235,10 +208,10 @@ void default_clicked_handler(BarBarRiver *river, guint tag,
                                           NULL);
 }
 
-static void g_barbar_river_init(BarBarRiver *self) {}
-static void g_barbar_river_constructed(GObject *object) {
+static void g_barbar_river_tag_init(BarBarRiverTag *self) {}
+static void g_barbar_river_tag_constructed(GObject *object) {
   GtkWidget *btn;
-  BarBarRiver *river = BARBAR_RIVER(object);
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
   char str[2];
   for (uint32_t i = 0; i < 9; i++) {
     sprintf(str, "%d", i + 1);
@@ -250,13 +223,12 @@ static void g_barbar_river_constructed(GObject *object) {
   }
 }
 
-void g_barbar_river_start(BarBarRiver *river) {
+void g_barbar_river_tag_start(BarBarRiverTag *river) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
   struct wl_output *output;
   struct wl_display *wl_display;
-  struct zriver_output_status_v1 *output_status;
 
   gdk_display = gdk_display_get_default();
 
@@ -281,25 +253,14 @@ void g_barbar_river_start(BarBarRiver *river) {
     return;
   }
 
-  output_status = zriver_status_manager_v1_get_river_output_status(
+  river->output_status = zriver_status_manager_v1_get_river_output_status(
       river->status_manager, output);
 
-  zriver_output_status_v1_add_listener(output_status, &output_status_listener,
-                                       river);
+  zriver_output_status_v1_add_listener(river->output_status,
+                                       &output_status_listener, river);
   wl_display_roundtrip(wl_display);
 
   zriver_status_manager_v1_destroy(river->status_manager);
 
   river->status_manager = NULL;
-
-  // struct wl_display *wl_display = wl_display_connect(NULL);
-
-  // wl_registry = wl_display_get_registry(wl_display);
-  // wl_registry_add_listener(wl_registry, &registry_listener, self);
-  // wl_display_roundtrip(wl_display);
-  //
-  // if (wl_display_roundtrip(wl_display) < 0) {
-  //   g_printerr("initial roundtrip failed\n");
-  //   return;
-  // }
 }
