@@ -2,6 +2,8 @@
 #include "barbar-clock.h"
 #include "barbar-cpu.h"
 #include "barbar-disk.h"
+#include "barbar-inhibitor.h"
+#include "barbar-mpris2.h"
 #include "barbar-river.h"
 #include <gtk4-layer-shell.h>
 
@@ -209,10 +211,15 @@ static void activate(GtkApplication *app, void *data) {
   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
   BarBarRiver *river = g_object_new(BARBAR_TYPE_RIVER, NULL);
   BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
+  BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
+  BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(cpu));
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(river));
   // css_provider = Gtk::CssProvider::create();
 
@@ -222,7 +229,9 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_clock_start(clock);
   g_barbar_disk_start(disk);
   g_barbar_river_start(river);
-  g_barbar_cpu_update(cpu);
+  g_barbar_cpu_start(cpu);
+  g_barbar_mpris_start(mpris);
+  g_barbar_inhibitor_start(inhibitor);
 }
 
 /**
@@ -253,6 +262,8 @@ int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv) { return 0; }
 BarBarBar *g_barbar_bar_new(void) {
   BarBarBar *bar;
 
+  // bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM,
+  //                    "bar-height", 15, NULL);
   bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM,
                      "bar-height", 15, NULL);
 

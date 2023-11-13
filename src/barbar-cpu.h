@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_CPU (g_barbar_cpu_get_type())
 
 // TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, GObject)
+G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, GtkWidget)
 
 void g_barbar_cpu_start(BarBarCpu *self);
 

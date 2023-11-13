@@ -27,15 +27,15 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_MPRIS (g_barbar_mpris_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarMpris, g_barbar_mpris, BARBAR, MPRIS, GObject)
+G_DECLARE_FINAL_TYPE(BarBarMpris, g_barbar_mpris, BARBAR, MPRIS, GtkWidget)
 
-void g_barbar_mpris_update(BarBarMpris *mpd);
+void g_barbar_mpris_start(BarBarMpris *mpris);
 
 G_END_DECLS
 

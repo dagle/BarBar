@@ -10,6 +10,7 @@ libbarbar_src = files(
   'barbar-mpris2.c',
   'barbar-river.c',
   'barbar-temperature.c',
+  'barbar-inhibitor.c',
   'tray/barbar-watcher.c',
 )
 
@@ -25,12 +26,25 @@ libbarbar_headers = [
   'barbar-mpris2.h',
   'barbar-river.h',
   'barbar-temperature.h',
+  'barbar-inhibitor.h',
   'tray/barbar-watcher.h',
 ]
 
 wl_mod = import('unstable-wayland')
-river_status = wl_mod.scan_xml('../protocol/river-status-unstable-v1.xml')
-river_control = wl_mod.scan_xml('../protocol/river-control-unstable-v1.xml')
+
+wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
+
+wayland_prots = [
+	wl_protocol_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml',
+  '../protocol/river-status-unstable-v1.xml',
+  '../protocol/river-control-unstable-v1.xml',
+]
+
+wayland_src = []
+
+foreach w : wayland_prots
+  wayland_src += wl_mod.scan_xml(w)
+endforeach
 
 dbus_prots = [
   '../protocol/dbus-menu.xml',
@@ -46,11 +60,11 @@ gdbus_src = gnome.gdbus_codegen('status-notifier',
 )
 
 executable('testbar',
-  libbarbar_src + 'main.c', river_status, gdbus_src, river_control,
+  libbarbar_src + 'main.c', wayland_src, gdbus_src, 
   dependencies: deps
 )
 
-libbarbar = library(barbar_package, libbarbar_src, river_status, river_control, gdbus_src,
+libbarbar = library(barbar_package, libbarbar_src, wayland_src, gdbus_src,
   dependencies : deps, install: true)
 
 pkg = import('pkgconfig')
