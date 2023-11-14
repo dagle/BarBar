@@ -235,6 +235,8 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
 
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
+
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(view));
