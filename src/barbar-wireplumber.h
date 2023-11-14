@@ -27,15 +27,15 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 #include <wp/wp.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_WIREPLUMBER (g_barbar_wireplumber_get_type())
 
-// TODO: This shouldn't have GObject as parent
 G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
-                     WIREPLUMBER, GObject)
+                     WIREPLUMBER, GtkWidget)
 
 void g_barbar_wireplumber_update(BarBarWireplumber *wireplumber);
 

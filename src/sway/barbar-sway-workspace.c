@@ -106,16 +106,45 @@ static void on_ready(GObject *source_object, GAsyncResult *res,
 }
 
 enum {
-  SWAY_IPC_SUBSCRIBE,
+  SWAY_RUN_COMMAND,
+  SWAY_GET_WORKSPACES,
+  SWAY_SUBSCRIBE,
+  SWAY_GET_OUTPUTS,
+  SWAY_GET_TREE,
+  SWAY_GET_MARKS,
+  SWAY_GET_BAR_CONFIG,
+  SWAY_GET_VERSION,
+  SWAY_GET_BINDING_MODES,
+  SWAY_GET_CONFIG,
+  SWAY_TICK,
+  SWAY_SEND_TICK,
+  SWAY_SYNC,
+  SWAY_GET_BINDING_STATE,
+  SWAY_GET_INPUTS = 100,
+  SWAY_GET_SEATS = 101,
 };
+
 void g_barbar_sway_ipc_send(GSocketConnection *connection, guint type,
                             const char *payload) {
-  GOutputStream *output_stream =
-      g_io_stream_get_output_stream(G_IO_STREAM(connection));
-  guint size = strlen(payload);
-  // g_output_stream_printf("")
-  // g_output_stream_write_all(output_stream, message, strlen(message), NULL,
-  //                             NULL, NULL);
+  GOutputStream *output_stream;
+  guint paylen;
+  guint length;
+  char *message;
+
+  paylen = strlen(payload);
+  // magic-string + 4bytes payload length + 4bytes type
+  length = 6 + 4 + 4 + paylen;
+  message = calloc(length, sizeof(char));
+
+  memcpy(message, "i3-ipc", 6);
+  memcpy(message + 6, &paylen, sizeof(paylen));
+  memcpy(message + 10, &type, sizeof(type));
+  memcpy(message + 14, payload, paylen);
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
+
+  g_output_stream_write_all(output_stream, message, paylen, NULL, NULL, NULL);
+
+  g_free(message);
 }
 
 void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
@@ -131,42 +160,14 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
     return;
   }
 
-  guint length = strlen("i3-ipc") + 4 + 4;
-  char *buffer = calloc(length, sizeof(char));
-  memcpy(buffer, "i3-ipc", 6);
-  memcpy(buffer, "i3-ipc", 6);
+  socket_client = g_socket_client_new();
 
-  printf("%s\n", buffer);
+  connection = g_socket_client_connect_to_host(socket_client, socket_path, 0,
+                                               NULL, &error);
 
-  // 00 00 00 04
-  // printf("i3-ipc%08X%08X%s\n", 4, 0, "ex");
-  // 00000004
-
-  // socket_client = g_socket_client_new();
-
-  // connection = g_socket_client_connect_to_host(socket_client, socket_path, 0,
-  //                                              NULL, &error);
-
-  // if (connection != NULL) {
-  //   // TODO: Error stuff
-  //   return;
-  // }
-  // g_barbar_sway_ipc_send(connection, SWAY_IPC_SUBSCRIBE, payload);
+  if (connection != NULL) {
+    // TODO: Error stuff
+    return;
+  }
+  g_barbar_sway_ipc_send(connection, SWAY_SUBSCRIBE, payload);
 }
-
-//
-// #define SOCKET_PATH "/tmp/my_unix_socket"
-//
-
-// int main() {
-//
-//     // Create a new socket client
-//
-//     // Connect to the server in an asynchronous manner
-//
-//     // Run the main loop
-//     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
-//     g_main_loop_run(loop);
-//
-//     return 0;
-// }
