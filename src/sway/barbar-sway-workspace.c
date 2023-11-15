@@ -4,6 +4,7 @@
 #include <json-glib/json-glib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
@@ -98,6 +99,267 @@ static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
   // send a clicky clock
 }
 
+struct workspace {
+  int id;
+  int num;
+
+  gboolean visible;
+  gboolean urgent;
+  gboolean focused;
+
+  const char *name;
+  const char *output;
+};
+
+void print_workspace(char *name, struct workspace *workspace) {
+  printf("%s: %d %s %d %d %d %s\n", name, workspace->num, workspace->name,
+         workspace->visible, workspace->urgent, workspace->focused,
+         workspace->output);
+}
+
+void g_barbar_sway_read_workspace(JsonReader *reader,
+                                  struct workspace *workspace) {
+  json_reader_read_member(reader, "id");
+  workspace->id = json_reader_get_int_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "num");
+  workspace->num = json_reader_get_int_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "visible");
+  workspace->visible = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "urgent");
+  workspace->urgent = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "focused");
+  workspace->focused = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "name");
+  workspace->name = json_reader_get_string_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "output");
+  workspace->output = json_reader_get_string_value(reader);
+  json_reader_end_member(reader);
+}
+
+void g_barbar_sway_workspace_add(BarBarSwayWorkspace *sway,
+                                 JsonReader *reader) {
+  struct workspace current;
+
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+  print_workspace("init", &current);
+  // do stuff
+}
+void g_barbar_sway_workspace_empty(BarBarSwayWorkspace *sway,
+                                   JsonReader *reader) {
+
+  struct workspace current;
+
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+  // do stuff
+}
+void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
+                                   JsonReader *reader) {
+  struct workspace old;
+  struct workspace current;
+
+  json_reader_read_member(reader, "old");
+  g_barbar_sway_read_workspace(reader, &old);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+  print_workspace("unfocus", &old);
+  print_workspace("focus", &current);
+  // do stuff
+}
+void g_barbar_sway_workspace_move(BarBarSwayWorkspace *sway,
+                                  JsonReader *reader) {
+  struct workspace old;
+  struct workspace current;
+
+  json_reader_read_member(reader, "old");
+  g_barbar_sway_read_workspace(reader, &old);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+  // do stuff
+}
+void g_barbar_sway_workspace_rename(BarBarSwayWorkspace *sway,
+                                    JsonReader *reader) {
+  // struct workspace old;
+  struct workspace current;
+
+  // do we get an old part?
+
+  // json_reader_read_member(reader, "old");
+  // g_barbar_sway_read_workspace(reader, &old);
+  // json_reader_end_member(reader);
+  //
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+  // do stuff
+}
+void g_barbar_sway_workspace_urgent(BarBarSwayWorkspace *sway,
+                                    JsonReader *reader) {
+
+  struct workspace current;
+
+  json_reader_read_member(reader, "current");
+  g_barbar_sway_read_workspace(reader, &current);
+  json_reader_end_member(reader);
+}
+void g_barbar_sway_workspace_reload(BarBarSwayWorkspace *sway,
+                                    JsonReader *reader) {
+  // reload everythg
+}
+
+static void g_barbar_sway_handle_workspaces_change(gchar *payload, uint32_t len,
+                                                   uint32_t type,
+                                                   gpointer data) {
+  JsonParser *parser;
+  gboolean ret;
+  GError *err = NULL;
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, payload, len, &err);
+
+  if (!ret) {
+    printf("json error: %s\n", err->message);
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+  // printf("%.*s\n", len, payload);
+
+  json_reader_read_member(reader, "change");
+  const char *change = json_reader_get_string_value(reader);
+  json_reader_end_member(reader);
+
+  // all of these should have if ours
+  if (!strcmp(change, "init")) {
+    g_barbar_sway_workspace_add(sway, reader);
+    // read current and create the new workspace
+
+  } else if (!strcmp(change, "empty")) {
+    g_barbar_sway_workspace_empty(sway, reader);
+    // read current and delete the workspace
+
+  } else if (!strcmp(change, "focus")) {
+    g_barbar_sway_workspace_focus(sway, reader);
+    // read old and unfocus it
+    // read current and focus it, remove urgent
+
+  } else if (!strcmp(change, "move")) {
+    g_barbar_sway_workspace_move(sway, reader);
+    // read old and delete the workspace, if ours
+    // read current and create the workspace, if ours
+
+  } else if (!strcmp(change, "rename")) {
+    g_barbar_sway_workspace_rename(sway, reader);
+    // read current and update the name
+
+  } else if (!strcmp(change, "urgent")) {
+    g_barbar_sway_workspace_urgent(sway, reader);
+    // read current update the css
+
+  } else if (!strcmp(change, "reload")) {
+    g_barbar_sway_workspace_reload(sway, reader);
+    // restart the module
+  }
+  // these are the different events we need to handle
+  // init empty focus move rename urgent reload
+
+  // json_reader_read_member(reader, "old");
+  //
+  // json_reader_read_member(reader, "num");
+  // int old_num = json_reader_get_int_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "name");
+  // const char *old_name = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "visible");
+  // gboolean old_vis = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "focused");
+  // gboolean old_focused = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "urgent");
+  // gboolean old_urgent = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "output");
+  // const char *old_output = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+  //
+  // json_reader_end_member(reader);
+  // printf("---------------------------\n");
+  // printf("old workspace: %d %s %d %d %d %s\n", old_num, old_name, old_vis,
+  //        old_focused, old_urgent, old_output);
+  //
+  // json_reader_read_member(reader, "current");
+  //
+  // json_reader_read_member(reader, "num");
+  // int current_num = json_reader_get_int_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "name");
+  // const char *current_name = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "visible");
+  // gboolean current_vis = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "focused");
+  // gboolean current_focused = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "urgent");
+  // gboolean current_urgent = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "output");
+  // const char *current_output = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+  //
+  // json_reader_end_member(reader);
+  //
+  // printf("---------------------------\n");
+  // printf("current workspace: %d %s %d %d %d %s\n", current_num, current_name,
+  //        current_vis, current_focused, current_urgent, current_output);
+  //
+  // printf("\n\n\n");
+
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "name");
+  // const char *name = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "visible");
+  // gboolean vis = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "focused");
+  // gboolean focused = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "urgent");
+  // gboolean urgent = json_reader_get_boolean_value(reader);
+  // json_reader_end_member(reader);
+  // json_reader_read_member(reader, "output");
+  // const char *output = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
+
+  // gtk_button_set_label(GTK_BUTTON(sway->buttons[num - 1]), name);
+  // gtk_widget_set_visible(sway->buttons[num - 1], true);
+}
+
 static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
                                             gchar *payload, gssize len) {
   JsonParser *parser;
@@ -107,8 +369,10 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
   parser = json_parser_new();
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
+  // printf("%.*s\n", len, payload);
+
   if (!ret) {
-    //   printf("json error: %s\n", err->message);
+    printf("json error: %s\n", err->message);
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -149,42 +413,30 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 }
 
 void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
-  GSocketClient *socket_client;
-  GSocketConnection *connection;
   GError *error = NULL;
   gchar *buf = NULL;
   int len;
+  BarBarSwayIpc *ipc;
 
   const char *intrest = "[\"workspace\"]";
 
-  // if (!socket_path) {
-  //   // TODO: Error stuff
-  //   return;
-  // }
-  //
-  // socket_client = g_socket_client_new();
-  // GSocketAddress *address = g_unix_socket_address_new(socket_path);
-  //
-  // connection = g_socket_client_connect(
-  //     socket_client, G_SOCKET_CONNECTABLE(address), NULL, &error);
-
-  connection = g_barbar_sway_ipc_connect(&error);
+  ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
     printf("Error: %s\n", error->message);
     // TODO: Error stuff
     return;
   }
   // g_barbar_sway_ipc_subscribe(connection, payload);
-  g_barbar_sway_ipc_send(connection, SWAY_GET_WORKSPACES, "");
-  len = g_barbar_sway_ipc_read(connection, &buf, NULL);
+  g_barbar_sway_ipc_send(ipc, SWAY_GET_WORKSPACES, "");
+  len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
   if (len > 0) {
-    // printf("json: %.*s\n", len, buf);
-    g_barbar_sway_ipc_send(connection, SWAY_SUBSCRIBE, intrest);
-    len = g_barbar_sway_ipc_read(connection, &buf, NULL);
-
     g_barbar_sway_handle_workspaces(sway, buf, len);
+
     g_free(buf);
   }
 
-  g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
+  g_barbar_sway_ipc_subscribe(ipc, intrest, sway,
+                              g_barbar_sway_handle_workspaces_change);
+
+  // g_barbar_sway_ipc_close(ipc);
 }

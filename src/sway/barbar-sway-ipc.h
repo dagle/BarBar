@@ -29,6 +29,7 @@
 #include <glib-object.h>
 #include <glib.h>
 #include <json-glib/json-glib.h>
+#include <stdint.h>
 
 G_BEGIN_DECLS
 
@@ -52,19 +53,41 @@ enum {
   SWAY_GET_SEATS = 101,
 };
 
-gboolean g_barbar_sway_ipc_send(GSocketConnection *connection, guint type,
+typedef struct _BarBarSwayIpc BarBarSwayIpc;
+typedef struct _BarBarSwayIpcAsyncData BarBarSwayIpcAsyncData;
+
+typedef void (*BarBarSwaySubscribeCallback)(gchar *payload, uint32_t length,
+                                            uint32_t type, gpointer data);
+
+struct _BarBarSwayIpc {
+  GSocketConnection *connection;
+
+  BarBarSwayIpcAsyncData *subscribe_data;
+};
+
+struct _BarBarSwayIpcAsyncData {
+  // A pointer to the class pointer
+  // A bit like a parrent pointer
+  gpointer *data;
+  uint32_t type;
+  uint32_t plen;
+  gchar *header;
+
+  gchar *payload;
+  BarBarSwaySubscribeCallback callback;
+};
+
+gboolean g_barbar_sway_ipc_send(BarBarSwayIpc *ipc, guint type,
                                 const char *payload);
 
-gssize g_barbar_sway_ipc_read(GSocketConnection *connection, gchar **payload,
+gssize g_barbar_sway_ipc_read(BarBarSwayIpc *ipc, gchar **payload,
                               GError **error);
 
-void g_barbar_sway_ipc_subscribe(GSocketConnection *connection,
-                                 const char *payload);
+void g_barbar_sway_ipc_subscribe(BarBarSwayIpc *ipc, const char *payload,
+                                 gpointer data,
+                                 BarBarSwaySubscribeCallback callback);
 
-GSocketConnection *g_barbar_sway_ipc_connect(GError **err);
-
-/* void g_barbar_sway_ipc_parse_worskpaces(gchar *payload, gssize len); */
-/* JsonReader *g_barbar_sway_ipc_json_reader(const char *json, gssize len); */
+BarBarSwayIpc *g_barbar_sway_ipc_connect(GError **err);
 
 G_END_DECLS
 
