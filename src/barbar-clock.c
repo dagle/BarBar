@@ -33,6 +33,8 @@ static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+static void g_barbar_clock_constructed(GObject *self);
+
 static void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
   g_return_if_fail(BARBAR_IS_CLOCK(clock));
 
@@ -85,10 +87,24 @@ static void g_barbar_clock_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_clock_constructed(GObject *self);
-
 static void g_barbar_clock_get_property(GObject *object, guint property_id,
-                                        GValue *value, GParamSpec *pspec) {}
+                                        GValue *value, GParamSpec *pspec) {
+
+  BarBarClock *clock = BARBAR_CLOCK(object);
+  switch (property_id) {
+  case PROP_TZ:
+    // g_value_set_string(value, clock->timezone);
+    break;
+  case PROP_FORMAT:
+    g_value_set_string(value, clock->format);
+    break;
+  case PROP_INTERVAL:
+    g_value_set_uint(value, clock->interval);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_clock_class_init(BarBarClockClass *class) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);

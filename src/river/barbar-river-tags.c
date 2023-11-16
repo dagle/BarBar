@@ -23,7 +23,7 @@ struct _BarBarRiverTag {
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  PROP_TAGNUMS,
 
   NUM_PROPERTIES,
 };
@@ -54,7 +54,7 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
   gobject_class->set_property = g_barbar_river_tag_set_property;
   gobject_class->get_property = g_barbar_river_tag_get_property;
   gobject_class->constructed = g_barbar_river_tag_constructed;
-  river_tags_props[PROP_DEVICE] =
+  river_tags_props[PROP_TAGNUMS] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_tags_props);
