@@ -12,6 +12,10 @@
 struct _BarBarSwayWorkspace {
   GtkWidget parent_instance;
 
+  char *output;
+
+  struct wl_output *outputs;
+
   // struct zriver_status_manager_v1 *status_manager;
   // struct wl_seat *seat;
   // struct wl_output *output;
@@ -413,12 +417,24 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 }
 
 void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
+  GdkDisplay *gdk_display;
+  GdkMonitor *monitor;
+
   GError *error = NULL;
   gchar *buf = NULL;
   int len;
   BarBarSwayIpc *ipc;
 
   const char *intrest = "[\"workspace\"]";
+
+  gdk_display = gdk_display_get_default();
+
+  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(sway));
+  GdkSurface *surface = gtk_native_get_surface(native);
+  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+
+  // TODO: We need to get the output->name, we can't really do that atm
+  // because
 
   ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
