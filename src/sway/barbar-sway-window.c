@@ -10,14 +10,14 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-struct _BarBarSwayWorkspace {
+struct _BarBarSwayWindow {
   GtkWidget parent_instance;
 
   char *output_name;
 
   struct wl_output *output;
 
-  GtkWidget *window;
+  GtkWidget *label;
 };
 
 enum {
@@ -37,12 +37,12 @@ static GParamSpec *sway_window_props[NUM_PROPERTIES] = {
 // static guint click_signal;
 
 static void g_barbar_sway_window_constructed(GObject *object);
-static void default_clicked_handler(BarBarSwayWorkspace *sway, guint workspace,
+static void default_clicked_handler(BarBarSwayWindow *sway, guint workspace,
                                     gpointer user_data);
 
-static void g_barbar_sway_window_set_output(BarBarSwayWorkspace *sway,
+static void g_barbar_sway_window_set_output(BarBarSwayWindow *sway,
                                             const gchar *output) {
-  g_return_if_fail(BARBAR_IS_SWAY_WORKSPACE(sway));
+  g_return_if_fail(BARBAR_IS_SWAY_WINDOW(sway));
 
   g_free(sway->output_name);
 
@@ -113,76 +113,44 @@ static void g_barbar_sway_window_constructed(GObject *object) {
 //   // send a clicky clock
 // }
 
-// void g_barbar_sway_read_workspace(JsonReader *reader,
-//                                   struct workspace *workspace) {
-//   json_reader_read_member(reader, "id");
-//   workspace->id = json_reader_get_int_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "num");
-//   workspace->num = json_reader_get_int_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "visible");
-//   workspace->visible = json_reader_get_boolean_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "urgent");
-//   workspace->urgent = json_reader_get_boolean_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "focused");
-//   workspace->focused = json_reader_get_boolean_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "name");
-//   workspace->name = json_reader_get_string_value(reader);
-//   json_reader_end_member(reader);
-//
-//   json_reader_read_member(reader, "output");
-//   workspace->output = json_reader_get_string_value(reader);
-//   json_reader_end_member(reader);
-// }
-
 static void g_barbar_sway_handle_window_change(gchar *payload, uint32_t len,
                                                uint32_t type, gpointer data) {
   JsonParser *parser;
   gboolean ret;
   GError *err = NULL;
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(data);
-  //
-  // parser = json_parser_new();
-  // ret = json_parser_load_from_data(parser, payload, len, &err);
-  //
-  // if (!ret) {
-  //   printf("json error: %s\n", err->message);
-  // }
-  //
-  // JsonReader *reader = json_reader_new(json_parser_get_root(parser));
-  //
-  // json_reader_read_member(reader, "change");
-  // const char *change = json_reader_get_string_value(reader);
-  // json_reader_end_member(reader);
-  //
+
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, payload, len, &err);
+
+  if (!ret) {
+    printf("json error: %s\n", err->message);
+    return;
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+
+  json_reader_read_member(reader, "change");
+  const char *change = json_reader_get_string_value(reader);
+  json_reader_end_member(reader);
+
   // if (!strcmp(change, "init")) {
   //   g_barbar_sway_workspace_add(sway, reader);
-  // } else if (!strcmp(change, "empty")) {
-  //   g_barbar_sway_workspace_empty(sway, reader);
-  // } else if (!strcmp(change, "focus")) {
-  //   g_barbar_sway_workspace_focus(sway, reader);
-  // } else if (!strcmp(change, "move")) {
-  //   g_barbar_sway_workspace_move(sway, reader);
-  // } else if (!strcmp(change, "rename")) {
-  //   printf("%.*s\n", len, payload);
-  //   g_barbar_sway_workspace_rename(sway, reader);
-  // } else if (!strcmp(change, "urgent")) {
-  //   g_barbar_sway_workspace_urgent(sway, reader);
-  // } else if (!strcmp(change, "reload")) {
-  //   g_barbar_sway_workspace_reload(sway, reader);
   // }
+  json_reader_read_member(reader, "container");
+  json_reader_read_member(reader, "focused");
+  gboolean focused = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+  if (focused) {
+    json_reader_read_member(reader, "name");
+    const char *name = json_reader_get_string_value(reader);
+    json_reader_end_member(reader);
+    gtk_label_set_text(GTK_LABEL(sway->label), name);
+  }
+  json_reader_end_member(reader);
 }
 
-void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
+void g_barbar_sway_workspace_start(BarBarSwayWindow *sway) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
 
@@ -191,7 +159,7 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
   int len;
   BarBarSwayIpc *ipc;
 
-  const char *intrest = "[\"workspace\"]";
+  const char *intrest = "[\"window\"]";
 
   gdk_display = gdk_display_get_default();
 
@@ -202,8 +170,8 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
 
   // TODO: We need to get the output->name, we can't really do that atm
   // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // this. This will change in future. For now the user needs to specify the
-  // output.
+  // support this. This will change in future. For now the user needs to specify
+  // the output. This will be fixed in the future.
 
   ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
@@ -215,13 +183,12 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
   g_barbar_sway_ipc_send(ipc, SWAY_GET_WORKSPACES, "");
   len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
   if (len > 0) {
-    g_barbar_sway_handle_workspaces(sway, buf, len);
-
+    // g_barbar_sway_handle_workspaces(sway, buf, len);
     g_free(buf);
   }
 
   g_barbar_sway_ipc_subscribe(ipc, intrest, sway,
-                              g_barbar_sway_handle_workspaces_change);
+                              g_barbar_sway_handle_window_change);
 
   // g_barbar_sway_ipc_close(ipc);
 }

@@ -420,6 +420,7 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 
   if (!ret) {
     printf("json error: %s\n", err->message);
+    return;
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -460,8 +461,8 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
 
   // TODO: We need to get the output->name, we can't really do that atm
   // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // this. This will change in future. For now the user needs to specify the
-  // output.
+  // support this. This will change in future. For now the user needs to specify
+  // the output. This will be fixed in the future.
 
   ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
