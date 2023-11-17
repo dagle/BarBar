@@ -371,6 +371,7 @@ static void g_barbar_sway_handle_workspaces_change(gchar *payload, uint32_t len,
   } else if (!strcmp(change, "reload")) {
     g_barbar_sway_workspace_reload(sway, reader);
   }
+  g_object_unref(reader);
 }
 
 static gint compare_func(gconstpointer a, gconstpointer b) {

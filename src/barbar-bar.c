@@ -10,6 +10,7 @@
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
 
+#include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"
 
 #include <gtk4-layer-shell.h>
@@ -227,6 +228,7 @@ static void activate(GtkApplication *app, void *data) {
 
   BarBarSwayWorkspace *workspace =
       g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
+  BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
@@ -236,6 +238,7 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
 
   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(window));
 
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
@@ -253,6 +256,7 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_inhibitor_start(inhibitor);
 
   g_barbar_sway_workspace_start(workspace);
+  g_barbar_sway_window_start(window);
 
   // g_barbar_river_tag_start(tags);
   // g_barbar_river_view_start(view);

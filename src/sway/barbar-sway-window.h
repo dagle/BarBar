@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarSwayWindow, g_barbar_sway_window, BARBAR,
                      SWAY_WINDOW, GtkWidget)
 
-void g_barbar_sway_workspace_start(BarBarSwayWindow *spaces);
+void g_barbar_sway_window_start(BarBarSwayWindow *spaces);
 
 G_END_DECLS
 

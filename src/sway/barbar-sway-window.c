@@ -79,7 +79,7 @@ static void g_barbar_sway_window_get_property(GObject *object,
   }
 }
 
-static void g_barbar_sway_workspace_class_init(BarBarSwayWindowClass *class) {
+static void g_barbar_sway_window_class_init(BarBarSwayWindowClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
@@ -106,6 +106,9 @@ static void g_barbar_sway_workspace_class_init(BarBarSwayWindowClass *class) {
 static void g_barbar_sway_window_init(BarBarSwayWindow *self) {}
 static void g_barbar_sway_window_constructed(GObject *object) {
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(object);
+
+  sway->label = gtk_label_new("");
+  gtk_widget_set_parent(sway->label, GTK_WIDGET(sway));
 }
 
 // static void default_clicked_handler(BarBarSwayWindow *sway, guint tag,
@@ -148,9 +151,56 @@ static void g_barbar_sway_handle_window_change(gchar *payload, uint32_t len,
     gtk_label_set_text(GTK_LABEL(sway->label), name);
   }
   json_reader_end_member(reader);
+  g_object_unref(reader);
+}
+static void g_barbar_sway_set_focused_tree(BarBarSwayWindow *sway,
+                                           JsonReader *reader) {
+  json_reader_read_member(reader, "focused");
+  gboolean focused = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  if (focused) {
+    json_reader_read_member(reader, "name");
+    const char *name = json_reader_get_string_value(reader);
+    json_reader_end_member(reader);
+
+    gtk_label_set_text(GTK_LABEL(sway->label), name);
+  } else {
+    json_reader_read_member(reader, "nodes");
+    if (json_reader_is_array(reader)) {
+      int n = json_reader_count_elements(reader);
+      for (int i = 0; i < n; i++) {
+        json_reader_read_element(reader, i);
+        g_barbar_sway_set_focused_tree(sway, reader);
+        json_reader_end_element(reader);
+      }
+    }
+    json_reader_end_member(reader);
+  }
 }
 
-void g_barbar_sway_workspace_start(BarBarSwayWindow *sway) {
+static void g_barbar_sway_initial_window(BarBarSwayWindow *sway, gchar *payload,
+                                         uint32_t len) {
+  JsonParser *parser;
+  gboolean ret;
+  GError *err = NULL;
+
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, payload, len, &err);
+
+  if (!ret) {
+    printf("json error: %s\n", err->message);
+    return;
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+
+  g_barbar_sway_set_focused_tree(sway, reader);
+
+  g_object_unref(reader);
+}
+
+void g_barbar_sway_window_start(BarBarSwayWindow *sway) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
 
@@ -179,11 +229,11 @@ void g_barbar_sway_workspace_start(BarBarSwayWindow *sway) {
     // TODO: Error stuff
     return;
   }
-  // g_barbar_sway_ipc_subscribe(connection, payload);
-  g_barbar_sway_ipc_send(ipc, SWAY_GET_WORKSPACES, "");
+
+  g_barbar_sway_ipc_send(ipc, SWAY_GET_TREE, "");
   len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
   if (len > 0) {
-    // g_barbar_sway_handle_workspaces(sway, buf, len);
+    g_barbar_sway_initial_window(sway, buf, len);
     g_free(buf);
   }
 
