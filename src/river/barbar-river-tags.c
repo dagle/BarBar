@@ -180,7 +180,7 @@ static const struct zriver_output_status_v1_listener output_status_listener = {
     .layout_name_clear = layout_name_clear,
 };
 
-void clicked(GtkButton *self, gpointer user_data) {
+static void clicked(GtkButton *self, gpointer user_data) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(user_data);
 
   guint tag;

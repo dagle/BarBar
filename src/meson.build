@@ -17,6 +17,7 @@ libbarbar_src = files(
   'sway/barbar-sway-window.c',
   'hyprland/barbar-hyprland-ipc.c',
   'hyprland/barbar-hyprland-workspace.c',
+  'dwl/barbar-dwl-tags.c',
   'barbar-temperature.c',
   'barbar-inhibitor.c',
   'tray/barbar-watcher.c',
@@ -41,6 +42,7 @@ libbarbar_headers = [
   'sway/barbar-sway-window.h',
   'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-workspace.h',
+  'dwl/barbar-dwl-tags.h',
   'barbar-temperature.h',
   'barbar-inhibitor.h',
   'tray/barbar-watcher.h',
@@ -54,6 +56,7 @@ wayland_prots = [
 	wl_protocol_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml',
   '../protocol/river-status-unstable-v1.xml',
   '../protocol/river-control-unstable-v1.xml',
+  '../protocol/dwl-ipc-unstable-v2.xml',
 ]
 
 wayland_src = []
