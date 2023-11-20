@@ -1,4 +1,6 @@
 #include "barbar-bar.h"
+#include "barbar-backlight.h"
+#include "barbar-battery.h"
 #include "barbar-clock.h"
 #include "barbar-cpu.h"
 #include "barbar-disk.h"
@@ -223,6 +225,7 @@ static void activate(GtkApplication *app, void *data) {
   BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
   BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
   BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
+  BarBarBattery *battery = g_object_new(BARBAR_TYPE_BATTERY, NULL);
 
   // BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
   // BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
@@ -236,7 +239,9 @@ static void activate(GtkApplication *app, void *data) {
   // BarBarHyprlandWorkspace *workspace =
   //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
   // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
-  BarBarDwlTag *tags = g_object_new(BARBAR_TYPE_DWL_TAG, NULL);
+  // BarBarDwlTag *tags = g_object_new(BARBAR_TYPE_DWL_TAG, NULL);
+
+  BarBarBacklight *back = g_object_new(BARBAR_TYPE_BACKLIGHT, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
@@ -245,7 +250,10 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
 
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(back));
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(battery));
+
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(window));
 
@@ -263,7 +271,9 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_cpu_start(cpu);
   g_barbar_mpris_start(mpris);
   g_barbar_inhibitor_start(inhibitor);
-  g_barbar_dwl_tag_start(tags);
+  g_barbar_backlight_start(back);
+  g_barbar_battery_start(battery);
+  // g_barbar_dwl_tag_start(tags);
   // g_barbar_hyprland_workspace_start(workspace);
 
   // g_barbar_sway_workspace_start(workspace);

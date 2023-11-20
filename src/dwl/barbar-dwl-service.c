@@ -1,12 +1,133 @@
 #include "dwl/barbar-dwl-service.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
+
+struct dwl_status {
+  char *output_name;
+
+  char *title;
+  char *appid;
+  char *layout;
+  uint32_t occupied;
+  uint32_t tags;
+  uint32_t client_tags;
+  uint32_t urgent;
+  gboolean fullscreen;
+  gboolean floating;
+  gboolean selmon;
+};
 
 struct _BarBarDwlService {
   GObject parent_instance;
+
+  struct dwl_status status;
   GDataInputStream *input;
+
+  // messages comes in chunks of 7 lines.
+  uint32_t counter;
 };
+
+typedef enum {
+  DWL_TITLE,
+  DWL_APPID,
+  DWL_FULLSCREEN,
+  DWL_FLOATING,
+  DWL_SELMON,
+  DWL_TAGS,
+  DWL_LAYOUT,
+} g_barbar_dwl_message_kind;
+
+// TODO: Add Error to this
+void parse_line(char *line, struct dwl_status *status) {
+  g_barbar_dwl_message_kind kind;
+  uint32_t num;
+
+  char *save_pointer = NULL;
+  char *string = strtok_r(line, " ", &save_pointer);
+  gssize id = 0;
+  while (string != NULL) {
+
+    if (id == 0) {
+      status->output_name = strdup(string);
+    } else if (id == 1) {
+      if (strcmp(string, "title") == 0) {
+        kind = DWL_TITLE;
+      } else if (strcmp(string, "appid") == 0) {
+        kind = DWL_APPID;
+      } else if (strcmp(string, "fullscreen") == 0) {
+        kind = DWL_FULLSCREEN;
+      } else if (strcmp(string, "floating") == 0) {
+        kind = DWL_FLOATING;
+      } else if (strcmp(string, "selmon") == 0) {
+        kind = DWL_SELMON;
+      } else if (strcmp(string, "tags") == 0) {
+        kind = DWL_TAGS;
+      } else if (strcmp(string, "layout") == 0) {
+        kind = DWL_LAYOUT;
+      } else {
+        // TODO: Error do error
+        // g_free(status->output_name);
+        // g_free(status);
+        return;
+      }
+    } else {
+      // TODO: these null check shouldn't be needed to be done?
+      switch (kind) {
+      case DWL_TITLE:
+        if (string) {
+          status->title = strdup(string);
+        }
+        break;
+      case DWL_APPID:
+        if (string) {
+          status->appid = strdup(string);
+        }
+        break;
+      case DWL_FULLSCREEN:
+        status->fullscreen = strcmp(string, "0") != 0;
+        break;
+      case DWL_FLOATING:
+        status->fullscreen = strcmp(string, "0") != 0;
+        break;
+      case DWL_SELMON:
+        status->fullscreen = strcmp(string, "0") != 0;
+        break;
+      case DWL_LAYOUT:
+        if (string) {
+          status->appid = strdup(string);
+        }
+        break;
+      case DWL_TAGS:
+        // Lets print this
+        num = strtoul(string, NULL, 10);
+        if (id == 2) {
+          status->occupied = num;
+        } else if (id == 3) {
+          status->tags = num;
+        } else if (id == 4) {
+          status->client_tags = num;
+        } else if (id == 5) {
+          status->urgent = num;
+        }
+
+        break;
+      }
+    }
+    string = strtok_r(NULL, " ", &save_pointer);
+    id++;
+  }
+}
+
+void g_barbar_dwl_status_free(struct dwl_status *status) {
+  g_free(status->output_name);
+  g_free(status->appid);
+  g_free(status->title);
+  g_free(status->layout);
+  g_free(status);
+}
 
 G_DEFINE_TYPE(BarBarDwlService, g_barbar_dwl_service, G_TYPE_OBJECT)
 
@@ -76,7 +197,20 @@ static void g_barbar_dwl_service_reader(GObject *object, GAsyncResult *res,
 
   line = g_data_input_stream_read_line_finish(input, res, &length, &error);
 
-  g_signal_emit(service, listener, 0);
+  parse_line(line, &service->status);
+
+  service->counter++;
+
+  if (service->counter == 6) {
+    g_signal_emit(service, listener, 0, &service->status);
+
+    service->counter = 0;
+    g_free(service->status.title);
+    g_free(service->status.appid);
+    g_free(service->status.layout);
+
+    memset(&service->status, 0, sizeof(struct dwl_status));
+  }
 
   g_data_input_stream_read_line_async(input, G_PRIORITY_DEFAULT, NULL,
                                       g_barbar_dwl_service_reader, data);
@@ -109,7 +243,7 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   listener =
       g_signal_new("listener", G_TYPE_FROM_CLASS(class),
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_UINT);
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void g_barbar_dwl_service_init(BarBarDwlService *self) {}

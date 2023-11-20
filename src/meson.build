@@ -19,6 +19,7 @@ libbarbar_src = files(
   'hyprland/barbar-hyprland-workspace.c',
   'dwl/barbar-dwl-service.c',
   'dwl/barbar-dwl-tags.c',
+  'barbar-backlight.c',
   'barbar-temperature.c',
   'barbar-inhibitor.c',
   'tray/barbar-watcher.c',

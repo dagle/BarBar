@@ -29,7 +29,7 @@ gobject = dependency('gobject-2.0')
 gio = dependency('gio-2.0')
 giounix = dependency('gio-unix-2.0')
 json = dependency('json-glib-1.0')
-udev_backlight = dependency('libudev')
+udev = dependency('libudev')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
@@ -53,6 +53,7 @@ deps = [
   gtk_layer_shell_dep,
   libmpdclient,
   giounix,
+  udev,
   json,
   upower_glib,
   libgtop,

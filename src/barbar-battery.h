@@ -27,15 +27,16 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_BATTERY (g_barbar_battery_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY, GObject)
+G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
+                     GtkWidget)
 
-void g_barbar_battery_update(BarBarBattery *battery);
+void g_barbar_battery_start(BarBarBattery *battery);
 
 G_END_DECLS
 

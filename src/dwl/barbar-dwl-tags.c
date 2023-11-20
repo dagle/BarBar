@@ -93,7 +93,9 @@ static void default_clicked_handler(BarBarDwlTag *dwl, guint tag,
   //                                         NULL);
 }
 
-void g_dwl_listen_cb(BarBarDwlService *service, gpointer data) {
+void g_dwl_listen_cb(BarBarDwlService *service, gpointer dwl_status,
+                     gpointer data) {
+  struct dwl_status *status = (struct dwl_status *)dwl_status;
   printf("dwl data\n");
 }
 
