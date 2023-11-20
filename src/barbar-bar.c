@@ -5,6 +5,7 @@
 #include "barbar-inhibitor.h"
 #include "barbar-mpris2.h"
 
+#include "dwl/barbar-dwl-tags.h"
 #include "river/barbar-river-layout.h"
 #include "river/barbar-river-mode.h"
 #include "river/barbar-river-tags.h"
@@ -232,9 +233,10 @@ static void activate(GtkApplication *app, void *data) {
   //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
   // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
 
-  BarBarHyprlandWorkspace *workspace =
-      g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
+  // BarBarHyprlandWorkspace *workspace =
+  //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
   // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
+  BarBarDwlTag *tags = g_object_new(BARBAR_TYPE_DWL_TAG, NULL);
 
   GtkWidget *bbb = gtk_action_bar_new();
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
@@ -243,7 +245,8 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
 
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
+  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
+  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(window));
 
   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
@@ -260,7 +263,8 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_cpu_start(cpu);
   g_barbar_mpris_start(mpris);
   g_barbar_inhibitor_start(inhibitor);
-  g_barbar_hyprland_workspace_start(workspace);
+  g_barbar_dwl_tag_start(tags);
+  // g_barbar_hyprland_workspace_start(workspace);
 
   // g_barbar_sway_workspace_start(workspace);
   // g_barbar_sway_window_start(window);

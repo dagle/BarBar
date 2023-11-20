@@ -1,5 +1,5 @@
 #include "dwl/barbar-dwl-tags.h"
-#include "dwl-ipc-unstable-v2-client-protocol.h"
+#include "dwl/barbar-dwl-service.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -11,11 +11,7 @@
 struct _BarBarDwlTag {
   GtkWidget parent_instance;
 
-  struct zdwl_ipc_manager_v2 *ipc_manager;
-  struct zdwl_ipc_output_v2 *ipc_output;
-
-  struct wl_seat *seat;
-  gboolean active;
+  BarBarDwlService *service;
 
   GtkWidget *buttons[9];
 };
@@ -69,34 +65,6 @@ static void g_barbar_dwl_tag_class_init(BarBarDwlTagClass *class) {
   gtk_widget_class_set_css_name(widget_class, "river-tag");
 }
 
-static void registry_handle_global(void *data, struct wl_registry *registry,
-                                   uint32_t name, const char *interface,
-                                   uint32_t version) {
-  BarBarDwlTag *dwl = BARBAR_DWL_TAG(data);
-  if (strcmp(interface, zdwl_ipc_manager_v2_interface.name) == 0) {
-    if (version >= ZDWL_IPC_MANAGER_V2_TAGS_SINCE_VERSION) {
-      dwl->ipc_manager = wl_registry_bind(
-          registry, name, &zdwl_ipc_manager_v2_interface, version);
-    }
-  }
-  if (strcmp(interface, wl_seat_interface.name) == 0) {
-    dwl->seat = wl_registry_bind(registry, name, &wl_seat_interface, version);
-  }
-}
-
-static void registry_handle_global_remove(void *_data,
-                                          struct wl_registry *_registry,
-                                          uint32_t _name) {
-  (void)_data;
-  (void)_registry;
-  (void)_name;
-}
-
-static const struct wl_registry_listener wl_registry_listener = {
-    .global = registry_handle_global,
-    .global_remove = registry_handle_global_remove,
-};
-
 static void clicked(GtkButton *self, gpointer user_data) {
   BarBarDwlTag *dwl = BARBAR_DWL_TAG(user_data);
 
@@ -113,7 +81,6 @@ static void clicked(GtkButton *self, gpointer user_data) {
 
 static void default_clicked_handler(BarBarDwlTag *dwl, guint tag,
                                     gpointer user_data) {
-  struct zriver_command_callback_v1 *callback;
   char buf[4];
 
   snprintf(buf, 4, "%d", tag);
@@ -125,59 +92,10 @@ static void default_clicked_handler(BarBarDwlTag *dwl, guint tag,
   // &command_callback_listener,
   //                                         NULL);
 }
-void printBits(unsigned int num) {
-  for (int bit = 0; bit < (sizeof(unsigned int) * 8); bit++) {
-    printf("%i ", num & 0x01);
-    num = num >> 1;
-  }
-  printf("\n");
+
+void g_dwl_listen_cb(BarBarDwlService *service, gpointer data) {
+  printf("dwl data\n");
 }
-
-static void toggle_visibility(void *data,
-                              struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2) {}
-
-static void active(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                   uint32_t active) {}
-
-static void tag(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                uint32_t tag, uint32_t state, uint32_t clients,
-                uint32_t focused) {
-  BarBarDwlTag *dwl = BARBAR_DWL_TAG(data);
-
-  printf("tag: ");
-  printBits(tag);
-
-  printf("state: ");
-  printBits(state);
-  if (state & ZDWL_IPC_OUTPUT_V2_TAG_STATE_ACTIVE) {
-  } else if (state & ZDWL_IPC_OUTPUT_V2_TAG_STATE_URGENT) {
-  } else {
-  }
-}
-
-static void layout(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                   uint32_t layout) {}
-
-static void title(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                  const char *title) {}
-static void appid(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                  const char *appid) {}
-static void layout_symbol(void *data,
-                          struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                          const char *layout) {}
-
-static void frame(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2) {}
-
-static const struct zdwl_ipc_output_v2_listener zdwl_ipc_output_v2_listener = {
-    .toggle_visibility = toggle_visibility,
-    .active = active,
-    .tag = tag,
-    .layout = layout,
-    .title = title,
-    .appid = appid,
-    .layout_symbol = layout_symbol,
-    .frame = frame,
-};
 
 static void g_barbar_dwl_tag_init(BarBarDwlTag *self) {}
 static void g_barbar_dwl_tag_constructed(GObject *object) {
@@ -195,52 +113,6 @@ static void g_barbar_dwl_tag_constructed(GObject *object) {
 }
 
 void g_barbar_dwl_tag_start(BarBarDwlTag *dwl) {
-  GdkDisplay *gdk_display;
-  GdkMonitor *monitor;
-  struct wl_registry *wl_registry;
-  struct wl_output *output;
-  struct wl_display *wl_display;
-
-  gdk_display = gdk_display_get_default();
-
-  // This shouldn't need to be done because layered shell requires wayland
-  g_return_if_fail(gdk_display);
-  g_return_if_fail(GDK_IS_WAYLAND_DISPLAY(gdk_display));
-
-  // We try to find the main screen for this widget, this should only
-  // be done if no screen is specified
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(dwl));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
-  output = gdk_wayland_monitor_get_wl_output(monitor);
-
-  wl_display = gdk_wayland_display_get_wl_display(gdk_display);
-  wl_registry = wl_display_get_registry(wl_display);
-
-  wl_registry_add_listener(wl_registry, &wl_registry_listener, dwl);
-  wl_display_roundtrip(wl_display);
-
-  if (!dwl->ipc_manager) {
-    return;
-  }
-
-  // output_status_ = zdwl_ipc_manager_v2_get_output(status_manager_, output);
-  // zdwl_ipc_output_v2_add_listener(output_status_,
-  // &output_status_listener_impl, this);
-
-  dwl->ipc_output = zdwl_ipc_manager_v2_get_output(dwl->ipc_manager, output);
-  zdwl_ipc_output_v2_add_listener(dwl->ipc_output, &zdwl_ipc_output_v2_listener,
-                                  dwl);
-  wl_display_roundtrip(wl_display);
-
-  // dwl->output_status = zriver_status_manager_v1_get_river_output_status(
-  //     dwl->status_manager, output);
-  //
-  // zriver_output_status_v1_add_listener(dwl->output_status,
-  //                                      &output_status_listener, dwl);
-  // wl_display_roundtrip(wl_display);
-  //
-  // zriver_status_manager_v1_destroy(dwl->status_manager);
-  //
-  // dwl->status_manager = NULL;
+  dwl->service = g_barbar_dwl_service_new();
+  g_signal_connect(dwl->service, "listener", G_CALLBACK(g_dwl_listen_cb), dwl);
 }
