@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_TEMPERATURE_H_
-#define _BARBAR_TEMPERATURE_H_
+#ifndef _BARBAR_WEATHER_H_
+#define _BARBAR_WEATHER_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,13 +31,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_TEMPERATURE (g_barbar_temperature_get_type())
+#define BARBAR_TYPE_WEATHER (g_barbar_weather_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarTemperature, g_barbar_temperature, BARBAR,
-                     TEMPERATURE, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarWeather, g_barbar_weather, BARBAR, WEATHER,
+                     GtkWidget)
 
-void g_barbar_temperature_start(BarBarTemperature *temperature);
+void g_barbar_weather_start(BarBarWeather *weather);
 
 G_END_DECLS
 
-#endif /* _BARBAR_TEMPERATURE_H_ */
+#endif /* _BARBAR_WEATHER_H_ */

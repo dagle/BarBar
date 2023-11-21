@@ -62,7 +62,9 @@ static void g_barbar_mpris_class_init(BarBarMprisClass *class) {
   mpris_props[PROP_PLAYER] =
       g_param_spec_string("player", NULL, NULL, "mpd", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mpris_props);
+
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
+  gtk_widget_class_set_css_name(widget_class, "mpris");
 }
 
 static void g_barbar_mpris_init(BarBarMpris *self) {}

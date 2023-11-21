@@ -7,6 +7,7 @@
 #include "barbar-inhibitor.h"
 #include "barbar-mpris2.h"
 
+#include "barbar-temperature.h"
 #include "dwl/barbar-dwl-tags.h"
 #include "river/barbar-river-layout.h"
 #include "river/barbar-river-mode.h"
@@ -226,6 +227,7 @@ static void activate(GtkApplication *app, void *data) {
   BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
   BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
   BarBarBattery *battery = g_object_new(BARBAR_TYPE_BATTERY, NULL);
+  BarBarTemperature *temperature = g_object_new(BARBAR_TYPE_TEMPERATURE, NULL);
 
   // BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
   // BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
@@ -249,6 +251,7 @@ static void activate(GtkApplication *app, void *data) {
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(cpu));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
+  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(temperature));
 
   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(back));
   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(battery));
@@ -273,6 +276,7 @@ static void activate(GtkApplication *app, void *data) {
   g_barbar_inhibitor_start(inhibitor);
   g_barbar_backlight_start(back);
   g_barbar_battery_start(battery);
+  g_barbar_temperature_start(temperature);
   // g_barbar_dwl_tag_start(tags);
   // g_barbar_hyprland_workspace_start(workspace);
 
