@@ -66,14 +66,14 @@ static void my_custom_widget_init(MyCustomWidget *self) {
 MyCustomWidget *my_custom_widget_new(void) {
   return g_object_new(MY_TYPE_CUSTOM_WIDGET, NULL);
 }
-static void activate(GtkApplication *app, void *data) {
-  MyCustomWidget *widget = my_custom_widget_new();
-  BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, NULL);
-
-  GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
-  gtk_window_set_child(gtk_window, widget);
-  gtk_window_present(gtk_window);
-}
+// static void activate(GtkApplication *app, void *data) {
+//   MyCustomWidget *widget = my_custom_widget_new();
+//   BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, NULL);
+//
+//   GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
+//   gtk_window_set_child(gtk_window, widget);
+//   gtk_window_present(gtk_window);
+// }
 
 // int main(int argc, char *argv[]) {
 //   GtkApplication *app = gtk_application_new(
@@ -89,6 +89,25 @@ static void activate(GtkApplication *app, void *data) {
 //
 //   // Perform your application logic here
 // }
+
+static void activate2(GtkApplication *app, void *data) {
+  GtkBuilder *builder =
+      gtk_builder_new_from_file("/home/dagle/.config/barbar/config.ui");
+
+  GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window1"));
+  gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
+  gtk_window_present(window);
+  g_object_unref(builder);
+}
+
+int run(int argc, char **argv) {
+  GtkApplication *app =
+      gtk_application_new("com.github.barbar", G_APPLICATION_DEFAULT_FLAGS);
+  g_signal_connect(app, "activate", G_CALLBACK(activate2), NULL);
+  int status = g_application_run(G_APPLICATION(app), argc, argv);
+  g_object_unref(app);
+  return status;
+}
 
 int main(int argc, char **argv) {
   // BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, NULL);
@@ -137,8 +156,11 @@ int main(int argc, char **argv) {
   // 					   NULL,
   // 					   NULL);
   // g_main_loop_run(loop);
-
-  BarBarBar *bar = g_barbar_bar_new();
-  int status = g_barbar_run(bar, argc, argv, NULL);
-  return status;
+  gtk_init();
+  g_barbar_bar_get_type();
+  // GtkWidget *bar = g_barbar_bar_new();
+  // g_object_unref(bar);
+  run(argc, argv);
+  // int status = g_barbar_run(argc, argv, NULL);
+  // return status;
 }

@@ -32,6 +32,10 @@ json = dependency('json-glib-1.0')
 udev = dependency('libudev')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
+
+libgweather = dependency('gweather4')
+libgeoclue = dependency('libgeoclue-2.0')
+
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
@@ -60,6 +64,8 @@ deps = [
   libwireplumber,
   playerctl,
   wayland_client,
+  libgweather,
+  libgeoclue,
   m_dep,
 ]
 

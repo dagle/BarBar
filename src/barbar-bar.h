@@ -51,12 +51,12 @@ typedef enum {
 
 #define BARBAR_TYPE_POSITION (g_barbar_position_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWindow)
 
-BarBarBar *g_barbar_bar_new(void);
+GtkWidget *g_barbar_bar_new(void);
 
-int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *w);
-int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv);
+/* int g_barbar_run(int argc, char **argv, GtkWidget *w); */
+/* int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv); */
 
 G_END_DECLS
 

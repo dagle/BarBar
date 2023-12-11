@@ -6,8 +6,10 @@
 #include "barbar-disk.h"
 #include "barbar-inhibitor.h"
 #include "barbar-mpris2.h"
+#include <gtk/gtk.h>
 
 #include "barbar-temperature.h"
+#include "barbar-weather.h"
 #include "dwl/barbar-dwl-tags.h"
 #include "river/barbar-river-layout.h"
 #include "river/barbar-river-mode.h"
@@ -20,6 +22,13 @@
 #include "hyprland/barbar-hyprland-workspace.h"
 
 #include <gtk4-layer-shell.h>
+/**
+ * BarBarBar:
+ *
+ * BarBarBar is a statusbar widget for layered sell. It will create a window and
+ * set the bar to the foreground.
+ *
+ */
 
 struct _BarBarBar {
   GObject parent;
@@ -34,7 +43,7 @@ struct _BarBarBar {
   BarBarPosition pos;
 };
 
-G_DEFINE_TYPE(BarBarBar, g_barbar_bar, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarBar, g_barbar_bar, GTK_TYPE_WINDOW)
 
 enum {
   PROP_0,
@@ -128,13 +137,13 @@ static void g_barbar_bar_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_bar_constructed(GObject *object) {
-  BarBarBar *self = BARBAR_BAR(object);
-  G_OBJECT_CLASS(g_barbar_bar_parent_class)->constructed(object);
-
-  self->pos = BARBAR_POS_TOP;
-  self->height = 20;
-}
+static void g_barbar_bar_constructed(GObject *object);
+//   BarBarBar *self = BARBAR_BAR(object);
+//   G_OBJECT_CLASS(g_barbar_bar_parent_class)->constructed(object);
+//
+//   self->pos = BARBAR_POS_TOP;
+//   self->height = 20;
+// }
 
 static void g_barbar_bar_class_init(BarBarBarClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -159,36 +168,49 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, bar_props);
 }
 
-static void g_barbar_bar_init(BarBarBar *self) {}
+static void g_barbar_bar_init(BarBarBar *self) {
+  printf("r: %p\n ", self);
+  // self->right_margin = 0;
+  self->left_margin = 0;
+  self->top_margin = 0;
+  self->bottom_margin = 0;
+}
 
-static void activate(GtkApplication *app, void *data) {
-  g_return_if_fail(app);
-  g_return_if_fail(data);
+// move this to main
+// static void activate2(GtkApplication *app, void *data) {
+//   GtkBuilder *builder =
+//       gtk_builder_new_from_file("/home/dagle/.config/barbar/config.ui");
+//
+//   GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window1"));
+//   // gtk_window_set_application(GTK_WINDOW(window), GTK_APPLICATION(app));
+//   gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
+//   gtk_window_present(window);
+//   g_object_unref(builder);
+// }
 
-  BarBarBar *bar = BARBAR_BAR(data);
+// maybe it run when show?
+static void g_barbar_bar_constructed(GObject *object) {
+  G_OBJECT_CLASS(g_barbar_bar_parent_class)->constructed(object);
+  BarBarBar *bar = BARBAR_BAR(object);
 
-  // Create a normal GTK window however you like
-  GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
-  gtk_window_set_default_size(gtk_window, 0, bar->height);
+  GtkWindow *gtk_window = GTK_WINDOW(object);
 
-  // Before the window is first realized, set it up to be a layer surface
   gtk_layer_init_for_window(gtk_window);
-
-  // Order below normal windows
+  gtk_layer_set_namespace(gtk_window, "bar");
   gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_TOP);
-
-  // Push other windows out of the way
   gtk_layer_auto_exclusive_zone_enable(gtk_window);
 
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, bar->left_margin);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT,
-                       bar->right_margin);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, bar->top_margin);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM,
-                       bar->bottom_margin);
+  printf("%d\n", bar->right_margin);
+
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, 0);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, 0);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, 0);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, 0);
   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
     gtk_layer_set_anchor(gtk_window, i, TRUE);
   }
+
+  bar->pos = BARBAR_POS_TOP;
   switch (bar->pos) {
   case BARBAR_POS_TOP:
     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, FALSE);
@@ -203,8 +225,6 @@ static void activate(GtkApplication *app, void *data) {
     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
     break;
   }
-  // gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
-  // gtk_window_set_resizable(gtk_window, FALSE);
 
   GtkCssProvider *css_provider;
   GdkDisplay *display;
@@ -218,109 +238,198 @@ static void activate(GtkApplication *app, void *data) {
   gtk_style_context_add_provider_for_display(display,
                                              GTK_STYLE_PROVIDER(css_provider),
                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
-
-  BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, "tz", "Europe/Stockholm",
-                                    "interval", 1000, NULL);
-
-  BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
-  BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
-  BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
-  BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
-  BarBarBattery *battery = g_object_new(BARBAR_TYPE_BATTERY, NULL);
-  BarBarTemperature *temperature = g_object_new(BARBAR_TYPE_TEMPERATURE, NULL);
-
-  // BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
-  // BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
-  // BarBarRiverLayout *layout = g_object_new(BARBAR_TYPE_RIVER_LAYOUT, NULL);
-  // BarBarRiverMode *mode = g_object_new(BARBAR_TYPE_RIVER_MODE, NULL);
-
-  // BarBarSwayWorkspace *workspace =
-  //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
-  // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
-
-  // BarBarHyprlandWorkspace *workspace =
-  //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
-  // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
-  // BarBarDwlTag *tags = g_object_new(BARBAR_TYPE_DWL_TAG, NULL);
-
-  BarBarBacklight *back = g_object_new(BARBAR_TYPE_BACKLIGHT, NULL);
-
-  GtkWidget *bbb = gtk_action_bar_new();
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(cpu));
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
-  gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(temperature));
-
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(back));
-  gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(battery));
-
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(window));
-
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(view));
-  // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(mode));
-  //
-
-  gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
-  gtk_window_present(gtk_window);
-
-  g_barbar_clock_start(clock);
-  g_barbar_disk_start(disk);
-  g_barbar_cpu_start(cpu);
-  g_barbar_mpris_start(mpris);
-  g_barbar_inhibitor_start(inhibitor);
-  g_barbar_backlight_start(back);
-  g_barbar_battery_start(battery);
-  g_barbar_temperature_start(temperature);
-  // g_barbar_dwl_tag_start(tags);
-  // g_barbar_hyprland_workspace_start(workspace);
-
-  // g_barbar_sway_workspace_start(workspace);
-  // g_barbar_sway_window_start(window);
-
-  // g_barbar_river_tag_start(tags);
-  // g_barbar_river_view_start(view);
-  // g_barbar_river_layout_start(layout);
-  // g_barbar_river_mode_start(mode);
 }
+// static void g_barbar_bar_constructed(GObject *object) {
+//   GtkCssProvider *css_provider;
+//   GdkDisplay *display;
+//
+//   display = gtk_widget_get_display(GTK_WIDGET(object));
+//
+//   css_provider = gtk_css_provider_new();
+//   gtk_css_provider_load_from_path(css_provider,
+//                                   "/home/dagle/.config/barbar/style.css");
+//
+//   gtk_style_context_add_provider_for_display(display,
+//                                              GTK_STYLE_PROVIDER(css_provider),
+//                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
+//   g_signal_connect(G_OBJECT(object), "show",
+//                    G_CALLBACK(g_barbar_bar_constructed2), NULL);
+// }
+
+// static void activate(GtkApplication *app, void *data) {
+//   g_return_if_fail(app);
+//   g_return_if_fail(data);
+//
+//   BarBarBar *bar = BARBAR_BAR(data);
+//
+//   // Create a normal GTK window however you like
+//   GtkWindow *gtk_window = GTK_WINDOW(gtk_application_window_new(app));
+//   gtk_window_set_default_size(gtk_window, 0, bar->height);
+//
+//   gtk_layer_set_namespace(gtk_window, "bar");
+//   // Before the window is first realized, set it up to be a layer surface
+//   gtk_layer_init_for_window(gtk_window);
+//
+//   // Order below normal windows
+//   gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_TOP);
+//
+//   // Push other windows out of the way
+//   gtk_layer_auto_exclusive_zone_enable(gtk_window);
+//   // gtk_layer_set_exclusive_zone(gtk_window, 0);
+//
+//   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT,
+//   bar->left_margin); gtk_layer_set_margin(gtk_window,
+//   GTK_LAYER_SHELL_EDGE_RIGHT,
+//                        bar->right_margin);
+//   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP,
+//   bar->top_margin); gtk_layer_set_margin(gtk_window,
+//   GTK_LAYER_SHELL_EDGE_BOTTOM,
+//                        bar->bottom_margin);
+//   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
+//     gtk_layer_set_anchor(gtk_window, i, TRUE);
+//   }
+//   switch (bar->pos) {
+//   case BARBAR_POS_TOP:
+//     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, FALSE);
+//     break;
+//   case BARBAR_POS_BOTTOM:
+//     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, FALSE);
+//     break;
+//   case BARBAR_POS_LEFT:
+//     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, FALSE);
+//     break;
+//   case BARBAR_POS_RIGHT:
+//     gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
+//     break;
+//   }
+//
+//   gtk_widget_set_size_request(GTK_WIDGET(gtk_window), 1366, 20);
+//   gtk_window_set_default_size(gtk_window, 1, 1);
+//   // gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
+//   // gtk_window_set_resizable(gtk_window, FALSE);
+//
+//   GtkCssProvider *css_provider;
+//   GdkDisplay *display;
+//
+//   display = gtk_widget_get_display(GTK_WIDGET(gtk_window));
+//
+//   css_provider = gtk_css_provider_new();
+//   gtk_css_provider_load_from_path(css_provider,
+//                                   "/home/dagle/.config/barbar/style.css");
+//
+//   gtk_style_context_add_provider_for_display(display,
+//                                              GTK_STYLE_PROVIDER(css_provider),
+//                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
+//
+//   BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, "tz",
+//   "Europe/Stockholm",
+//                                     "interval", 1000, NULL);
+//
+//   BarBarDisk *disk = g_object_new(BARBAR_TYPE_DISK, "path", "/", NULL);
+//   BarBarCpu *cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
+//   BarBarMpris *mpris = g_object_new(BARBAR_TYPE_MPRIS, NULL);
+//   BarBarInhibitor *inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
+//   BarBarBattery *battery = g_object_new(BARBAR_TYPE_BATTERY, NULL);
+//   BarBarTemperature *temperature = g_object_new(BARBAR_TYPE_TEMPERATURE,
+//   NULL); BarBarWeather *weather = g_object_new(BARBAR_TYPE_WEATHER, NULL);
+//
+//   BarBarRiverTag *tags = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
+//   // BarBarRiverView *view = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
+//   // BarBarRiverLayout *layout = g_object_new(BARBAR_TYPE_RIVER_LAYOUT,
+//   NULL);
+//   // BarBarRiverMode *mode = g_object_new(BARBAR_TYPE_RIVER_MODE, NULL);
+//
+//   // BarBarSwayWorkspace *workspace =
+//   //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
+//   // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
+//
+//   // BarBarHyprlandWorkspace *workspace =
+//   //     g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
+//   // BarBarSwayWindow *window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
+//   // BarBarDwlTag *tags = g_object_new(BARBAR_TYPE_DWL_TAG, NULL);
+//
+//   // BarBarBacklight *back = g_object_new(BARBAR_TYPE_BACKLIGHT, NULL);
+//
+//   GtkWidget *bbb = gtk_action_bar_new();
+//   gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(clock));
+//   // gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(disk));
+//   // gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(cpu));
+//   // gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(mpris));
+//   // gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(inhibitor));
+//   // gtk_action_bar_pack_end(GTK_ACTION_BAR(bbb), GTK_WIDGET(temperature));
+//
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(back));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(battery));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(weather));
+//
+//   // gtk_widget_set_valign(GTK_WIDGET(tags), GTK_ALIGN_CENTER);
+//   gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
+//
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(workspace));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(window));
+//
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(tags));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(layout));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(view));
+//   // gtk_action_bar_pack_start(GTK_ACTION_BAR(bbb), GTK_WIDGET(mode));
+//   //
+//
+//   gtk_window_set_child(gtk_window, GTK_WIDGET(bbb));
+//   gtk_window_present(gtk_window);
+//
+//   // g_barbar_river_tag_start(tags);
+//   g_barbar_clock_start(clock);
+//   // g_barbar_disk_start(disk);
+//   // g_barbar_cpu_start(cpu);
+//   // g_barbar_mpris_start(mpris);
+//   // g_barbar_inhibitor_start(inhibitor);
+//   // g_barbar_backlight_start(back);
+//   // g_barbar_battery_start(battery);
+//   // g_barbar_temperature_start(temperature);
+//   // g_barbar_weather_start(weather);
+//
+//   // g_barbar_dwl_tag_start(tags);
+//   // g_barbar_hyprland_workspace_start(workspace);
+//
+//   // g_barbar_sway_workspace_start(workspace);
+//   // g_barbar_sway_window_start(window);
+//
+//   // g_barbar_river_view_start(view);
+//   // g_barbar_river_layout_start(layout);
+//   // g_barbar_river_mode_start(mode);
+// }
+
+// /**
+//  * g_barbar_run:
+//  * @bar: A #BarBarBar
+//  * @argc: The argc from main()
+//  * @argv: The argv from main()
+//  * Returns: The exit status.
+//  */
+// // int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *widget)
+// {
+// int g_barbar_run(int argc, char **argv, GtkWidget *widget) {
+//   GtkApplication *app =
+//       gtk_application_new("com.github.barbar", G_APPLICATION_DEFAULT_FLAGS);
+//   g_signal_connect(app, "activate", G_CALLBACK(activate2), NULL);
+//   int status = g_application_run(G_APPLICATION(app), argc, argv);
+//   g_object_unref(app);
+//   return status;
+// }
+//
 
 /**
- * g_barbar_run:
- * @bar: A #BarBarBar
- * @argc: The argc from main()
- * @argv: The argv from main()
- * Returns: The exit status.
+ * g_barbar_bar_new:
+ *
+ * Creates a new `BarBarBar`.
+ *
+ * Returns: a new `BarBarBar`.
  */
-int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *widget) {
-  GtkApplication *app =
-      gtk_application_new("com.github.barbar", G_APPLICATION_DEFAULT_FLAGS);
-  g_signal_connect(app, "activate", G_CALLBACK(activate), bar);
-  int status = g_application_run(G_APPLICATION(app), argc, argv);
-  g_object_unref(app);
-  return status;
-}
-
-/**
- * g_barbar_bars_run:
- * @bars: a %NULL-terminated list of #BarBarBar to start
- * @argc: The argc from main()
- * @argv: The argv from main()
- * Returns: The exit status.
- */
-int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv) { return 0; }
-
-BarBarBar *g_barbar_bar_new(void) {
+GtkWidget *g_barbar_bar_new(void) {
   BarBarBar *bar;
 
-  // bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM,
-  //                    "bar-height", 15, NULL);
-  bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_BOTTOM,
-                     "bar-height", 15, NULL);
+  bar = g_object_new(BARBAR_TYPE_BAR, NULL);
+  // bar = g_object_new(BARBAR_TYPE_BAR, "bar-pos", BARBAR_POS_TOP, NULL);
 
-  return bar;
+  return GTK_WIDGET(bar);
 }

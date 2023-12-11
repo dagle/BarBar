@@ -28,6 +28,7 @@ enum {
   NUM_PROPERTIES,
 };
 
+// G_DEFINE_TYPE_WITH_CODE
 G_DEFINE_TYPE(BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET)
 
 static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
@@ -216,7 +217,10 @@ static void g_barbar_river_tag_constructed(GObject *object) {
   for (uint32_t i = 0; i < 9; i++) {
     sprintf(str, "%d", i + 1);
     btn = gtk_button_new_with_label(str);
+    // btn = gtk_label_new(str);
     // gtk_widget_set_name(btn, "tags");
+    gtk_button_set_can_shrink(GTK_BUTTON(btn), TRUE);
+    gtk_widget_set_size_request(GTK_WIDGET(btn), 2, 2);
     gtk_widget_set_parent(btn, GTK_WIDGET(river));
     g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
     river->buttons[i] = btn;
