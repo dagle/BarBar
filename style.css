@@ -1,0 +1,191 @@
+* {
+  border-radius: 0;
+}
+
+window {
+    font-family: FontAwesome, Terminess Nerd Font;
+    font-size: 12px;
+    min-height: 0;
+    background-color: black;
+    transition-property: background-color;
+    transition-duration: .5s;
+    color: #ffffff;
+    border: none;
+}
+
+/* window { */
+    /* background-color: rgba(43, 48, 59, 0.5); */
+    /* border-bottom: 3px solid rgba(100, 114, 125, 0.5); */
+    /* color: #ffffff; */
+    /* transition-property: background-color; */
+    /* transition-duration: .5s; */
+/* } */
+
+/* river#tags button { */
+/*     background-color: #3498db; */
+    /* padding: 0 5px; */
+    /* font-size: 32px; */
+    /* color: #444444; */
+    /* border-bottom: 1px solid rgba(100, 114, 125, 0.5); */
+/* } */
+/* river#tags button { */
+/*   background: black; */
+/* } */
+/* text-button { */
+/*   color: #ff0000; */
+/* } */
+river-tag button {
+  background: black;
+  border: none;
+  color: #444444;
+  /* padding: 0 1px solid rgb(0,0,0); */
+  /* border-bottom: 1px solid rgba(100, 114, 125, 0.5); */
+}
+
+river-tag button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+river-tag button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+river-tag button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
+
+sway-workspace button {
+  background: black;
+  border: none;
+  color: #444444;
+  /* padding: 0 1px solid rgb(0,0,0); */
+  /* border-bottom: 1px solid rgba(100, 114, 125, 0.5); */
+}
+
+sway-workspace button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+sway-workspace button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+sway-workspace button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
+
+/* #tags button { */
+/*     padding: 0 5px; */
+/*     background-color: transparent; */
+/*     color: #444444; */
+/*     border-bottom: 1px solid rgba(100, 114, 125, 0.5); */
+/* } */
+/* #tags button:hover { */
+/*     background: rgba(0, 0, 0, 0.2); */
+/*     box-shadow: inherit; */
+/* } */
+/**/
+/* #tags button.focused { */
+/*     background: rgba(130, 130, 130, 0.2); */
+/*     box-shadow: inherit; */
+/*     border-bottom: 1px solid #ffffff; */
+/* } */
+/* #tags button.urgent{ */
+/*     padding: 0 5px; */
+/*     box-shadow: inherit; */
+/*     color: #eb4b4b; */
+/* 	background-color: #eb4d4b; */
+/* } */
+/* #tags button.occupied{ */
+/*     padding: 0 5px; */
+/*     box-shadow: inherit; */
+/*     color: #ffffff; */
+/* } */
+
+/**/
+/* window#waybar.hidden { */
+/*     opacity: 0.2; */
+/* } */
+/**/
+/* #window { */
+/*     color: #e8e8e8; */
+/*     border: none; */
+/* } */
+/* #window.focused { */
+/*     color: #ffffff; */
+/*     border: none; */
+/* } */
+/**/
+/* #temperature { */
+/*     color: #bd111f; */
+/* } */
+/**/
+/* #temperature.critical { */
+/*     color: #bd111f; */
+/* } */
+/**/
+/* #temperature { */
+/*     color: #11ba3e; */
+/* } */
+/**/
+/* #temperature.critical { */
+/*     color: #bd111f; */
+/*     background: #bd111f; */
+/* 	border: none; */
+/* } */
+/**/
+/* #tags button { */
+/*     padding: 0 5px; */
+/*     background-color: transparent; */
+/*     color: #444444; */
+/*     border-bottom: 1px solid rgba(100, 114, 125, 0.5); */
+/* } */
+/* #tags button:hover { */
+/*     background: rgba(0, 0, 0, 0.2); */
+/*     box-shadow: inherit; */
+/* } */
+/**/
+/* #tags button.focused { */
+/*     background: rgba(130, 130, 130, 0.2); */
+/*     box-shadow: inherit; */
+/*     border-bottom: 1px solid #ffffff; */
+/* } */
+/* #tags button.urgent{ */
+/*     padding: 0 5px; */
+/*     box-shadow: inherit; */
+/*     color: #eb4b4b; */
+/* 	background-color: #eb4d4b; */
+/* } */
+/* #tags button.occupied{ */
+/*     padding: 0 5px; */
+/*     box-shadow: inherit; */
+/*     color: #ffffff; */
+/* } */
+/**/
+/* #clock, */
+/* #battery, */
+/* #cpu, */
+/* #memory, */
+/* #disk, */
+/* #temperature, */
+/* #backlight, */
+/* #network, */
+/* #pulseaudio, */
+/* #custom-media, */
+/* #tray, */
+/* #mode, */
+/* #idle_inhibitor, */
+/* #mpd { */
+/*     padding: 0 10px; */
+/*     margin: 0 0px; */
+/*     color: #ffffff; */
+/* } */
+/**/
