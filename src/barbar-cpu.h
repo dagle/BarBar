@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 // TODO: This shouldn't have GObject as parent
 G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, GtkWidget)
 
-void g_barbar_cpu_start(BarBarCpu *self);
+/* void g_barbar_cpu_start(BarBarCpu *self); */
 
 G_END_DECLS
 

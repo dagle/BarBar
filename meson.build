@@ -7,16 +7,6 @@ project(
   # ],
 )
 
-# gmime_version = meson.project_version()
-# ver_arr = gmime_version.split('.')
-
-# GMIME_MAJOR_VERSION=ver_arr[0].to_int()
-# GMIME_MINOR_VERSION=ver_arr[1].to_int()
-# GMIME_MICRO_VERSION=ver_arr[2].to_int()
-# GMIME_BINARY_AGE= 100 * GMIME_MINOR_VERSION + GMIME_MICRO_VERSION
-# GMIME_INTERFACE_AGE=0
-
-# barbar_package = 'barbar-@0@.0'.format(GMIME_MAJOR_VERSION)
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
 

@@ -3,11 +3,15 @@
 #include <stdio.h>
 
 struct _BarBarBattery {
-  GtkWidget parent;
+  GtkWidget parent_instance;
 
   GtkWidget *label;
+  guint interval;
 
   char *device;
+  guint source_id;
+  UpClient *client;
+  UpDevice *dev;
 };
 
 enum {
@@ -17,6 +21,8 @@ enum {
 
   NUM_PROPERTIES,
 };
+
+#define DEFAULT_INTERVAL 1000
 
 // use upower
 G_DEFINE_TYPE(BarBarBattery, g_barbar_battery, GTK_TYPE_WIDGET)
@@ -51,25 +57,36 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
 }
 
 static void g_barbar_battery_constructed(GObject *self) {
-  BarBarBattery *battery = BARBAR_BATTERY(self);
-
-  battery->label = gtk_label_new("");
-  gtk_widget_set_parent(battery->label, GTK_WIDGET(battery));
+  // BarBarBattery *battery = BARBAR_BATTERY(self);
 }
 
-static void g_barbar_battery_init(BarBarBattery *self) {}
+void g_barbar_battery_start(BarBarBattery *mem, gpointer data);
 
-void g_barbar_battery_start(BarBarBattery *battery) {
-  UpClient *client = up_client_new();
-  GDBusConnection *login1_connection;
-  GError *error;
-  guint login1_id;
+static void g_barbar_battery_init(BarBarBattery *self) {
+  self->label = gtk_label_new("");
+  self->interval = DEFAULT_INTERVAL;
 
-  UpDevice *dev = up_client_get_display_device(client);
-  char *str = up_device_to_text(dev);
-  printf("UpDevice: %s\n", str);
-  g_object_unref(dev);
-  g_object_unref(client);
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+
+  g_signal_connect(self, "map", G_CALLBACK(g_barbar_battery_start), NULL);
+}
+
+static void g_barbar_battery_up(UpDevice *dev, BarBarBattery *battery) {
+
+  double d;
+  g_object_get(dev, "percentage", &d, NULL);
+
+  gchar *str = g_strdup_printf("%.0f%%", d);
+  gtk_label_set_label(GTK_LABEL(battery->label), str);
+  g_free(str);
+}
+
+static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
+                                    gpointer data) {
+
+  BarBarBattery *battery = BARBAR_BATTERY(data);
+
+  g_barbar_battery_up(UP_DEVICE(object), battery);
 
   // GPtrArray* newDevices = up_client_get_devices2(client);
   // for (guint i = 0; i < newDevices->len; i++) {
@@ -78,8 +95,6 @@ void g_barbar_battery_start(BarBarBattery *battery) {
   //
   // 	}
   // }
-
-  // TODO: add this
 
   // login1_connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
   // if (!login1_connection) {
@@ -98,4 +113,16 @@ void g_barbar_battery_start(BarBarBattery *battery) {
   // g_signal_connect(client, "device-added", G_CALLBACK(deviceAdded_cb), this);
   // g_signal_connect(client, "device-removed", G_CALLBACK(deviceRemoved_cb),
   // this);
+}
+
+void g_barbar_battery_setup_device(BarBarBattery *battery) {}
+
+void g_barbar_battery_start(BarBarBattery *battery, gpointer data) {
+  battery->client = up_client_new();
+  battery->dev = up_client_get_display_device(battery->client);
+
+  g_barbar_battery_up(battery->dev, battery);
+
+  g_signal_connect(battery->dev, "notify", G_CALLBACK(g_barbar_battery_update),
+                   battery);
 }

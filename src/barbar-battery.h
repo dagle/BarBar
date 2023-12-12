@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
                      GtkWidget)
 
-void g_barbar_battery_start(BarBarBattery *battery);
+/* void g_barbar_battery_start(BarBarBattery *battery); */
 
 G_END_DECLS
 

@@ -27,15 +27,16 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK, GObject)
+G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
+                     GtkWidget)
 
-void g_barbar_network_update(BarBarNetwork *self);
+/* void g_barbar_network_update(BarBarNetwork *self); */
 
 G_END_DECLS
 

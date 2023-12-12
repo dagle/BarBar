@@ -17,6 +17,26 @@
             <property name="interval">1000</property>
           </object>
         </child>
+        <child type="end">
+          <object class="BarBarMem">
+            <!-- <property name="interval">1000</property> -->
+          </object>
+        </child>
+        <child type="end">
+          <object class="BarBarCpu">
+            <!-- <property name="interval">1000</property> -->
+          </object>
+        </child>
+        <child type="end">
+          <object class="BarBarBattery">
+            <!-- <property name="interval">1000</property> -->
+          </object>
+        </child>
+        <child type="end">
+          <object class="BarBarNetwork">
+            <!-- <property name="interval">1000</property> -->
+          </object>
+        </child>
       </object>
     </child>
   </object>

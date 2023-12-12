@@ -35,7 +35,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, GtkWidget)
 
-void g_barbar_mem_update(BarBarMem *self);
+/* void g_barbar_mem_update(BarBarMem *self); */
 
 G_END_DECLS
 
