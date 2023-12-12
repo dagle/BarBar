@@ -38,11 +38,12 @@ static GParamSpec *river_view_props[NUM_PROPERTIES] = {
 static void g_barbar_river_view_constructed(GObject *object);
 
 static void g_barbar_river_view_set_property(GObject *object, guint property_id,
-                                            const GValue *value,
-                                            GParamSpec *pspec) {}
+                                             const GValue *value,
+                                             GParamSpec *pspec) {}
 
 static void g_barbar_river_view_get_property(GObject *object, guint property_id,
-                                            GValue *value, GParamSpec *pspec) {}
+                                             GValue *value, GParamSpec *pspec) {
+}
 
 static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -53,7 +54,8 @@ static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
   gobject_class->constructed = g_barbar_river_view_constructed;
   river_view_props[PROP_DEVICE] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, river_view_props);
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
+                                    river_view_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "river-view");
@@ -102,9 +104,10 @@ listen_unfocused_output(void *data,
   }
 }
 
-static void listen_focused_view(void *data,
-                         struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                         const char *title) {
+static void
+listen_focused_view(void *data,
+                    struct zriver_seat_status_v1 *zriver_seat_status_v1,
+                    const char *title) {
   BarBarRiverView *river = BARBAR_RIVER_VIEW(data);
   if (river->focused) {
     gtk_label_set_text(GTK_LABEL(river->label), title);
@@ -112,9 +115,8 @@ static void listen_focused_view(void *data,
 }
 
 static void listen_mode(void *data,
-                 struct zriver_seat_status_v1 *zriver_seat_status_v1,
-                 const char *name) {}
-
+                        struct zriver_seat_status_v1 *zriver_seat_status_v1,
+                        const char *name) {}
 
 static const struct zriver_seat_status_v1_listener seat_status_listener = {
     .focused_output = listen_focused_output,
@@ -123,12 +125,16 @@ static const struct zriver_seat_status_v1_listener seat_status_listener = {
     .mode = listen_mode,
 };
 
+void g_barbar_river_view_start(BarBarRiverView *river, gpointer data);
+
 static void g_barbar_river_view_init(BarBarRiverView *self) {}
 static void g_barbar_river_view_constructed(GObject *object) {
   BarBarRiverView *river = BARBAR_RIVER_VIEW(object);
   river->label = gtk_label_new("");
   gtk_widget_set_parent(river->label, GTK_WIDGET(river));
   river->focused = FALSE;
+
+  g_signal_connect(river, "map", G_CALLBACK(g_barbar_river_view_start), NULL);
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
@@ -136,7 +142,7 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-void g_barbar_river_view_start(BarBarRiverView *river) {
+void g_barbar_river_view_start(BarBarRiverView *river, gpointer data) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
@@ -170,8 +176,8 @@ void g_barbar_river_view_start(BarBarRiverView *river) {
   river->seat_listener = zriver_status_manager_v1_get_river_seat_status(
       river->status_manager, river->seat);
 
-  zriver_seat_status_v1_add_listener(river->seat_listener, &seat_status_listener,
-                                       river);
+  zriver_seat_status_v1_add_listener(river->seat_listener,
+                                     &seat_status_listener, river);
   wl_display_roundtrip(wl_display);
 
   zriver_status_manager_v1_destroy(river->status_manager);

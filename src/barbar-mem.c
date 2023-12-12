@@ -13,7 +13,7 @@ struct _BarBarMem {
 enum {
   PROP_0,
 
-  PROP_STATES,
+  // PROP_STATES,
 
   NUM_PROPERTIES,
 };
@@ -35,8 +35,8 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
 
   gobject_class->set_property = g_barbar_mem_set_property;
   gobject_class->get_property = g_barbar_mem_get_property;
-  mem_props[PROP_STATES] =
-      g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
+  // mem_props[PROP_STATES] =
+  //     g_param_spec_string("path", NULL, NULL, "/", G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mem_props);
 }
 

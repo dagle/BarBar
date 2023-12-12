@@ -209,6 +209,8 @@ static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                           NULL);
 }
 
+void g_barbar_river_tag_start(BarBarRiverTag *river, gpointer data);
+
 static void g_barbar_river_tag_init(BarBarRiverTag *self) {}
 static void g_barbar_river_tag_constructed(GObject *object) {
   GtkWidget *btn;
@@ -225,9 +227,10 @@ static void g_barbar_river_tag_constructed(GObject *object) {
     g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
     river->buttons[i] = btn;
   }
+  g_signal_connect(river, "map", G_CALLBACK(g_barbar_river_tag_start), NULL);
 }
 
-void g_barbar_river_tag_start(BarBarRiverTag *river) {
+void g_barbar_river_tag_start(BarBarRiverTag *river, gpointer data) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;

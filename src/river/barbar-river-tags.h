@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarRiverTag, g_barbar_river_tag, BARBAR, RIVER_TAG,
                      GtkWidget)
 
-void g_barbar_river_tag_start(BarBarRiverTag *tag);
+/* void g_barbar_river_tag_start(BarBarRiverTag *tag); */
 
 G_END_DECLS
 

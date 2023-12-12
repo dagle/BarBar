@@ -61,7 +61,7 @@ static void g_barbar_clock_set_interval(BarBarClock *clock, guint interval) {
   clock->interval = interval;
   // restart the clock if started. This stops the old clock
   if (clock->source_id > 0) {
-    g_barbar_clock_start(clock);
+    // g_barbar_clock_start(clock);
   }
 
   g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_INTERVAL]);
@@ -130,6 +130,7 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
 static gboolean g_barbar_clock_update(gpointer data);
 
 static void g_barbar_clock_init(BarBarClock *clock) {}
+void g_barbar_clock_start(BarBarClock *clock, gpointer data);
 
 static void g_barbar_clock_constructed(GObject *object) {
   BarBarClock *clock = BARBAR_CLOCK(object);
@@ -141,6 +142,7 @@ static void g_barbar_clock_constructed(GObject *object) {
 
   clock->label = gtk_label_new("");
   gtk_widget_set_parent(clock->label, GTK_WIDGET(clock));
+  g_signal_connect(clock, "map", G_CALLBACK(g_barbar_clock_start), NULL);
 }
 
 static gboolean g_barbar_clock_update(gpointer data) {
@@ -159,7 +161,7 @@ static gboolean g_barbar_clock_update(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_clock_start(BarBarClock *clock) {
+void g_barbar_clock_start(BarBarClock *clock, gpointer data) {
   if (clock->source_id > 0) {
     g_source_remove(clock->source_id);
   }

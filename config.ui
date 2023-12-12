@@ -4,28 +4,17 @@
     <child>
       <object class="GtkActionBar">
         <child type="start">
-          <object class="GtkButton">
-            <property name="label">1</property>
-          </object>
-        </child>
-        <child type="start">
-          <object class="GtkButton">
-            <property name="label">2</property>
+          <object class="BarBarRiverTag">
           </object>
         </child>
         <child type="center">
-          <object class="GtkButton">
-            <property name="label">Center</property>
+          <object class="BarBarRiverView">
           </object>
         </child>
         <child type="end">
-          <object class="GtkButton">
-            <property name="label">1</property>
-          </object>
-        </child>
-        <child type="end">
-          <object class="GtkButton">
-            <property name="label">2</property>
+          <object class="BarBarClock">
+            <property name="format">%k:%M:%S</property>
+            <property name="interval">1000</property>
           </object>
         </child>
       </object>

@@ -10,6 +10,7 @@
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
 
+#include "river/barbar-river-tags.h"
 #include "status-notifier.h"
 
 static gboolean reg_host(StatusNotifierWatcher *obj,
@@ -158,6 +159,9 @@ int main(int argc, char **argv) {
   // g_main_loop_run(loop);
   gtk_init();
   g_barbar_bar_get_type();
+  g_barbar_river_tag_get_type();
+  g_barbar_river_view_get_type();
+  g_barbar_clock_get_type();
   // GtkWidget *bar = g_barbar_bar_new();
   // g_object_unref(bar);
   run(argc, argv);

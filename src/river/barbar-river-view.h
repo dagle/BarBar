@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarRiverView, g_barbar_river_view, BARBAR, RIVER_VIEW,
                      GtkWidget)
 
-void g_barbar_river_view_start(BarBarRiverView *view);
+/* void g_barbar_river_view_start(BarBarRiverView *view); */
 
 G_END_DECLS
 

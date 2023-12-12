@@ -31,7 +31,7 @@
  */
 
 struct _BarBarBar {
-  GObject parent;
+  GtkWindow parent_instance;
 
   int left_margin;
   int right_margin;
@@ -168,13 +168,7 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, bar_props);
 }
 
-static void g_barbar_bar_init(BarBarBar *self) {
-  printf("r: %p\n ", self);
-  // self->right_margin = 0;
-  self->left_margin = 0;
-  self->top_margin = 0;
-  self->bottom_margin = 0;
-}
+static void g_barbar_bar_init(BarBarBar *self) {}
 
 // move this to main
 // static void activate2(GtkApplication *app, void *data) {
@@ -200,12 +194,12 @@ static void g_barbar_bar_constructed(GObject *object) {
   gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_TOP);
   gtk_layer_auto_exclusive_zone_enable(gtk_window);
 
-  printf("%d\n", bar->right_margin);
-
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, 0);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, 0);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, 0);
-  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, 0);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, bar->left_margin);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT,
+                       bar->right_margin);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, bar->top_margin);
+  gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM,
+                       bar->bottom_margin);
   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
     gtk_layer_set_anchor(gtk_window, i, TRUE);
   }
