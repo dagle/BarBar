@@ -18,12 +18,22 @@
           </object>
         </child>
         <child type="end">
+          <!-- <property name="interval">1000</property> -->
           <object class="BarBarMem">
-            <!-- <property name="interval">1000</property> -->
+            <child>
+              <object class="BarBarLabel">
+                <property name="format">{percentage:.0}% </property>
+              </object>
+            </child>
           </object>
         </child>
         <child type="end">
           <object class="BarBarCpu">
+            <child>
+              <object class="BarBarDiagram">
+                <property name="value">load</property>
+              </object>
+            </child>
             <!-- <property name="interval">1000</property> -->
           </object>
         </child>
@@ -34,7 +44,8 @@
         </child>
         <child type="end">
           <object class="BarBarNetwork">
-            <!-- <property name="interval">1000</property> -->
+            <!-- wlan0: -->
+            <property name="interface">wlan0</property>
           </object>
         </child>
       </object>

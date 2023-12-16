@@ -137,6 +137,13 @@ static gboolean is_number(const char *str, int *i) {
   return TRUE;
 }
 
+static gboolean is_variant_number(GParamSpec *pspec) {
+  if (G_IS_PARAM_SPEC_INT(pspec) || G_IS_PARAM_SPEC_UINT(pspec)) {
+  }
+
+  return FALSE;
+}
+
 GString *print_props(const gchar *format, GObject *object) {
   if (format == NULL) {
     return NULL;
@@ -248,6 +255,20 @@ GString *print_props(const gchar *format, GObject *object) {
     g_value_init(&value, G_PARAM_SPEC_VALUE_TYPE(param_spec));
     g_object_get_property(object, property_name, &value);
     // g_object_get_property(object, property_name, &value);
+
+    if (is_variant_number(param_spec)) {
+      // print_number(str, value, param_spec, num_format, digits, decimals);
+    } else {
+      print_variant(str, value, sperator, length);
+      //   const char *s = g_value_get_string(&value);
+      //   g_string_append(str, s);
+      // } else if (G_IS_PARAM_SPEC_BOOLEAN(param_spec)) {
+      //   if (g_value_get_boolean(&value)) {
+      //     g_string_append(str, "true");
+      //   } else {
+      //     g_string_append(str, "false");
+      //   }
+    }
     switch (num_format) {
     case FMT_DEFAULT: {
       if (param_spec) {
@@ -326,6 +347,398 @@ GString *print_props(const gchar *format, GObject *object) {
   }
   printf("%s\n", str->str);
   return str;
+}
+
+GString *g_variant_print_string(GVariant *value, GString *string,
+                                gboolean type_annotate) {
+  const gchar *value_type_string = g_variant_get_type_string(value);
+
+  if G_UNLIKELY (string == NULL)
+    string = g_string_new(NULL);
+
+  switch (value_type_string[0]) {
+  case G_VARIANT_CLASS_MAYBE:
+    if (type_annotate)
+      g_string_append_printf(string, "@%s ", value_type_string);
+
+    if (g_variant_n_children(value)) {
+      const GVariantType *base_type;
+      guint i, depth;
+      GVariant *element = NULL;
+
+      /* Nested maybes:
+       *
+       * Consider the case of the type "mmi".  In this case we could
+       * write "just just 4", but "4" alone is totally unambiguous,
+       * so we try to drop "just" where possible.
+       *
+       * We have to be careful not to always drop "just", though,
+       * since "nothing" needs to be distinguishable from "just
+       * nothing".  The case where we need to ensure we keep the
+       * "just" is actually exactly the case where we have a nested
+       * Nothing.
+       *
+       * Search for the nested Nothing, to save a lot of recursion if there
+       * are multiple levels of maybes.
+       */
+      for (depth = 0, base_type = g_variant_get_type(value);
+           g_variant_type_is_maybe(base_type);
+           depth++, base_type = g_variant_type_element(base_type))
+        ;
+
+      element = g_variant_ref(value);
+      for (i = 0; i < depth && element != NULL; i++) {
+        GVariant *new_element = g_variant_n_children(element)
+                                    ? g_variant_get_child_value(element, 0)
+                                    : NULL;
+        g_variant_unref(element);
+        element = g_steal_pointer(&new_element);
+      }
+
+      if (element == NULL) {
+        /* One of the maybes was Nothing, so print out the right number of
+         * justs. */
+        for (; i > 1; i--)
+          g_string_append(string, "just ");
+        g_string_append(string, "nothing");
+      } else {
+        /* There are no Nothings, so print out the child with no prefixes. */
+        g_variant_print_string(element, string, FALSE);
+      }
+
+      g_clear_pointer(&element, g_variant_unref);
+    } else
+      g_string_append(string, "nothing");
+
+    break;
+
+  case G_VARIANT_CLASS_ARRAY:
+    /* it's an array so the first character of the type string is 'a'
+     *
+     * if the first two characters are 'ay' then it's a bytestring.
+     * under certain conditions we print those as strings.
+     */
+    if (value_type_string[1] == 'y') {
+      const gchar *str;
+      gsize size;
+      gsize i;
+
+      /* first determine if it is a byte string.
+       * that's when there's a single nul character: at the end.
+       */
+      str = g_variant_get_data(value);
+      size = g_variant_get_size(value);
+
+      for (i = 0; i < size; i++)
+        if (str[i] == '\0')
+          break;
+
+      /* first nul byte is the last byte -> it's a byte string. */
+      if (i == size - 1) {
+        gchar *escaped = g_strescape(str, NULL);
+
+        /* use double quotes only if a ' is in the string */
+        if (strchr(str, '\''))
+          g_string_append_printf(string, "b\"%s\"", escaped);
+        else
+          g_string_append_printf(string, "b'%s'", escaped);
+
+        g_free(escaped);
+        break;
+      }
+
+      else {
+        /* fall through and handle normally... */
+      }
+    }
+
+    /*
+     * if the first two characters are 'a{' then it's an array of
+     * dictionary entries (ie: a dictionary) so we print that
+     * differently.
+     */
+    // <property name="format">{apa:32}<property>
+    // <property name="format">{apa@,:32}<property>
+    if (value_type_string[1] == '{')
+    /* dictionary */
+    {
+      const gchar *comma = "";
+      gsize n, i;
+
+      if ((n = g_variant_n_children(value)) == 0) {
+        if (type_annotate)
+          g_string_append_printf(string, "@%s ", value_type_string);
+        g_string_append(string, "{}");
+        break;
+      }
+
+      g_string_append_c(string, '{');
+      for (i = 0; i < n; i++) {
+        GVariant *entry, *key, *val;
+
+        g_string_append(string, comma);
+        comma = ", ";
+
+        entry = g_variant_get_child_value(value, i);
+        key = g_variant_get_child_value(entry, 0);
+        val = g_variant_get_child_value(entry, 1);
+        g_variant_unref(entry);
+
+        g_variant_print_string(key, string, type_annotate);
+        g_variant_unref(key);
+        g_string_append(string, ": ");
+        g_variant_print_string(val, string, type_annotate);
+        g_variant_unref(val);
+        type_annotate = FALSE;
+      }
+      g_string_append_c(string, '}');
+    } else
+    /* normal (non-dictionary) array */
+    {
+      const gchar *comma = "";
+      gsize n, i;
+
+      if ((n = g_variant_n_children(value)) == 0) {
+        if (type_annotate)
+          g_string_append_printf(string, "@%s ", value_type_string);
+        g_string_append(string, "[]");
+        break;
+      }
+
+      g_string_append_c(string, '[');
+      for (i = 0; i < n; i++) {
+        GVariant *element;
+
+        g_string_append(string, comma);
+        comma = ", ";
+
+        element = g_variant_get_child_value(value, i);
+
+        g_variant_print_string(element, string, type_annotate);
+        g_variant_unref(element);
+        type_annotate = FALSE;
+      }
+      g_string_append_c(string, ']');
+    }
+
+    break;
+
+  case G_VARIANT_CLASS_TUPLE: {
+    gsize n, i;
+
+    n = g_variant_n_children(value);
+
+    g_string_append_c(string, '(');
+    for (i = 0; i < n; i++) {
+      GVariant *element;
+
+      element = g_variant_get_child_value(value, i);
+      g_variant_print_string(element, string, type_annotate);
+      g_string_append(string, ", ");
+      g_variant_unref(element);
+    }
+
+    /* for >1 item:  remove final ", "
+     * for 1 item:   remove final " ", but leave the ","
+     * for 0 items:  there is only "(", so remove nothing
+     */
+    g_string_truncate(string, string->len - (n > 0) - (n > 1));
+    g_string_append_c(string, ')');
+  } break;
+
+  case G_VARIANT_CLASS_DICT_ENTRY: {
+    GVariant *element;
+
+    g_string_append_c(string, '{');
+
+    element = g_variant_get_child_value(value, 0);
+    g_variant_print_string(element, string, type_annotate);
+    g_variant_unref(element);
+
+    g_string_append(string, ", ");
+
+    element = g_variant_get_child_value(value, 1);
+    g_variant_print_string(element, string, type_annotate);
+    g_variant_unref(element);
+
+    g_string_append_c(string, '}');
+  } break;
+
+  case G_VARIANT_CLASS_VARIANT: {
+    GVariant *child = g_variant_get_variant(value);
+
+    /* Always annotate types in nested variants, because they are
+     * (by nature) of variable type.
+     */
+    g_string_append_c(string, '<');
+    g_variant_print_string(child, string, TRUE);
+    g_string_append_c(string, '>');
+
+    g_variant_unref(child);
+  } break;
+
+  case G_VARIANT_CLASS_BOOLEAN:
+    if (g_variant_get_boolean(value))
+      g_string_append(string, "true");
+    else
+      g_string_append(string, "false");
+    break;
+
+  case G_VARIANT_CLASS_STRING: {
+    const gchar *str = g_variant_get_string(value, NULL);
+    gunichar quote = strchr(str, '\'') ? '"' : '\'';
+
+    g_string_append_c(string, quote);
+
+    while (*str) {
+      gunichar c = g_utf8_get_char(str);
+
+      if (c == quote || c == '\\')
+        g_string_append_c(string, '\\');
+
+      if (g_unichar_isprint(c))
+        g_string_append_unichar(string, c);
+
+      else {
+        g_string_append_c(string, '\\');
+        if (c < 0x10000)
+          switch (c) {
+          case '\a':
+            g_string_append_c(string, 'a');
+            break;
+
+          case '\b':
+            g_string_append_c(string, 'b');
+            break;
+
+          case '\f':
+            g_string_append_c(string, 'f');
+            break;
+
+          case '\n':
+            g_string_append_c(string, 'n');
+            break;
+
+          case '\r':
+            g_string_append_c(string, 'r');
+            break;
+
+          case '\t':
+            g_string_append_c(string, 't');
+            break;
+
+          case '\v':
+            g_string_append_c(string, 'v');
+            break;
+
+          default:
+            g_string_append_printf(string, "u%04x", c);
+            break;
+          }
+        else
+          g_string_append_printf(string, "U%08x", c);
+      }
+
+      str = g_utf8_next_char(str);
+    }
+
+    g_string_append_c(string, quote);
+  } break;
+
+  case G_VARIANT_CLASS_BYTE:
+    if (type_annotate)
+      g_string_append(string, "byte ");
+    g_string_append_printf(string, "0x%02x", g_variant_get_byte(value));
+    break;
+
+  case G_VARIANT_CLASS_INT16:
+    if (type_annotate)
+      g_string_append(string, "int16 ");
+    g_string_append_printf(string, "%" G_GINT16_FORMAT,
+                           g_variant_get_int16(value));
+    break;
+
+  case G_VARIANT_CLASS_UINT16:
+    if (type_annotate)
+      g_string_append(string, "uint16 ");
+    g_string_append_printf(string, "%" G_GUINT16_FORMAT,
+                           g_variant_get_uint16(value));
+    break;
+
+  case G_VARIANT_CLASS_INT32:
+    /* Never annotate this type because it is the default for numbers
+     * (and this is a *pretty* printer)
+     */
+    g_string_append_printf(string, "%" G_GINT32_FORMAT,
+                           g_variant_get_int32(value));
+    break;
+
+  case G_VARIANT_CLASS_HANDLE:
+    if (type_annotate)
+      g_string_append(string, "handle ");
+    g_string_append_printf(string, "%" G_GINT32_FORMAT,
+                           g_variant_get_handle(value));
+    break;
+
+  case G_VARIANT_CLASS_UINT32:
+    if (type_annotate)
+      g_string_append(string, "uint32 ");
+    g_string_append_printf(string, "%" G_GUINT32_FORMAT,
+                           g_variant_get_uint32(value));
+    break;
+
+  case G_VARIANT_CLASS_INT64:
+    if (type_annotate)
+      g_string_append(string, "int64 ");
+    g_string_append_printf(string, "%" G_GINT64_FORMAT,
+                           g_variant_get_int64(value));
+    break;
+
+  case G_VARIANT_CLASS_UINT64:
+    if (type_annotate)
+      g_string_append(string, "uint64 ");
+    g_string_append_printf(string, "%" G_GUINT64_FORMAT,
+                           g_variant_get_uint64(value));
+    break;
+
+  case G_VARIANT_CLASS_DOUBLE: {
+    gchar buffer[100];
+    gint i;
+
+    g_ascii_dtostr(buffer, sizeof buffer, g_variant_get_double(value));
+
+    for (i = 0; buffer[i]; i++)
+      if (buffer[i] == '.' || buffer[i] == 'e' || buffer[i] == 'n' ||
+          buffer[i] == 'N')
+        break;
+
+    /* if there is no '.' or 'e' in the float then add one */
+    if (buffer[i] == '\0') {
+      buffer[i++] = '.';
+      buffer[i++] = '0';
+      buffer[i++] = '\0';
+    }
+
+    g_string_append(string, buffer);
+  } break;
+
+  case G_VARIANT_CLASS_OBJECT_PATH:
+    if (type_annotate)
+      g_string_append(string, "objectpath ");
+    g_string_append_printf(string, "\'%s\'", g_variant_get_string(value, NULL));
+    break;
+
+  case G_VARIANT_CLASS_SIGNATURE:
+    if (type_annotate)
+      g_string_append(string, "signature ");
+    g_string_append_printf(string, "\'%s\'", g_variant_get_string(value, NULL));
+    break;
+
+  default:
+    g_assert_not_reached();
+  }
+
+  return string;
 }
 
 static void g_barbar_cpu_constructed(GObject *object) {}
