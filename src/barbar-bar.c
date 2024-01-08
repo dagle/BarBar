@@ -181,7 +181,7 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
    * What screen to display the bar on.
    */
   bar_props[PROP_SCREEN_NUM] =
-      g_param_spec_uint("screen-num", NULL, NULL, 0, G_MAXUINT, 1,
+      g_param_spec_uint("screen-num", NULL, NULL, 0, G_MAXUINT, 0,
                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   /**
    * BarBarBar:bar-pos:
@@ -214,9 +214,11 @@ static void g_barbar_bar_constructed(GObject *object) {
   // something like this, make it possible to identify the monitor by name
   GdkDisplay *gdk_display = gdk_display_get_default();
   GListModel *monitors = gdk_display_get_monitors(gdk_display);
-  if (bar->screen_num < g_list_model_get_n_items(monitors)) {
+  if (bar->screen_num <= g_list_model_get_n_items(monitors)) {
     GdkMonitor *monitor = g_list_model_get_item(monitors, bar->screen_num);
-    gtk_layer_set_monitor(gtk_window, monitor);
+    if (monitor) {
+      gtk_layer_set_monitor(gtk_window, monitor);
+    }
   }
 
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, bar->left_margin);

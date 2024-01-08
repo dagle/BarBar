@@ -1,4 +1,5 @@
 #include "barbar-rotary.h"
+#include <gsk/gsk.h>
 
 struct _BarBarRotary {
   GtkWidget parent_instance;
@@ -6,35 +7,89 @@ struct _BarBarRotary {
   double min_value;
   double max_value;
   double cur_value;
-  // GtkWidget *label;
 
-  // char *path;
+  gboolean inverted;
+
+  GskPath *circle;
+  GskPath *path;
+  GskStroke *stroke;
 };
 
 enum {
   PROP_0,
 
   PROP_VALUE,
-  // PROP_INVERTED,
+  PROP_MIN_VALUE,
+  PROP_MAX_VALUE,
+  PROP_INVERTED,
 
   NUM_PROPERTIES,
 };
 
-static GParamSpec *rotary_props[NUM_PROPERTIES] = {
+static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
 
 G_DEFINE_TYPE(BarBarRotary, g_barbar_rotary, GTK_TYPE_WIDGET)
 
-// static void g_barbar_rotary_constructed(GObject *object);
+static void g_barbar_rotary_set_value_internal(BarBarRotary *self,
+                                               double value) {
+  self->cur_value = value;
 
-static void g_barbar_rotary_set_value(BarBarRotary *rotary, const char *path) {
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_VALUE]);
+
+  // gtk_widget_queue_allocate(GTK_WIDGET(self->trough_widget));
+}
+
+static void g_barbar_rotary_set_value(BarBarRotary *self, double value) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
+
+  g_barbar_rotary_set_value_internal(self, value);
+}
+
+static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
+
+  if (value == self->max_value)
+    return;
+
+  self->max_value = value;
+
+  if (self->max_value < self->cur_value)
+    g_barbar_rotary_set_value_internal(self, self->max_value);
+
+  // update_block_nodes(self);
+  // update_level_style_classes(self);
+
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MAX_VALUE]);
+}
+
+static void g_barbar_rotary_set_min_value(BarBarRotary *self, double value) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
+
+  if (value == self->min_value)
+    return;
+
+  self->min_value = value;
+
+  if (self->min_value > self->cur_value)
+    g_barbar_rotary_set_value_internal(self, self->min_value);
+
+  // update_block_nodes(self);
+  // update_level_style_classes(self);
+
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MIN_VALUE]);
+}
+
+static void g_barbar_rotary_set_inverted(BarBarRotary *rotary, gboolean value) {
   g_return_if_fail(BARBAR_IS_ROTARY(rotary));
 
-  // g_free(bar->path);
-  // bar->path = g_strdup(path);
+  if (rotary->inverted == value) {
+    return;
+  }
+  rotary->inverted = value;
 
-  g_object_notify_by_pspec(G_OBJECT(rotary), rotary_props[PROP_VALUE]);
+  g_object_notify_by_pspec(G_OBJECT(rotary), properties[PROP_INVERTED]);
 }
 
 static void g_barbar_rotary_set_property(GObject *object, guint property_id,
@@ -44,7 +99,13 @@ static void g_barbar_rotary_set_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_VALUE:
-    // g_barbar_disk_set_path(disk, g_value_get_string(value));
+    g_barbar_rotary_set_value(rotary, g_value_get_double(value));
+  case PROP_MIN_VALUE:
+    g_barbar_rotary_set_min_value(rotary, g_value_get_double(value));
+  case PROP_MAX_VALUE:
+    g_barbar_rotary_set_max_value(rotary, g_value_get_double(value));
+  case PROP_INVERTED:
+    g_barbar_rotary_set_inverted(rotary, g_value_get_double(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -57,7 +118,13 @@ static void g_barbar_rotary_get_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_VALUE:
-    // g_value_set_string(value, disk->path);
+    g_value_set_double(value, rotary->cur_value);
+  case PROP_MIN_VALUE:
+    g_value_set_double(value, rotary->min_value);
+  case PROP_MAX_VALUE:
+    g_value_set_double(value, rotary->max_value);
+  case PROP_INVERTED:
+    g_value_set_boolean(value, rotary->inverted);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -67,20 +134,31 @@ static void g_barbar_rotary_get_property(GObject *object, guint property_id,
 void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
                              int for_size, int *minimum, int *natural,
                              int *minimum_baseline, int *natural_baseline) {
-  // GtkCssStyle *style;
-
-  *minimum = *natural = 40;
-
-  // gtk_widget_get_css_node(widget);
+  *minimum = *natural = 100;
 }
 
 void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
+
+  BarBarRotary *rotary = BARBAR_ROTARY(widget);
   int x, y, width, height;
 
   x = 0;
   y = 0;
-  width = gtk_widget_get_width(widget);
-  height = gtk_widget_get_height(widget);
+
+  builder = gsk_path_builder_new();
+  gsk_path_builder_add_circle(builder, &GRAPHENE_POINT_INIT(50, 50), 40);
+  self->circle = gsk_path_builder_free_to_path(builder);
+
+  // self->stroke = gsk_stroke_new (5);
+
+  // width = gtk_widget_get_width(widget);
+  // height = gtk_widget_get_height(widget);
+
+  // GskPathBuilder *builder;
+
+  gtk_snapshot_append_stroke(snapshot, self->circle, self->stroke,
+                             &self->circle_color);
+  gtk_snapshot_append_stroke(snapshot, self->path, self->stroke, &self->color);
 
   // let total_width = self.obj().allocated_width() as f64;
   // let total_height = self.obj().allocated_height() as f64;
@@ -100,23 +178,45 @@ void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
   // cairo_set_line_width(cr, m_Style.strokeWidth);
 
-  cairo_t *cr = gtk_snapshot_append_cairo(
-      snapshot, &GRAPHENE_RECT_INIT(x, y, width, height));
+  // GskPathBuilder *builder;
+  // GskPathPoint start, end;
+  // graphene_point_t p0, p1;
+  // float start_angle, end_angle;
+  //
+  // start_angle = self->angle;
+  // end_angle = fmod (self->angle + 360 * self->completion / 100, 360);
+  //
+  // p0 = GRAPHENE_POINT_INIT (50 + 40 * cos (M_PI * start_angle / 180),
+  //                           50 + 40 * sin (M_PI * start_angle / 180));
+  // p1 = GRAPHENE_POINT_INIT (50 + 40 * cos (M_PI * end_angle / 180),
+  //                           50 + 40 * sin (M_PI * end_angle / 180));
+  //
+  // g_clear_pointer (&self->path, gsk_path_unref);
+  //
+  // gsk_path_get_closest_point (self->circle, &p0, INFINITY, &start, NULL);
+  // gsk_path_get_closest_point (self->circle, &p1, INFINITY, &end, NULL);
+  //
+  // builder = gsk_path_builder_new ();
+  // gsk_path_builder_add_segment (builder, self->circle, &start, &end);
+  // self->path = gsk_path_builder_free_to_path (builder);
 
-  // cairo_set_source_rgb(cr, bgCol->red, bgCol->green, bgCol->blue);
-  cairo_arc(cr, xCenter, yCenter, radius, 0, 2 * M_PI);
-  cairo_stroke(cr);
+#ifdef SHOW_CONTROLS
+  g_clear_pointer(&self->controls, gsk_path_unref);
+  builder = gsk_path_builder_new();
+  gsk_path_foreach(self->path, -1, add_controls, builder);
+  self->controls = gsk_path_builder_free_to_path(builder);
+#endif
 
-  // Inner
-  // cairo_set_source_rgb(cr, fgCol->red, fgCol->green, fgCol->blue);
-  cairo_arc(cr, xCenter, yCenter, radius, beg, beg + angle);
-  cairo_stroke(cr);
+  // gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 }
 
 void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
                                    int baseline) {}
 
-GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget);
+static GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget);
+static GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget) {
+  return GTK_SIZE_REQUEST_CONSTANT_SIZE;
+}
 
 static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -129,10 +229,50 @@ static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
   widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
   widget_class->measure = g_barbar_rotary_measure;
   widget_class->snapshot = g_barbar_rotary_snapshot;
-  rotary_props[PROP_VALUE] =
-      g_param_spec_string("path", NULL, NULL, NULL, G_PARAM_READWRITE);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
-                                    rotary_props);
+
+  /**
+   * BarBarRotary:value:
+   *
+   * Determines the currently filled value of the rotary.
+   */
+  properties[PROP_VALUE] = g_param_spec_double(
+      "value", NULL, NULL, 0.0, G_MAXDOUBLE, 0.0,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * BarBarRotary:min-value:
+   *
+   * Determines the minimum value of the interval that can be displayed by the
+   * rotary.
+   */
+  properties[PROP_MIN_VALUE] = g_param_spec_double(
+      "min-value", NULL, NULL, 0.0, G_MAXDOUBLE, 0.0,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * BarBarRotary:max-value:
+   *
+   * Determines the maximum value of the interval that can be displayed by the
+   * rotary.
+   */
+  properties[PROP_MAX_VALUE] = g_param_spec_double(
+      "max-value", NULL, NULL, 0.0, G_MAXDOUBLE, 1.0,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * BarBarRotary:inverted:
+   *
+   * Whether the `BarBarRotary` is inverted.
+   *
+   * Rotary normally grow from left to right.
+   * Inverted rotaries grow in the opposite direction.
+   */
+  properties[PROP_INVERTED] = g_param_spec_boolean(
+      "inverted", NULL, NULL, FALSE,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
+  gtk_widget_class_set_css_name(widget_class, "rotary");
   // gtk_widget_class_set_layout_manager_type(widget_class,
   // GTK_TYPE_BOX_LAYOUT);
 }

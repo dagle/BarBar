@@ -5,6 +5,8 @@ libbarbar_src = files(
   # 'barbar-disk.c',
   # 'barbar-mpd.c',
 
+  'widgets/barbar-rotary.c',
+
   # 'sensors/barbar-battery.c',
   'sensors/barbar-sensor.c',
   'sensors/barbar-clock.c',
@@ -18,6 +20,7 @@ libbarbar_src = files(
 
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
+
 
   # 'river/barbar-river-layout.c',
   # 'river/barbar-river-mode.c',
@@ -41,6 +44,8 @@ libbarbar_headers = [
   'barbar-util.h',
   # 'barbar-disk.h',
   # 'barbar-mpd.h',
+  #
+  'widgets/barbar-rotary.c',
 
   # 'sensors/barbar-battery.h',
   'sensors/barbar-sensor.h',
