@@ -12,21 +12,18 @@
           </object>
         </child>
         <child type="end">
-          <object class="BarbarEventWidget">
-            <property name="normal">
-              <object class="BarBarClock">
-                <property name="format">%k:%M:%S</property>
+          <object class="BarBarRotary">
+            <property name="value">load</property>
+            <property name="Sensor">
+              <object class="BarBarCpu">
                 <property name="interval">1000</property>
               </object>
             </property>
-            <property name="hover">
-            </property>
-          </object>
         </child>
         <child type="end">
           <object class="BarBarLabel">
             <property name="format">{percentage:.0}% </property>
-            <property name="producer">
+            <property name="Sensor">
               <object class="BarBarMem">
                 <property name="interval">1000</property>
               </object>
@@ -34,23 +31,11 @@
           </object>
         </child>
         <child type="end">
-          <object class="BarBarDiagram">
-            <property name="value">load</property>
-            <property name="producer">
-              <object class="BarBarCpu">
-                <property name="interval">1000</property>
-              </object>
-            </property>
-          </object>
-        </child>
-        <child type="end">
           <object class="BarBarBattery">
-            <!-- <property name="interval">1000</property> -->
           </object>
         </child>
         <child type="end">
           <object class="BarBarNetwork">
-            <!-- wlan0: -->
             <property name="interface">wlan0</property>
           </object>
         </child>

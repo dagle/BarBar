@@ -1,4 +1,5 @@
 #include "barbar-network.h"
+#include "glibconfig.h"
 #include <glibtop/netload.h>
 #include <glibtop/parameter.h>
 
@@ -11,12 +12,11 @@
 #include <libintl.h>
 #include <locale.h>
 
+#include <stdint.h>
 #include <stdio.h>
 
 struct _BarBarNetwork {
-  GtkWidget parent_instance;
-
-  GtkWidget *label;
+  BarBarSensor parent_instance;
 
   char *interface;
   int family;
@@ -27,6 +27,9 @@ struct _BarBarNetwork {
 
   guint64 bytes_in;
   guint64 bytes_out;
+
+  guint64 up_speed;
+  guint64 down_speed;
 };
 
 enum {
@@ -34,6 +37,9 @@ enum {
 
   PROP_INTERVAL,
   PROP_INTERFACE,
+
+  PROP_UP_SPEED,
+  PROP_DOWN_SPEED,
 
   NUM_PROPERTIES,
 };
@@ -45,7 +51,7 @@ enum {
 // update every 10 sec
 #define DEFAULT_INTERVAL 10000
 
-G_DEFINE_TYPE(BarBarNetwork, g_barbar_network, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(BarBarNetwork, g_barbar_network, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *network_props[NUM_PROPERTIES] = {
     NULL,
@@ -99,39 +105,74 @@ static void g_barbar_network_get_property(GObject *object, guint property_id,
   case PROP_INTERVAL:
     g_value_set_uint(value, network->interval);
     break;
+  case PROP_UP_SPEED:
+    g_value_set_uint64(value, network->up_speed);
+    break;
+  case PROP_DOWN_SPEED:
+    g_value_set_uint64(value, network->down_speed);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
+static void g_barbar_network_constructed(GObject *obj);
+
 static void g_barbar_network_class_init(BarBarNetworkClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
+
+  sensor_class->start = g_barbar_network_start;
 
   gobject_class->set_property = g_barbar_network_set_property;
   gobject_class->get_property = g_barbar_network_get_property;
-  network_props[PROP_INTERVAL] =
-      g_param_spec_uint("interval", "Interval", "Interval in milli seconds", 0,
-                        G_MAXUINT32, DEFAULT_INTERVAL, G_PARAM_READWRITE);
+  gobject_class->constructed = g_barbar_network_constructed;
+
+  /**
+   * BarBarNetwork:interval:
+   *
+   * How often network should be pulled for info
+   */
+  network_props[PROP_INTERVAL] = g_param_spec_uint(
+      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
+      DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarNetwork:interface:
+   *
+   * The name of the interface
+   */
   network_props[PROP_INTERFACE] = g_param_spec_string(
       "interface", "Interface", "Interface to measure speed on", NULL,
-      G_PARAM_READWRITE);
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarNetwork:up-speed:
+   *
+   * The upload speed of the device
+   */
+  network_props[PROP_UP_SPEED] = g_param_spec_uint64(
+      "up-speed", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
+  /**
+   * BarBarNetwork:down-speed:
+   *
+   * The download speed of the device
+   */
+  network_props[PROP_DOWN_SPEED] = g_param_spec_uint64(
+      "down-speed", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     network_props);
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
-
-void g_barbar_network_start(BarBarNetwork *net, gpointer data);
 
 static void g_barbar_network_init(BarBarNetwork *self) {
   self->interval = DEFAULT_INTERVAL;
-  self->label = gtk_label_new("");
   self->bytes_out = 0;
   self->bytes_in = 0;
+}
 
-  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
-
-  g_signal_connect(self, "map", G_CALLBACK(g_barbar_network_start), NULL);
+static void g_barbar_network_constructed(GObject *obj) {
+  BarBarNetwork *self = BARBAR_NETWORK(obj);
+  G_OBJECT_CLASS(g_barbar_network_parent_class)->constructed(obj);
 }
 
 static char *hwaddress_format_for_display(glibtop_netload *buf) {
@@ -151,16 +192,10 @@ static char *hwaddress_format_for_display(glibtop_netload *buf) {
 static gboolean g_barbar_network_update(gpointer data) {
   BarBarNetwork *net = BARBAR_NETWORK(data);
 
-  guint64 in_diff;
-  guint64 out_diff;
-
   glibtop_netload netload;
-  // unsigned method, count, port;
-  // unsigned count;
   struct in_addr addr, subnet;
   char address_string[INET_ADDRSTRLEN], subnet_string[INET_ADDRSTRLEN];
   char address6_string[INET6_ADDRSTRLEN], prefix6_string[INET6_ADDRSTRLEN];
-  // char *hwaddress_string;
 
   if (net->interface == NULL) {
     return G_SOURCE_REMOVE;
@@ -176,65 +211,29 @@ static gboolean g_barbar_network_update(gpointer data) {
   inet_ntop(AF_INET6, netload.address6, address6_string, INET6_ADDRSTRLEN);
   inet_ntop(AF_INET6, netload.prefix6, prefix6_string, INET6_ADDRSTRLEN);
 
-  // hwaddress_string = hwaddress_format_for_display(&netload);
-
   if (!net->bytes_in) {
     net->bytes_in = netload.bytes_in;
+  }
+  if (!net->bytes_in) {
     net->bytes_out = netload.bytes_out;
   }
 
-  in_diff = netload.bytes_in - net->bytes_in;
-  out_diff = netload.bytes_out - net->bytes_out;
+  guint tick = net->interval / 1000;
+
+  net->down_speed = (netload.bytes_in - net->bytes_in) / tick;
+  net->up_speed = (netload.bytes_out - net->bytes_out) / tick;
 
   net->bytes_in = netload.bytes_in;
   net->bytes_out = netload.bytes_out;
 
-  guint tick = net->interval / 1000;
-
-  // printf("bytes in: %lu kb/s\n", in_diff / (1024 * (net->interval / 1000)));
-  // printf("bytes out: %lu kb/s\n", out_diff / (1024 * (net->interval /
-  // 1000)));
-
-  gchar *str =
-      g_strdup_printf("in: %lu kb/s | out: %lu kb/s", in_diff / (1024 * tick),
-                      out_diff / (1024 * tick));
-  gtk_label_set_label(GTK_LABEL(net->label), str);
-  g_free(str);
-
-  // printf("Network Load (0x%016llx):\n\n"
-  //        "\tInterface Flags:\t0x%016llx\n"
-  //        "\tAddress:\t\t0x%08x - %s\n"
-  //        "\tSubnet:\t\t\t0x%08x - %s\n\n"
-  //        "\tMTU:\t\t\t%d\n"
-  //        "\tCollisions:\t\t%" G_GUINT64_FORMAT "\n\n"
-  //        "\tPackets In:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tPackets Out:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tPackets Total:\t\t%" G_GUINT64_FORMAT "\n\n"
-  //        "\tBytes In:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tBytes Out:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tBytes Total:\t\t%" G_GUINT64_FORMAT "\n\n"
-  //        "\tErrors In:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tErrors Out:\t\t%" G_GUINT64_FORMAT "\n"
-  //        "\tErrors Total:\t\t%" G_GUINT64_FORMAT "\n\n"
-  //        "\tAddress6:\t\t%s\n"
-  //        "\tPrefix6:\t\t%s\n"
-  //        "\tScope6:\t\t\t%#03x\n\n"
-  //        "\tHarware Address:\t%s\n\n",
-  //        (unsigned long long)netload.flags,
-  //        (unsigned long long)netload.if_flags, (guint32)netload.address,
-  //        address_string, (guint32)netload.subnet, subnet_string, netload.mtu,
-  //        netload.collisions, netload.packets_in, netload.packets_out,
-  //        netload.packets_total, netload.bytes_in, netload.bytes_out,
-  //        netload.bytes_total, netload.errors_in, netload.errors_out,
-  //        netload.errors_total, address6_string, prefix6_string,
-  //        (int)netload.scope6, hwaddress_string);
-
-  // glibtop_close ();
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_UP_SPEED]);
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_DOWN_SPEED]);
 
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_network_start(BarBarNetwork *net, gpointer data) {
+void g_barbar_network_start(BarBarSensor *sensor) {
+  BarBarNetwork *net = BARBAR_NETWORK(sensor);
   if (net->source_id > 0) {
     g_source_remove(net->source_id);
   }

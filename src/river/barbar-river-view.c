@@ -36,6 +36,7 @@ static GParamSpec *river_view_props[NUM_PROPERTIES] = {
 };
 
 static void g_barbar_river_view_constructed(GObject *object);
+static void g_barbar_river_view_start(GtkWidget *widget);
 
 static void g_barbar_river_view_set_property(GObject *object, guint property_id,
                                              const GValue *value,
@@ -52,6 +53,9 @@ static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
   gobject_class->set_property = g_barbar_river_view_set_property;
   gobject_class->get_property = g_barbar_river_view_get_property;
   gobject_class->constructed = g_barbar_river_view_constructed;
+
+  widget_class->root = g_barbar_river_view_start;
+
   river_view_props[PROP_DEVICE] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
@@ -125,16 +129,12 @@ static const struct zriver_seat_status_v1_listener seat_status_listener = {
     .mode = listen_mode,
 };
 
-void g_barbar_river_view_start(BarBarRiverView *river, gpointer data);
-
 static void g_barbar_river_view_init(BarBarRiverView *self) {}
 static void g_barbar_river_view_constructed(GObject *object) {
   BarBarRiverView *river = BARBAR_RIVER_VIEW(object);
   river->label = gtk_label_new("");
   gtk_widget_set_parent(river->label, GTK_WIDGET(river));
   river->focused = FALSE;
-
-  g_signal_connect(river, "map", G_CALLBACK(g_barbar_river_view_start), NULL);
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
@@ -142,13 +142,15 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-void g_barbar_river_view_start(BarBarRiverView *river, gpointer data) {
+void g_barbar_river_view_start(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
-  struct wl_output *output;
   struct wl_display *wl_display;
-  struct zriver_output_status_v1 *output_status;
+
+  GTK_WIDGET_CLASS(g_barbar_river_view_parent_class)->root(widget);
+
+  BarBarRiverView *river = BARBAR_RIVER_VIEW(widget);
 
   gdk_display = gdk_display_get_default();
 
@@ -158,9 +160,14 @@ void g_barbar_river_view_start(BarBarRiverView *river, gpointer data) {
 
   // We try to find the main screen for this widget, this should only
   // be done if no screen is specified
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(river));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    // print an error
+    printf("Parent window not found!\n");
+    return;
+  }
+  monitor = gtk_layer_get_monitor(window);
   river->output = gdk_wayland_monitor_get_wl_output(monitor);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);

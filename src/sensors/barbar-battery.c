@@ -3,13 +3,13 @@
 #include <stdio.h>
 
 struct _BarBarBattery {
-  GtkWidget parent_instance;
+  GObject parent_instance;
 
-  GtkWidget *label;
   guint interval;
 
   char *device;
   guint source_id;
+
   UpClient *client;
   UpDevice *dev;
 };
@@ -24,8 +24,12 @@ enum {
 
 #define DEFAULT_INTERVAL 1000
 
+#define LOGIN_PATH "/org/freedesktop/login1"
+#define LOGIN_INTERFACE "org.freedesktop.login1.Manager"
+#define LOGIN_NAME "org.freedesktop.login1"
+
 // use upower
-G_DEFINE_TYPE(BarBarBattery, g_barbar_battery, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(BarBarBattery, g_barbar_battery, G_TYPE_OBJECT)
 
 static GParamSpec *battery_props[NUM_PROPERTIES] = {
     NULL,
@@ -42,7 +46,6 @@ static void g_barbar_battery_get_property(GObject *object, guint property_id,
 
 static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_battery_set_property;
   gobject_class->get_property = g_barbar_battery_get_property;
@@ -52,8 +55,9 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     battery_props);
 
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  gtk_widget_class_set_css_name(widget_class, "battery");
+  // gtk_widget_class_set_layout_manager_type(widget_class,
+  // GTK_TYPE_BOX_LAYOUT); gtk_widget_class_set_css_name(widget_class,
+  // "battery");
 }
 
 static void g_barbar_battery_constructed(GObject *self) {
@@ -63,12 +67,11 @@ static void g_barbar_battery_constructed(GObject *self) {
 void g_barbar_battery_start(BarBarBattery *mem, gpointer data);
 
 static void g_barbar_battery_init(BarBarBattery *self) {
-  self->label = gtk_label_new("");
   self->interval = DEFAULT_INTERVAL;
 
-  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+  // gtk_widget_set_parent(self->label, GTK_WIDGET(self));
 
-  g_signal_connect(self, "map", G_CALLBACK(g_barbar_battery_start), NULL);
+  // g_signal_connect(self, "map", G_CALLBACK(g_barbar_battery_start), NULL);
 }
 
 static void g_barbar_battery_up(UpDevice *dev, BarBarBattery *battery) {
@@ -76,15 +79,16 @@ static void g_barbar_battery_up(UpDevice *dev, BarBarBattery *battery) {
   double d;
   g_object_get(dev, "percentage", &d, NULL);
 
-  gchar *str = g_strdup_printf("%.0f%%", d);
-  gtk_label_set_label(GTK_LABEL(battery->label), str);
-  g_free(str);
+  // gchar *str = g_strdup_printf("%.0f%%", d);
+  // gtk_label_set_label(GTK_LABEL(battery->label), str);
+  // g_free(str);
 }
 
 static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
                                     gpointer data) {
 
   BarBarBattery *battery = BARBAR_BATTERY(data);
+  GError *err = NULL;
 
   g_barbar_battery_up(UP_DEVICE(object), battery);
 
@@ -96,7 +100,12 @@ static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
   // 	}
   // }
 
-  // login1_connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
+  GDBusConnection *login1_connection =
+      g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
+
+  GDBusProxy *proxy = g_dbus_proxy_new_sync(
+      login1_connection, G_DBUS_PROXY_FLAGS_NONE, NULL, LOGIN_NAME, LOGIN_PATH,
+      LOGIN_INTERFACE, NULL, &err);
   // if (!login1_connection) {
   // throw std::runtime_error("Unable to connect to the SYSTEM Bus!...");
   // } else {

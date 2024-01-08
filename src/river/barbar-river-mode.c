@@ -151,9 +151,14 @@ void g_barbar_river_mode_start(BarBarRiverMode *river) {
 
   // We try to find the main screen for this widget, this should only
   // be done if no screen is specified
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(river));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    // print an error
+    printf("Parent window not found!\n");
+    return;
+  }
+  monitor = gtk_layer_get_monitor(window);
   river->output = gdk_wayland_monitor_get_wl_output(monitor);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);

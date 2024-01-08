@@ -1,16 +1,18 @@
 #include "barbar-clock.h"
+#include "barbar-sensor.h"
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
 
 struct _BarBarClock {
-  GtkWidget parent_instance;
+  BarBarSensor parent_instance;
 
-  GtkWidget *label;
   char *format;
   guint interval;
 
   GTimeZone *timezone;
+  GDateTime *time;
+
   guint source_id;
 };
 
@@ -23,11 +25,12 @@ enum {
   PROP_TZ,
   PROP_FORMAT,
   PROP_INTERVAL,
+  PROP_TIME,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarClock, g_barbar_clock, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(BarBarClock, g_barbar_clock, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
@@ -67,6 +70,29 @@ static void g_barbar_clock_set_interval(BarBarClock *clock, guint interval) {
   g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_INTERVAL]);
 }
 
+static void g_barbar_get_time(BarBarClock *clock, GValue *value) {
+  g_return_if_fail(BARBAR_IS_CLOCK(clock));
+
+  if (!clock->time) {
+    return;
+  }
+
+  char *str = g_date_time_format(clock->time, clock->format);
+
+  g_value_set_string(value, str);
+
+  g_free(str);
+}
+
+static void g_barbar_get_timezone(BarBarClock *clock, GValue *value) {
+  g_return_if_fail(BARBAR_IS_CLOCK(clock));
+  g_return_if_fail(clock->timezone);
+
+  const char *tz = g_time_zone_get_identifier(clock->timezone);
+
+  g_value_set_string(value, tz);
+}
+
 static void g_barbar_clock_set_property(GObject *object, guint property_id,
                                         const GValue *value,
                                         GParamSpec *pspec) {
@@ -93,7 +119,7 @@ static void g_barbar_clock_get_property(GObject *object, guint property_id,
   BarBarClock *clock = BARBAR_CLOCK(object);
   switch (property_id) {
   case PROP_TZ:
-    // g_value_set_string(value, clock->timezone);
+    g_barbar_get_timezone(clock, value);
     break;
   case PROP_FORMAT:
     g_value_set_string(value, clock->format);
@@ -101,67 +127,102 @@ static void g_barbar_clock_get_property(GObject *object, guint property_id,
   case PROP_INTERVAL:
     g_value_set_uint(value, clock->interval);
     break;
+  case PROP_TIME:
+    g_barbar_get_time(clock, value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-static void g_barbar_clock_class_init(BarBarClockClass *class) {
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+void g_barbar_clock_dispose(GObject *object) {
+  // BarBarClock *self = BARBAR_CLOCK(object);
 
+  G_OBJECT_CLASS(g_barbar_clock_parent_class)->dispose(object);
+}
+
+static void g_barbar_clock_class_init(BarBarClockClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
+
+  sensor_class->start = g_barbar_clock_start;
 
   gobject_class->set_property = g_barbar_clock_set_property;
   gobject_class->get_property = g_barbar_clock_get_property;
   gobject_class->constructed = g_barbar_clock_constructed;
-  clock_props[PROP_TZ] = g_param_spec_string("tz", "Time Zone", "Time zone",
-                                             NULL, G_PARAM_READWRITE);
-  clock_props[PROP_FORMAT] =
-      g_param_spec_string("format", "Format", "date time format string",
-                          DEFAULT_FORMAT, G_PARAM_READWRITE);
-  clock_props[PROP_INTERVAL] =
-      g_param_spec_uint("interval", "Interval", "Interval in milli seconds", 0,
-                        G_MAXUINT32, DEFAULT_INTERVAL, G_PARAM_READWRITE);
+
+  gobject_class->dispose = g_barbar_clock_dispose;
+
+  /**
+   * BarBarClock:tz:
+   *
+   * Time Zone the clock should be located in. Uses local time by default.
+   */
+  clock_props[PROP_TZ] =
+      g_param_spec_string("tz", "Time Zone", "Time zone", NULL,
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  /**
+   * BarBarClock:format:
+   *
+   * The format the clock should use, uses g_date_time_format.
+   */
+  clock_props[PROP_FORMAT] = g_param_spec_string(
+      "format", "Format", "date time format string", DEFAULT_FORMAT,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarClock:time:
+   *
+   * The format the clock should use, uses g_date_time_format.
+   */
+  clock_props[PROP_TIME] =
+      g_param_spec_string("time", NULL, NULL, NULL, G_PARAM_READABLE);
+  /**
+   * BarBarClock:interval:
+   *
+   * How often memory should be pulled for info.
+   */
+  clock_props[PROP_INTERVAL] = g_param_spec_uint(
+      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
+      DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, clock_props);
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
 static gboolean g_barbar_clock_update(gpointer data);
 
-static void g_barbar_clock_init(BarBarClock *clock) {}
-void g_barbar_clock_start(BarBarClock *clock, gpointer data);
+static void g_barbar_clock_init(BarBarClock *clock) {
+  clock->format = g_strdup(DEFAULT_FORMAT);
+  clock->interval = DEFAULT_INTERVAL;
+}
 
 static void g_barbar_clock_constructed(GObject *object) {
   BarBarClock *clock = BARBAR_CLOCK(object);
 
   G_OBJECT_CLASS(g_barbar_clock_parent_class)->constructed(object);
-
-  clock->format = g_strdup(DEFAULT_FORMAT);
-  clock->interval = DEFAULT_INTERVAL;
-
-  clock->label = gtk_label_new("");
-  gtk_widget_set_parent(clock->label, GTK_WIDGET(clock));
-  g_signal_connect(clock, "map", G_CALLBACK(g_barbar_clock_start), NULL);
 }
 
 static gboolean g_barbar_clock_update(gpointer data) {
   BarBarClock *clock = BARBAR_CLOCK(data);
-  GDateTime *time;
-  if (clock->timezone) {
-    time = g_date_time_new_now(clock->timezone);
-  } else {
-    time = g_date_time_new_now_local();
+
+  if (clock->time) {
+    g_date_time_unref(clock->time);
   }
 
-  char *str = g_date_time_format(time, clock->format);
-  gtk_label_set_text(GTK_LABEL(clock->label), str);
+  if (clock->timezone) {
+    clock->time = g_date_time_new_now(clock->timezone);
+  } else {
+    clock->time = g_date_time_new_now_local();
+  }
 
-  g_date_time_unref(time);
+  g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_TIME]);
+
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_clock_start(BarBarClock *clock, gpointer data) {
+void g_barbar_clock_start(BarBarSensor *sensor) {
+  BarBarClock *clock = BARBAR_CLOCK(sensor);
+
   if (clock->source_id > 0) {
     g_source_remove(clock->source_id);
   }

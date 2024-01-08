@@ -22,22 +22,18 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_NETWORK_H_
-#define _BARBAR_NETWORK_H_
+#ifndef _BARBAR_CMD_H_
+#define _BARBAR_CMD_H_
 
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
+#define BARBAR_TYPE_CMD (g_barbar_cmd_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
-                     GtkWidget)
-
-/* void g_barbar_network_update(BarBarNetwork *self); */
+G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, GObject)
 
 G_END_DECLS
 
-#endif /* _BARBAR_NETWORK_H_ */
+#endif /* _BARBAR_CMD_H_ */

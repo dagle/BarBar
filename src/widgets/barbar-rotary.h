@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_CPU_H_
-#define _BARBAR_CPU_H_
+#ifndef _BARBAR_ROTARY_H_
+#define _BARBAR_ROTARY_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,13 +31,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_CPU (g_barbar_cpu_get_type())
+#define BARBAR_TYPE_ROTARY (g_barbar_rotary_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
 
-/* void g_barbar_cpu_start(BarBarCpu *self); */
+/* void g_barbar_disk_start(BarBarRotary *disk); */
+GtkWidget *g_barbar_rotary_new(void);
 
 G_END_DECLS
 
-#endif /* _BARBAR_CPU_H_ */
+#endif /* _BARBAR_ROTARY_H_ */

@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdio.h>
 
+// TODO: Remake this into a sensor
+
 struct _BarBarTemperature {
   GtkWidget parent;
 
@@ -17,11 +19,12 @@ enum {
   PROP_0,
 
   PROP_DEVICE,
-  PROP_CRITICAL,
-  // PROP_FORMAT_CRITICAL,
 
   NUM_PROPERTIES,
 };
+
+#define DEFAULT_INTERVAL 10000
+#define DEFAULT_DEVICE "/sys/class/thermal/thermal_zone0/temp"
 
 G_DEFINE_TYPE(BarBarTemperature, g_barbar_temperature, GTK_TYPE_WIDGET)
 
@@ -52,9 +55,6 @@ static void g_barbar_temperature_set_property(GObject *object,
   case PROP_DEVICE:
     g_barbar_temperature_set_path(temperature, g_value_get_string(value));
     break;
-  case PROP_CRITICAL:
-    temperature->critical = g_value_get_double(value);
-    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -72,12 +72,9 @@ static void g_barbar_temperature_class_init(BarBarTemperatureClass *class) {
   gobject_class->get_property = g_barbar_temperature_get_property;
   gobject_class->constructed = g_barbar_temperature_constructed;
 
-  temperature_props[PROP_DEVICE] = g_param_spec_string(
-      "path", NULL, NULL, "/sys/class/thermal/thermal_zone0/temp",
-      G_PARAM_READWRITE);
-  temperature_props[PROP_CRITICAL] = g_param_spec_double(
-      "critical-temp", NULL, NULL, 0.0, 300.0, 80.0, G_PARAM_READWRITE);
-
+  temperature_props[PROP_DEVICE] =
+      g_param_spec_string("path", NULL, NULL, DEFAULT_DEVICE,
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     temperature_props);
 
@@ -85,12 +82,17 @@ static void g_barbar_temperature_class_init(BarBarTemperatureClass *class) {
   gtk_widget_class_set_css_name(widget_class, "temperature");
 }
 
-static void g_barbar_temperature_init(BarBarTemperature *self) {}
+static void g_barbar_temperature_init(BarBarTemperature *self) {
+  self->interval = DEFAULT_INTERVAL;
+}
 
 static void g_barbar_temperature_constructed(GObject *self) {
   BarBarTemperature *temp = BARBAR_TEMPERATURE(self);
 
-  temp->path = strdup("/sys/class/thermal/thermal_zone0/temp");
+  if (!temp->path) {
+    temp->path = strdup(DEFAULT_DEVICE);
+  }
+
   temp->critical = 80.0;
   temp->interval = 1000;
 

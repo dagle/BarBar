@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_RIVER_VIEW_H_
-#define _BARBAR_RIVER_VIEW_H_
+#ifndef _BARBAR_BACKLIGHT_H_
+#define _BARBAR_BACKLIGHT_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,11 +31,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_RIVER_VIEW (g_barbar_river_view_get_type())
+#define BARBAR_TYPE_BACKLIGHT (g_barbar_backlight_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarRiverView, g_barbar_river_view, BARBAR, RIVER_VIEW,
-                     GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarBacklight, g_barbar_backlight, BARBAR, BACKLIGHT,
+                     GObject)
+
+void g_barbar_backlight_start(BarBarBacklight *backlight);
 
 G_END_DECLS
 
-#endif /* _BARBAR_RIVER_VIEW_H_ */
+#endif /* _BARBAR_BACKLIGHT_H_ */

@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BATTERY_H_
-#define _BARBAR_BATTERY_H_
+#ifndef _BARBAR_DIAGRAM_H_
+#define _BARBAR_DIAGRAM_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,13 +31,12 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_BATTERY (g_barbar_battery_get_type())
+#define BARBAR_TYPE_DIAGRAM (g_barbar_diagram_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
-                     GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarDiagram, g_barbar_rotary, BARBAR, DIAGRAM, GtkWidget)
 
-/* void g_barbar_battery_start(BarBarBattery *battery); */
+GtkWidget *g_barbar_diagram_new(void);
 
 G_END_DECLS
 
-#endif /* _BARBAR_BATTERY_H_ */
+#endif /* _BARBAR_DIAGRAM_H_ */

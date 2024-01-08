@@ -22,20 +22,21 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_RIVER_VIEW_H_
-#define _BARBAR_RIVER_VIEW_H_
+#ifndef _BARBAR_CPU_H_
+#define _BARBAR_CPU_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_RIVER_VIEW (g_barbar_river_view_get_type())
+#define BARBAR_TYPE_CPU (g_barbar_cpu_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarRiverView, g_barbar_river_view, BARBAR, RIVER_VIEW,
-                     GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, BarBarSensor)
+
+void g_barbar_cpu_start(BarBarSensor *sensor);
 
 G_END_DECLS
 
-#endif /* _BARBAR_RIVER_VIEW_H_ */
+#endif /* _BARBAR_CPU_H_ */

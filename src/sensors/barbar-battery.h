@@ -22,21 +22,20 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_CMD_H_
-#define _BARBAR_CMD_H_
+#ifndef _BARBAR_BATTERY_H_
+#define _BARBAR_BATTERY_H_
 
 #include <glib-object.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_CMD (g_barbar_cmd_get_type())
+#define BARBAR_TYPE_BATTERY (g_barbar_battery_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, GObject)
+G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY, GObject)
 
-void g_barbar_cmd_update(BarBarCmd *self);
+/* void g_barbar_battery_start(BarBarBattery *battery); */
 
 G_END_DECLS
 
-#endif /* _BARBAR_CMD_H_ */
+#endif /* _BARBAR_BATTERY_H_ */

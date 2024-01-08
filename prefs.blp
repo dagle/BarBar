@@ -1,0 +1,84 @@
+using Gtk 4.0;
+using BarBar 1.0;
+
+BarBar.Bar {
+  screen-num: 0;
+  Gtk.ActionBar {
+    [start]
+    BarBar.RiverTag {
+    }
+
+    [center]
+    BarBar.RiverView {
+    }
+
+    [end]
+    Gtk.Label {
+      label: bind clock.time;
+    }
+
+    [end]
+    Gtk.LevelBar {
+      value: bind mem.percent;
+      orientation: vertical;
+      inverted: true;
+    }
+
+    [end]
+    Gtk.LevelBar {
+      value: bind cpu.percent;
+      orientation: vertical;
+      inverted: true;
+    }
+
+    [end]
+    Gtk.Label {
+      label: bind network.down-speed;
+      // label: bind $BarBar.label_format("enp13s0: {down-speed:kb,.0}⬇️ {up-speed:kb,.0}⬆️ ", network);
+    }
+  }
+}
+
+BarBar.Bar {
+  screen-num: 1;
+  Gtk.ActionBar {
+    [start]
+    BarBar.RiverTag {
+    }
+
+    [center]
+    BarBar.RiverView {
+    }
+
+    [end]
+    Gtk.Label {
+
+    }
+
+    // [end]
+    // BarBar.Inhibitor {
+    // } 
+
+    // [end]
+    // BarBar.Tray {
+    // }
+  }
+}
+
+BarBar.Clock clock {
+  interval: 1000;
+  format: "%H:%M:%S";
+}
+
+BarBar.Mem mem {
+}
+
+BarBar.Cpu cpu {
+}
+
+BarBar.Network network {
+  interface: "enp13s0";
+}
+
+// BarBar.Mpris mpris {
+//}

@@ -1,6 +1,6 @@
 project(
   'barbar', 'c',
-  version: '0.0.1',
+  version: '1.0',
   license: 'MIT',
   meson_version: '>= 1.0.0',
   # default_options: [
@@ -10,7 +10,7 @@ project(
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
 
-barbar_package = 'barbar-0.0.1'
+barbar_package = 'barbar-1.0'
 conf_data = configuration_data()
 
 thread_dep = dependency('threads')
@@ -23,29 +23,29 @@ udev = dependency('libudev')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 
-libgweather = dependency('gweather4')
-libgeoclue = dependency('libgeoclue-2.0')
+# libgweather = dependency('gweather4')
+# libgeoclue = dependency('libgeoclue-2.0')
 
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
-template_glib = dependency('template-glib-1.0')
+# template_glib = dependency('template-glib-1.0')
 
 gtk = dependency('gtk4')
-libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
 
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         required: true,
         fallback : ['gtk4-layer-shell', 'gtk_layer_shell'])
 
 deps = [
-  thread_dep,
   glib,
   gobject,
   gio,
   gtk,
   gtk_layer_shell_dep,
-  libmpdclient,
+  wayland_client,
+  thread_dep,
+  # libmpdclient,
   giounix,
   udev,
   json,
@@ -53,9 +53,8 @@ deps = [
   libgtop,
   libwireplumber,
   playerctl,
-  wayland_client,
-  libgweather,
-  libgeoclue,
+  # libgweather,
+  # libgeoclue,
   m_dep,
 ]
 

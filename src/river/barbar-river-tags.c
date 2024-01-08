@@ -1,4 +1,5 @@
 #include "river/barbar-river-tags.h"
+#include "barbar-util.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -28,13 +29,13 @@ enum {
   NUM_PROPERTIES,
 };
 
-// G_DEFINE_TYPE_WITH_CODE
 G_DEFINE_TYPE(BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET)
 
 static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+static void g_barbar_river_tag_map(GtkWidget *widget);
 static void g_barbar_river_tag_constructed(GObject *object);
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data);
@@ -55,6 +56,9 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
   gobject_class->set_property = g_barbar_river_tag_set_property;
   gobject_class->get_property = g_barbar_river_tag_get_property;
   gobject_class->constructed = g_barbar_river_tag_constructed;
+
+  widget_class->root = g_barbar_river_tag_map;
+
   river_tags_props[PROP_TAGNUMS] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
@@ -209,8 +213,6 @@ static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                           NULL);
 }
 
-void g_barbar_river_tag_start(BarBarRiverTag *river, gpointer data);
-
 static void g_barbar_river_tag_init(BarBarRiverTag *self) {}
 static void g_barbar_river_tag_constructed(GObject *object) {
   GtkWidget *btn;
@@ -219,23 +221,24 @@ static void g_barbar_river_tag_constructed(GObject *object) {
   for (uint32_t i = 0; i < 9; i++) {
     sprintf(str, "%d", i + 1);
     btn = gtk_button_new_with_label(str);
-    // btn = gtk_label_new(str);
-    // gtk_widget_set_name(btn, "tags");
-    gtk_button_set_can_shrink(GTK_BUTTON(btn), TRUE);
-    gtk_widget_set_size_request(GTK_WIDGET(btn), 2, 2);
     gtk_widget_set_parent(btn, GTK_WIDGET(river));
     g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
     river->buttons[i] = btn;
   }
-  g_signal_connect(river, "map", G_CALLBACK(g_barbar_river_tag_start), NULL);
+
+  G_OBJECT_CLASS(g_barbar_river_tag_parent_class)->constructed(object);
 }
 
-void g_barbar_river_tag_start(BarBarRiverTag *river, gpointer data) {
+static void g_barbar_river_tag_map(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
   struct wl_output *output;
   struct wl_display *wl_display;
+
+  GTK_WIDGET_CLASS(g_barbar_river_tag_parent_class)->root(widget);
+
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(widget);
 
   gdk_display = gdk_display_get_default();
 
@@ -245,9 +248,16 @@ void g_barbar_river_tag_start(BarBarRiverTag *river, gpointer data) {
 
   // We try to find the main screen for this widget, this should only
   // be done if no screen is specified
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(river));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+  // GtkWindow *window = g_barbar_get_parent_layer_window(GTK_WIDGET(river));
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    // print an error
+    printf("Parent window not found!\n");
+    return;
+  }
+
+  monitor = gtk_layer_get_monitor(window);
   output = gdk_wayland_monitor_get_wl_output(monitor);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);

@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BACKLIGHT_H_
-#define _BARBAR_BACKLIGHT_H_
+#ifndef _BARBAR_UTIL_H_
+#define _BARBAR_UTIL_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,13 +31,8 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_BACKLIGHT (g_barbar_backlight_get_type())
-
-G_DECLARE_FINAL_TYPE(BarBarBacklight, g_barbar_backlight, BARBAR, BACKLIGHT,
-                     GtkWidget)
-
-void g_barbar_backlight_start(BarBarBacklight *backlight);
+GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget);
 
 G_END_DECLS
 
-#endif /* _BARBAR_BACKLIGHT_H_ */
+#endif /* _BARBAR_UTIL_H_ */

@@ -22,7 +22,21 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_WIDGET_H_
-#define _BARBAR_WIDGET_H_
+#ifndef _BARBAR_CLOCK_H_
+#define _BARBAR_CLOCK_H_
 
-#endif /* _BARBAR_WIDGET_H_ */
+#include "barbar-sensor.h"
+#include <glib-object.h>
+#include <glib.h>
+
+G_BEGIN_DECLS
+
+#define BARBAR_TYPE_CLOCK (g_barbar_clock_get_type())
+
+G_DECLARE_FINAL_TYPE(BarBarClock, g_barbar_clock, BARBAR, CLOCK, BarBarSensor)
+
+void g_barbar_clock_start(BarBarSensor *sensor);
+
+G_END_DECLS
+
+#endif /* _BARBAR_CLOCK_H_ */

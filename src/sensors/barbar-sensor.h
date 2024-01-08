@@ -22,21 +22,26 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_CLOCK_H_
-#define _BARBAR_CLOCK_H_
+#ifndef _BARBAR_SENSOR_H_
+#define _BARBAR_SENSOR_H_
 
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_CLOCK (g_barbar_clock_get_type())
+#define BARBAR_TYPE_SENSOR (g_barbar_sensor_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarClock, g_barbar_clock, BARBAR, CLOCK, GtkWidget)
+G_DECLARE_DERIVABLE_TYPE(BarBarSensor, g_barbar_sensor, BARBAR, SENSOR, GObject)
 
-/* void g_barbar_clock_start(BarBarClock *clock); */
+struct _BarBarSensorClass {
+  GObjectClass parent_class;
+
+  void (*start)(BarBarSensor *self);
+};
+
+void g_barbar_sensor_start(BarBarSensor *self);
 
 G_END_DECLS
 
-#endif /* _BARBAR_CLOCK_H_ */
+#endif /* _BARBAR_SENSOR_H_ */

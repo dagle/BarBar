@@ -22,21 +22,22 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_MEM_H_
-#define _BARBAR_MEM_H_
+#ifndef _BARBAR_NETWORK_H_
+#define _BARBAR_NETWORK_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_MEM (g_barbar_mem_get_type())
+#define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
+                     BarBarSensor)
 
-/* void g_barbar_mem_update(BarBarMem *self); */
+void g_barbar_network_start(BarBarSensor *sensor);
 
 G_END_DECLS
 
-#endif /* _BARBAR_MEM_H_ */
+#endif /* _BARBAR_NETWORK_H_ */

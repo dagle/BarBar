@@ -1,21 +1,9 @@
 #include "barbar-bar.h"
-#include "barbar-battery.h"
-#include "barbar-clock.h"
-#include "barbar-cpu.h"
-#include "barbar-disk.h"
-#include "barbar-mpd.h"
-#include "barbar-mpris2.h"
-#include "barbar-temperature.h"
-#include "barbar-wireplumber.h"
+#include "barbar.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
 
-#include "barbar-battery.h"
-#include "barbar-cpu.h"
-#include "barbar-mem.h"
-#include "barbar-network.h"
-#include "river/barbar-river-tags.h"
-#include "river/barbar-river-view.h"
+#include "sensors/barbar-sensor.h"
 #include "status-notifier.h"
 
 static gboolean reg_host(StatusNotifierWatcher *obj,
@@ -95,14 +83,28 @@ MyCustomWidget *my_custom_widget_new(void) {
 //
 //   // Perform your application logic here
 // }
-
 static void activate2(GtkApplication *app, void *data) {
   GtkBuilder *builder =
       gtk_builder_new_from_file("/home/dagle/.config/barbar/config.ui");
+  GSList *list = gtk_builder_get_objects(builder);
 
-  GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window1"));
-  gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
-  gtk_window_present(window);
+  for (GSList *it = list; it; it = it->next) {
+    GObject *object = it->data;
+
+    if (BARBAR_IS_BAR(object)) {
+      GtkWindow *window = GTK_WINDOW(object);
+      gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
+      gtk_window_present(window);
+    } else if (BARBAR_IS_SENSOR(object)) {
+      g_object_ref(object);
+      BarBarSensor *sensor = BARBAR_SENSOR(object);
+      g_barbar_sensor_start(sensor);
+    }
+  }
+  g_slist_free(list);
+
+  // GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window1"));
+  // gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
   g_object_unref(builder);
 }
 
@@ -164,13 +166,7 @@ int main(int argc, char **argv) {
   // g_main_loop_run(loop);
   gtk_init();
   g_barbar_bar_get_type();
-  g_barbar_river_tag_get_type();
-  g_barbar_river_view_get_type();
-  g_barbar_clock_get_type();
-  g_barbar_mem_get_type();
-  g_barbar_cpu_get_type();
-  g_barbar_battery_get_type();
-  g_barbar_network_get_type();
+  g_barbar_init();
   // GtkWidget *bar = g_barbar_bar_new();
   // g_object_unref(bar);
   run(argc, argv);

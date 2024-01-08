@@ -1,17 +1,24 @@
 libbarbar_src = files(
   'barbar.c',
   'barbar-bar.c',
+  'barbar-util.c',
   # 'barbar-disk.c',
   # 'barbar-mpd.c',
-  'barbar-battery.c',
-  'barbar-clock.c',
-  'barbar-cpu.c',
-  'barbar-mem.c',
-  'barbar-network.c',
-  # 'barbar-wireplumber.c',
-  # 'barbar-mpris2.c',
+
+  # 'sensors/barbar-battery.c',
+  'sensors/barbar-sensor.c',
+  'sensors/barbar-clock.c',
+  'sensors/barbar-cpu.c',
+  'sensors/barbar-mem.c',
+  'sensors/barbar-network.c',
+  # 'sensors/barbar-cmd.c',
+
+  # 'sensors/barbar-wireplumber.c',
+  # 'sensors/barbar-mpris2.c',
+
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
+
   # 'river/barbar-river-layout.c',
   # 'river/barbar-river-mode.c',
   # 'sway/barbar-sway-ipc.c',
@@ -31,17 +38,24 @@ libbarbar_src = files(
 libbarbar_headers = [
   'barbar.h',
   'barbar-bar.h',
+  'barbar-util.h',
   # 'barbar-disk.h',
   # 'barbar-mpd.h',
-  'barbar-battery.h',
-  'barbar-clock.h',
-  'barbar-cpu.h',
-  'barbar-mem.h',
-  'barbar-network.h',
-  # 'barbar-wireplumber.h',
-  # 'barbar-mpris2.h',
+
+  # 'sensors/barbar-battery.h',
+  'sensors/barbar-sensor.h',
+  'sensors/barbar-clock.h',
+  'sensors/barbar-cpu.h',
+  'sensors/barbar-mem.h',
+  'sensors/barbar-network.h',
+  # 'sensors/barbar-cmd.c',
+
+  # 'sensors/barbar-wireplumber.h',
+  # 'sensors/barbar-mpris2.h',
+
   'river/barbar-river-tags.h',
   'river/barbar-river-view.h',
+
   # 'river/barbar-river-layout.h',
   # 'river/barbar-river-mode.h',
   # 'sway/barbar-sway-ipc.h',
@@ -59,7 +73,7 @@ libbarbar_headers = [
 
 wl_mod = import('unstable-wayland')
 
-wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
+wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
 
 wayland_prots = [
 	wl_protocol_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml',
@@ -86,11 +100,6 @@ gdbus_src = gnome.gdbus_codegen('status-notifier',
   namespace : 'StatusNotifier',
 )
 
-executable('testbar',
-  libbarbar_src + 'main.c', wayland_src, gdbus_src, 
-  dependencies: deps
-)
-
 libbarbar = library(barbar_package, libbarbar_src, wayland_src, gdbus_src,
   dependencies : deps, install: true)
 
@@ -114,10 +123,10 @@ if get_option('introspection')
     sources: libbarbar_src + libbarbar_headers,
     export_packages: [barbar_package],
     header: 'barbar/barbar.h',
-    namespace: 'Barbar',
+    namespace: 'BarBar',
     nsversion: '1.0',
     symbol_prefix: ['g_barbar', 'barbar'],
-    identifier_prefix : ['Barbar'],
+    identifier_prefix : ['BarBar'],
     includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0'],
     dependencies: deps,
     extra_args: gir_args,
@@ -132,3 +141,10 @@ if get_option('vala')
     packages: [ 'gio-2.0', 'gtk4' ],
     install: true)
 endif
+
+executable('barbar',
+  libbarbar_src + 'main.c', wayland_src, gdbus_src, 
+  dependencies: deps,
+  install: true
+)
+
