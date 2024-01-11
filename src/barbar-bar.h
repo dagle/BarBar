@@ -47,6 +47,8 @@ typedef enum {
   BARBAR_POS_RIGHT,
 } BarBarPosition;
 
+GType g_barbar_position_get_type(void);
+
 #define BARBAR_TYPE_BAR (g_barbar_bar_get_type())
 
 #define BARBAR_TYPE_POSITION (g_barbar_position_get_type())

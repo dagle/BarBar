@@ -1,5 +1,5 @@
-#include "hyprland/barbar-hyprland-workspace.h"
-#include "hyprland/barbar-hyprland-ipc.h"
+#include "barbar-hyprland-workspace.h"
+#include "barbar-hyprland-ipc.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -67,7 +67,7 @@ static GParamSpec *hypr_workspace_props[NUM_PROPERTIES] = {
 
 static guint click_signal;
 
-static void g_barbar_hyprland_workspace_constructed(GObject *object);
+static void g_barbar_hyprland_workspace_map(GtkWidget *widget);
 static void default_clicked_handler(BarBarHyprlandWorkspace *hypr,
                                     guint workspace, gpointer user_data);
 
@@ -81,8 +81,10 @@ g_barbar_hyprland_workspace_set_output(BarBarHyprlandWorkspace *hypr,
 
   g_free(hypr->output_name);
 
-  hypr->output_name = strdup(output);
-  g_object_notify_by_pspec(G_OBJECT(clock), hypr_workspace_props[PROP_OUTPUT]);
+  if (output) {
+    hypr->output_name = strdup(output);
+  }
+  g_object_notify_by_pspec(G_OBJECT(hypr), hypr_workspace_props[PROP_OUTPUT]);
 }
 
 static void g_barbar_hyprland_workspace_set_property(GObject *object,
@@ -122,10 +124,10 @@ g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
 
   gobject_class->set_property = g_barbar_hyprland_workspace_set_property;
   gobject_class->get_property = g_barbar_hyprland_workspace_get_property;
-  gobject_class->constructed = g_barbar_hyprland_workspace_constructed;
+  widget_class->root = g_barbar_hyprland_workspace_map;
 
-  hypr_workspace_props[PROP_OUTPUT] =
-      g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
+  hypr_workspace_props[PROP_OUTPUT] = g_param_spec_string(
+      "output", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   click_signal = g_signal_new_class_handler(
       "clicked", G_TYPE_FROM_CLASS(class),
@@ -141,7 +143,6 @@ g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
 }
 
 static void g_barbar_hyprland_workspace_init(BarBarHyprlandWorkspace *self) {}
-static void g_barbar_hyprland_workspace_constructed(GObject *object) {}
 
 static void default_clicked_handler(BarBarHyprlandWorkspace *sway, guint tag,
                                     gpointer user_data) {
@@ -152,73 +153,101 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
                                                  gpointer data) {
   switch (type) {
   case HYPRLAND_WORKSPACE:
+    printf("workspace\n");
+    printf("%s\n", args);
     break;
   case HYPRLAND_CREATEWORKSPACE:
+    printf("create\n");
     break;
   case HYPRLAND_DESTROYWORKSPACE:
+    printf("delete\n");
     break;
   case HYPRLAND_MOVEWORKSPACE:
+    printf("move\n");
     break;
   case HYPRLAND_RENAMEWORKSPACE:
+    printf("rename\n");
     break;
   }
 }
+static void parse_initional_workspaces(BarBarHyprlandWorkspace *hypr,
+                                       GSocketConnection *ipc) {
+  JsonParser *parser;
+  GInputStream *input_stream;
+  GError *err = NULL;
+  parser = json_parser_new();
 
-void g_barbar_hyprland_workspace_start(BarBarHyprlandWorkspace *hypr) {
-  GdkDisplay *gdk_display;
-  GdkMonitor *monitor;
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc));
+  gboolean ret = json_parser_load_from_stream(parser, input_stream, NULL, &err);
 
-  GError *error = NULL;
-  gchar *buf = NULL;
-  int len;
-  // BarBarHyprlandIpc *ipc;
-
-  gdk_display = gdk_display_get_default();
-
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(hypr));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
-  hypr->output = gdk_wayland_monitor_get_wl_output(monitor);
-  GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
-
-  if (error) {
-    printf("error: %s\n", error->message);
-    return;
+  if (!ret) {
+    printf("json error: %s\n", err->message);
   }
 
-  g_barbar_hyprland_ipc_send_command(ipc, "j/workspaces", &error);
-  if (error) {
-    printf("error: %s\n", error->message);
-    return;
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+
+  if (json_reader_is_array(reader)) {
+    int n = json_reader_count_elements(reader);
+    for (int j = 0; j < n; j++) {
+      json_reader_read_member(reader, "id");
+      int id = json_reader_get_int_value(reader);
+      json_reader_end_member(reader);
+
+      json_reader_read_member(reader, "name");
+      const char *name = json_reader_get_string_value(reader);
+      json_reader_end_member(reader);
+
+      json_reader_read_member(reader, "monitor");
+      const char *monitor = json_reader_get_string_value(reader);
+      json_reader_end_member(reader);
+
+      json_reader_read_member(reader, "monitorID");
+      int monitor_id = json_reader_get_int_value(reader);
+      json_reader_end_member(reader);
+      json_reader_end_element(reader);
+    }
+    g_object_unref(reader);
+    g_object_unref(parser);
   }
-  gchar *str = g_barbar_hyprland_ipc_message_resp(ipc, &error);
-  printf("str: %s\n", str);
 
-  g_barbar_hyprland_ipc_listner(g_barbar_hyprland_workspace_callback, NULL,
-                                &error);
+  static void g_barbar_hyprland_workspace_map(GtkWidget * widget) {
+    GdkDisplay *gdk_display;
+    GdkMonitor *monitor;
 
-  // TODO: We need to get the output->name, we can't really do that atm
-  // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // support this. This will change in future. For now the user needs to specify
-  // the output. This will be fixed in the future.
+    GError *error = NULL;
+    // gchar *buf = NULL;
+    // int len;
 
-  // ipc = g_barbar_sway_ipc_connect(&error);
-  // if (error != NULL) {
-  //   printf("Error: %s\n", error->message);
-  //   // TODO: Error stuff
-  //   return;
-  // }
-  // // g_barbar_sway_ipc_subscribe(connection, payload);
-  // g_barbar_sway_ipc_send(ipc, SWAY_GET_WORKSPACES, "");
-  // len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
-  // if (len > 0) {
-  //   g_barbar_sway_handle_workspaces(sway, buf, len);
-  //
-  //   g_free(buf);
-  // }
-  //
-  // g_barbar_sway_ipc_subscribe(ipc, intrest, sway,
-  //                             g_barbar_sway_handle_workspaces_change);
+    BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(widget);
+    // BarBarHyprlandIpc *ipc;
 
-  // g_barbar_sway_ipc_close(ipc);
-}
+    gdk_display = gdk_display_get_default();
+
+    GtkNative *native = gtk_widget_get_native(GTK_WIDGET(hypr));
+    GdkSurface *surface = gtk_native_get_surface(native);
+    monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+    hypr->output = gdk_wayland_monitor_get_wl_output(monitor);
+    GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
+
+    if (error) {
+      printf("error: %s\n", error->message);
+      return;
+    }
+
+    g_barbar_hyprland_ipc_send_command(ipc, "j/workspaces", &error);
+    if (error) {
+      printf("error: %s\n", error->message);
+      return;
+    }
+    gchar *str = g_barbar_hyprland_ipc_message_resp(ipc, &error);
+    printf("str: %s\n", str);
+
+    GSocketConnection *con = g_barbar_hyprland_ipc_listner(
+        g_barbar_hyprland_workspace_callback, NULL, NULL, &error);
+
+    // TODO: We need to get the output->name, we can't really do that atm
+    // because gtk4 binds to the wl_output interface version 3, which doesn't
+    // support this. This will change in future. For now the user needs to
+    // specify
+    // the output. This will be fixed in the future.
+  }

@@ -25,6 +25,7 @@
 #ifndef _BARBAR_WIREPLUMBER_H_
 #define _BARBAR_WIREPLUMBER_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -35,9 +36,9 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_WIREPLUMBER (g_barbar_wireplumber_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
-                     WIREPLUMBER, GtkWidget)
+                     WIREPLUMBER, BarBarSensor)
 
-void g_barbar_wireplumber_update(BarBarWireplumber *wireplumber);
+void g_barbar_wireplumber_start(BarBarSensor *sensor);
 
 G_END_DECLS
 

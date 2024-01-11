@@ -36,8 +36,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarHyprlandWorkspace, g_barbar_hyprland_workspace,
                      BARBAR, HYPRLAND_WORKSPACE, GtkWidget)
 
-void g_barbar_hyprland_workspace_start(BarBarHyprlandWorkspace *spaces);
-
 G_END_DECLS
 
 #endif /* _BARBAR_HYPRLAND_WORKSPACE_H_ */

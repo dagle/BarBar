@@ -41,10 +41,11 @@ enum {
   NUM_PROPERTIES,
 };
 
-static GType g_barbar_position_get_type(void) {
-  static GType barbar_position_type = 0;
+GType g_barbar_position_get_type(void) {
 
-  if (!barbar_position_type) {
+  static gsize gtk_bar_role_type;
+  if (g_once_init_enter(&gtk_bar_role_type)) {
+
     static GEnumValue pattern_types[] = {
         {BARBAR_POS_TOP, "top", "top"},
         {BARBAR_POS_BOTTOM, "bottom", "bot"},
@@ -53,15 +54,51 @@ static GType g_barbar_position_get_type(void) {
         {0, NULL, NULL},
     };
 
-    barbar_position_type =
-        g_enum_register_static("BarBarPosition", pattern_types);
+    GType type = 0;
+    type = g_enum_register_static("BarBarPosition", pattern_types);
+    g_once_init_leave(&gtk_bar_role_type, type);
   }
-  return barbar_position_type;
+  return gtk_bar_role_type;
 }
 
 static GParamSpec *bar_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static void g_barbar_bar_set_pos_internal(BarBarBar *bar, BarBarPosition pos) {
+  GtkWindow *gtk_window = GTK_WINDOW(bar);
+
+  for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
+    gtk_layer_set_anchor(gtk_window, i, TRUE);
+  }
+
+  switch (bar->pos) {
+  case BARBAR_POS_TOP:
+    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, FALSE);
+    break;
+  case BARBAR_POS_BOTTOM:
+    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, FALSE);
+    break;
+  case BARBAR_POS_LEFT:
+    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, FALSE);
+    break;
+  case BARBAR_POS_RIGHT:
+    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
+    break;
+  }
+}
+
+static void g_barbar_bar_set_pos(BarBarBar *bar, BarBarPosition pos) {
+  g_return_if_fail(BARBAR_IS_BAR(bar));
+
+  if (bar->pos == pos) {
+    return;
+  }
+
+  // g_barbar_bar_set_pos_internal(bar, pos);
+
+  g_object_notify_by_pspec(G_OBJECT(bar), bar_props[PROP_BAR_POS]);
+}
 
 static void g_barbar_bar_set_property(GObject *object, guint property_id,
                                       const GValue *value, GParamSpec *pspec) {
@@ -81,7 +118,7 @@ static void g_barbar_bar_set_property(GObject *object, guint property_id,
     bar->bottom_margin = g_value_get_uint(value);
     break;
   case PROP_BAR_POS:
-    bar->pos = g_value_get_enum(value);
+    g_barbar_bar_set_pos(bar, g_value_get_enum(value));
     break;
   case PROP_BAR_HEIGHT:
     bar->height = g_value_get_uint(value);
@@ -128,11 +165,22 @@ static void g_barbar_bar_get_property(GObject *object, guint property_id,
 
 static void g_barbar_bar_constructed(GObject *object);
 
+// GObject g_barbar_bar_constructor(GType type, guint n_construct_properties,
+//                                  GObjectConstructParam *construct_properties)
+//                                  {
+//
+//   GObject *object;
+//
+//   return NULL;
+//
+// }
+
 static void g_barbar_bar_class_init(BarBarBarClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
   gobject_class->set_property = g_barbar_bar_set_property;
   gobject_class->get_property = g_barbar_bar_get_property;
+  // gobject_class->constructor = g_barbar_bar_constructor;
   gobject_class->constructed = g_barbar_bar_constructed;
 
   /**
@@ -186,11 +234,14 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
   /**
    * BarBarBar:bar-pos:
    *
-   * Where to display the bar on the screen. Default is top.
+   * [enum@BarBar.Position] Where to display the bar on the screen. Default is
+   * top.
    */
-  bar_props[PROP_BAR_POS] =
-      g_param_spec_enum("bar-pos", NULL, NULL, BARBAR_TYPE_POSITION,
-                        BARBAR_POS_TOP, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  bar_props[PROP_BAR_POS] = g_param_spec_enum(
+      "bar-pos", "barposition", "the position of the bar", BARBAR_TYPE_POSITION,
+      BARBAR_POS_TOP,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, bar_props);
 }
 
@@ -227,25 +278,8 @@ static void g_barbar_bar_constructed(GObject *object) {
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, bar->top_margin);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM,
                        bar->bottom_margin);
-  for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
-    gtk_layer_set_anchor(gtk_window, i, TRUE);
-  }
 
-  bar->pos = BARBAR_POS_TOP;
-  switch (bar->pos) {
-  case BARBAR_POS_TOP:
-    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM, FALSE);
-    break;
-  case BARBAR_POS_BOTTOM:
-    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_TOP, FALSE);
-    break;
-  case BARBAR_POS_LEFT:
-    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT, FALSE);
-    break;
-  case BARBAR_POS_RIGHT:
-    gtk_layer_set_anchor(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
-    break;
-  }
+  g_barbar_bar_set_pos_internal(bar, bar->pos);
 
   GtkCssProvider *css_provider;
   GdkDisplay *display;

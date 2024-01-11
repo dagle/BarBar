@@ -1,13 +1,13 @@
-#include "hyprland/barbar-hyprland-ipc.h"
+#include "barbar-hyprland-ipc.h"
 #include <stdint.h>
 #include <stdio.h>
 
-// static void callback_header(GObject *object, GAsyncResult *result,
-//                             gpointer data);
-// static void callback_payload(GObject *object, GAsyncResult *result,
-//                              gpointer data);
-//
-//
+/**
+ * g_barbar_hyprland_ipc_controller:
+ * @error (out): the error, in case connection failed
+ *
+ * Returns: (nullable) (transfer full): the connection
+ */
 GSocketConnection *g_barbar_hyprland_ipc_controller(GError **error) {
   GSocketClient *socket_client;
   GSocketConnection *connection;
@@ -32,6 +32,13 @@ GSocketConnection *g_barbar_hyprland_ipc_controller(GError **error) {
   return connection;
 }
 
+/* g_barbar_hyprland_ipc_send_command:
+ * @ipc: the socket
+ * @msg: message to send
+ * @err (out): the error, in case sending the message failed
+ *
+ * Returns: True if sending the message was a success.
+ */
 gboolean g_barbar_hyprland_ipc_send_command(GSocketConnection *ipc, char *msg,
                                             GError **err) {
   GOutputStream *output_stream;
@@ -41,10 +48,17 @@ gboolean g_barbar_hyprland_ipc_send_command(GSocketConnection *ipc, char *msg,
 
   ret = g_output_stream_write_all(output_stream, msg, strlen(msg), NULL, NULL,
                                   err);
-  // g_data_input_stream_read_upto_async
   return ret;
 }
 
+/* g_barbar_hyprland_ipc_message_resp:
+ * @ipc: the socket
+ * @err (out): the error, in case sending the message failed
+ *
+ * Read the response from a command
+ *
+ * Returns: (transfer full): the response
+ */
 gchar *g_barbar_hyprland_ipc_message_resp(GSocketConnection *ipc,
                                           GError **err) {
   GInputStream *input_stream;
@@ -111,9 +125,18 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
                                       g_barbar_hyprland_line_reader, data);
 }
 
+/**
+ * g_barbar_hyprland_ipc_listner:
+ * @cb: function to run on each event
+ * @data: (closure): data passed to the function
+ * @destroy: function to destroy data
+ * @error: (out): error setting up the listner
+ *
+ * Returns: (transfer full): the connection
+ */
 GSocketConnection *
 g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
-                              GError **error) {
+                              GDestroyNotify destroy, GError **error) {
   GSocketClient *socket_client;
   GSocketConnection *connection;
   GInputStream *input_stream;

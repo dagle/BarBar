@@ -1,6 +1,7 @@
 #ifndef __BARBAR_H__
 #define __BARBAR_H__
 
+#include "barbar-bar.h"
 #include "sensors/barbar-backlight.h"
 #include "sensors/barbar-battery.h"
 #include "sensors/barbar-clock.h"
@@ -12,10 +13,12 @@
 #include "sensors/barbar-network.h"
 #include "sensors/barbar-sensor.h"
 #include "sensors/barbar-temperature.h"
+#include "sensors/barbar-wireplumber.h"
 
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
-/* #include "sensors/barbar-wireplumber.h" */
+
+#include "hyprland/barbar-hyprland-workspace.h"
 
 void g_barbar_init(void);
 

@@ -28,19 +28,18 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 #include <glib.h>
-#include <json-glib/json-glib.h>
 #include <stdint.h>
 
 G_BEGIN_DECLS
 
-typedef struct _BarBarHyprlandIpc BarBarHyprlandIpc;
-typedef struct _BarBarHyprlandIpcAsyncData BarBarHyprlandIpcAsyncData;
+/* typedef struct _BarBarHyprlandIpc BarBarHyprlandIpc; */
+/* typedef struct _BarBarHyprlandIpcAsyncData BarBarHyprlandIpcAsyncData; */
 
 typedef void (*BarBarHyprlandSubscribeCallback)(uint32_t type, char *args,
                                                 gpointer data);
 
 // event type
-enum {
+typedef enum {
   HYPRLAND_WORKSPACE,
   HYPRLAND_FOCUSEDMON,
   HYPRLAND_ACTIVEWINDOW,
@@ -67,19 +66,18 @@ enum {
   HYPRLAND_WINDOWTITLE,
   HYPRLAND_IGNOREGROUPLOCK,
   HYPRLAND_LOCKGROUPS
-};
+} BarBarHyperlandEvent;
 
-struct _BarBarSwayIpcAsyncData {
-  // A pointer to the class pointer
-  // A bit like a parrent pointer
-  gpointer *data;
-  uint32_t type;
-  uint32_t plen;
-  gchar *header;
-
-  gchar *payload;
-  /* BarBarSwaySubscribeCallback callback; */
-};
+/* struct _BarBarSwayIpcAsyncData { */
+/*   // A pointer to the class pointer */
+/*   // A bit like a parrent pointer */
+/*   gpointer *data; */
+/*   uint32_t type; */
+/*   uint32_t plen; */
+/*   gchar *header; */
+/**/
+/*   gchar *payload; */
+/* }; */
 
 GSocketConnection *g_barbar_hyprland_ipc_controller(GError **err);
 
@@ -90,7 +88,7 @@ gchar *g_barbar_hyprland_ipc_message_resp(GSocketConnection *ipc, GError **err);
 
 GSocketConnection *
 g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
-                              GError **err);
+                              GDestroyNotify destroy, GError **error);
 
 G_END_DECLS
 

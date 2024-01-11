@@ -2,15 +2,18 @@ using Gtk 4.0;
 using BarBar 1.0;
 
 BarBar.Bar {
-  screen-num: 0;
+  bar-pos: bot;
   Gtk.ActionBar {
     [start]
-    BarBar.RiverTag {
+    BarBar.HyprlandWorkspace {
     }
+    // [start]
+    // BarBar.RiverTag {
+    // }
 
-    [center]
-    BarBar.RiverView {
-    }
+    // [center]
+    // BarBar.RiverView {
+    // }
 
     [end]
     Gtk.Label {
@@ -31,36 +34,20 @@ BarBar.Bar {
       inverted: true;
     }
 
-    [end]
-    Gtk.Label {
-      label: bind network.down-speed;
+    // [end]
+    // Gtk.Label {
       // label: bind $BarBar.label_format("enp13s0: {down-speed:kb,.0}⬇️ {up-speed:kb,.0}⬆️ ", network);
-    }
-  }
-}
-
-BarBar.Bar {
-  screen-num: 1;
-  Gtk.ActionBar {
-    [start]
-    BarBar.RiverTag {
-    }
-
-    [center]
-    BarBar.RiverView {
-    }
-
-    [end]
-    Gtk.Label {
-
-    }
+    // }
 
     // [end]
-    // BarBar.Inhibitor {
-    // } 
-
-    // [end]
-    // BarBar.Tray {
+    // Gtk.ScaleButton {
+    //   adjustment: Adjustment {
+    //     lower: 0.0;
+    //     upper: 1.0;
+    //     page-increment: 0.1;
+    //     step-increment: 0.1;
+    //     value: bind plumb.value bidirectional;
+    //   };
     // }
   }
 }
@@ -77,8 +64,11 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "enp13s0";
+  interface: "wlan0";
 }
+
+// BarBar.Wireplumber plumb {
+// }
 
 // BarBar.Mpris mpris {
 //}
