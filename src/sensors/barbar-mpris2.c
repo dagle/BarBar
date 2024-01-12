@@ -3,9 +3,7 @@
 #include <stdio.h>
 
 struct _BarBarMpris {
-  GtkWidget parent_instance;
-
-  GtkWidget *label;
+  BarBarSensor parent_instance;
 
   char *player;
 };
@@ -14,20 +12,27 @@ enum {
   PROP_0,
 
   PROP_PLAYER,
+  PROP_SONG,
+  PROP_DURATION,
+  PROP_LENGTH,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarMpris, g_barbar_mpris, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(BarBarMpris, g_barbar_mpris, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *mpris_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_mpris_constructed(GObject *object);
+static void g_barbar_mpris_start(BarBarSensor *sensor);
 
 void g_barbar_mpris_set_player(BarBarMpris *mpris, const char *player) {
   g_return_if_fail(BARBAR_IS_MPRIS(mpris));
+
+  if (mpris->player && !strcmp(mpris->player, player)) {
+    return;
+  }
 
   g_free(mpris->player);
   mpris->player = g_strdup(player);
@@ -54,30 +59,25 @@ static void g_barbar_mpris_get_property(GObject *object, guint property_id,
 
 static void g_barbar_mpris_class_init(BarBarMprisClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+  BarBarSensorClass *sensor = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_mpris_set_property;
   gobject_class->get_property = g_barbar_mpris_get_property;
-  gobject_class->constructed = g_barbar_mpris_constructed;
+  sensor->start = g_barbar_mpris_start;
+
+  /**
+   * BarBarMpris:player
+   *
+   * The name of the player we want to watch
+   *
+   */
   mpris_props[PROP_PLAYER] =
       g_param_spec_string("player", NULL, NULL, "mpd", G_PARAM_READWRITE);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mpris_props);
 
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  gtk_widget_class_set_css_name(widget_class, "mpris");
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, mpris_props);
 }
 
 static void g_barbar_mpris_init(BarBarMpris *self) {}
-
-static void g_barbar_mpris_constructed(GObject *object) {
-  BarBarMpris *mpris = BARBAR_MPRIS(object);
-
-  G_OBJECT_CLASS(g_barbar_mpris_parent_class)->constructed(object);
-
-  mpris->player = strdup("mpd");
-  mpris->label = gtk_label_new("");
-  gtk_widget_set_parent(mpris->label, GTK_WIDGET(mpris));
-}
 
 static void g_barbar_mpris_on_play(PlayerctlPlayer *player, gpointer data) {
   BarBarMpris *mpris = BARBAR_MPRIS(data);
@@ -138,7 +138,7 @@ static void g_barbar_mpris_player_appeared(PlayerctlPlayerManager *manager,
   //                              player_playback_status);
   str = g_strdup_printf("%s - %s", artist, track);
 
-  gtk_label_set_label(GTK_LABEL(mpris->label), str);
+  // gtk_label_set_label(GTK_LABEL(mpris->label), str);
 
   g_free(str);
   g_free(track);
@@ -159,7 +159,8 @@ static void g_barbar_mpris_player_vanished(PlayerctlPlayerManager *manager,
   g_print("player: %s\n", player_name->name);
 }
 
-void g_barbar_mpris_start(BarBarMpris *mpris) {
+static void g_barbar_mpris_start(BarBarSensor *sensor) {
+  BarBarMpris *mpris = BARBAR_MPRIS(sensor);
   GError *error = NULL;
   PlayerctlPlayerManager *manager = playerctl_player_manager_new(&error);
 
@@ -169,6 +170,11 @@ void g_barbar_mpris_start(BarBarMpris *mpris) {
                    G_CALLBACK(g_barbar_mpris_player_appeared), mpris, NULL);
   g_object_connect(manager, "signal::name-vanished",
                    G_CALLBACK(g_barbar_mpris_player_vanished), mpris, NULL);
+
+  // g_signal_connect(manager, "name-appeared",
+  // G_CALLBACK(g_barbar_mpris_player_appeared), mpris);
+  // g_signal_connect(manager, "name-vanished",
+  // G_CALLBACK(g_barbar_mpris_player_vanished), mpris);
 
   GList *players = playerctl_list_players(&error);
   if (error) {

@@ -22,20 +22,33 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BATTERY_H_
-#define _BARBAR_BATTERY_H_
+#ifndef _BARBAR_CALENDAR_H_
+#define _BARBAR_CALENDAR_H_
 
-#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_BATTERY (g_barbar_battery_get_type())
+/* #define BARBAR_TYPE_CLOCK (g_barbar_clock_get_type()) */
 
-G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
-                     BarBarSensor)
+#define BARBAR_TYPE_CALENDAR (g_barbar_calendar_get_type())
+#define BARBAR_CALENDAR(obj)                                                   \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj), BARBAR_TYPE_CALENDAR, BarBarCalendar))
+#define BABBAR_IS_CALENDAR(obj)                                                \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj), BARBAR_TYPE_CALENDAR))
+
+typedef struct _BarBarCalendar BarBarCalendar;
+// TODO: This shouldn't have GObject as parent
+/* G_DECLARE_FINAL_TYPE(BarBarCalendar, g_barbar_clock, BARBAR, CALANDAR, */
+/*                      GtkWidget) */
+
+GType barbar_calendar_get_type(void) G_GNUC_CONST;
+
+GtkWidget *barbar_calendar_new(void);
+/* void g_barbar_clock_start(BarBarCalendar *clock); */
 
 G_END_DECLS
 
-#endif /* _BARBAR_BATTERY_H_ */
+#endif /* _BARBAR_CALENDAR_H_ */

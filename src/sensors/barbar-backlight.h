@@ -25,6 +25,7 @@
 #ifndef _BARBAR_BACKLIGHT_H_
 #define _BARBAR_BACKLIGHT_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -34,9 +35,7 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_BACKLIGHT (g_barbar_backlight_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarBacklight, g_barbar_backlight, BARBAR, BACKLIGHT,
-                     GObject)
-
-void g_barbar_backlight_start(BarBarBacklight *backlight);
+                     BarBarSensor)
 
 G_END_DECLS
 

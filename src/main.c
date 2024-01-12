@@ -37,29 +37,6 @@ void g_barbar_status_watcher_bus_acquired_handler2(GDBusConnection *connection,
                                    &error);
 }
 
-G_DECLARE_FINAL_TYPE(MyCustomWidget, my_custom_widget, MY, CUSTOM_WIDGET,
-                     GtkWidget)
-
-#define MY_TYPE_CUSTOM_WIDGET (my_custom_widget_get_type())
-
-struct _MyCustomWidget {
-  GtkWidget parent_instance;
-  // Add your custom fields here
-};
-
-G_DEFINE_TYPE(MyCustomWidget, my_custom_widget, GTK_TYPE_WIDGET)
-
-static void my_custom_widget_class_init(MyCustomWidgetClass *class) {
-  // Perform class initialization here
-}
-
-static void my_custom_widget_init(MyCustomWidget *self) {
-  // Perform instance initialization here
-}
-
-MyCustomWidget *my_custom_widget_new(void) {
-  return g_object_new(MY_TYPE_CUSTOM_WIDGET, NULL);
-}
 // static void activate(GtkApplication *app, void *data) {
 //   MyCustomWidget *widget = my_custom_widget_new();
 //   BarBarClock *clock = g_object_new(BARBAR_TYPE_CLOCK, NULL);
@@ -153,16 +130,13 @@ int main(int argc, char **argv) {
   //
   // loop = g_main_loop_new(NULL, FALSE);
   //
-  //    g_bus_own_name(G_BUS_TYPE_SESSION,
-  // "org.kde.StatusNotifierWatcher",
+  // g_bus_own_name(
+  //     G_BUS_TYPE_SESSION, "org.kde.StatusNotifierWatcher",
   //
-  // G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT
-  // | G_BUS_NAME_OWNER_FLAGS_REPLACE, NULL,
+  //     G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT |
+  //     G_BUS_NAME_OWNER_FLAGS_REPLACE, NULL,
   //
-  // g_barbar_status_watcher_bus_acquired_handler2,
-  // 					   NULL,
-  // 					   NULL,
-  // 					   NULL);
+  //     g_barbar_status_watcher_bus_acquired_handler2, NULL, NULL, NULL);
   // g_main_loop_run(loop);
   gtk_init();
   g_barbar_bar_get_type();

@@ -25,17 +25,15 @@
 #ifndef _BARBAR_MPRIS_H_
 #define _BARBAR_MPRIS_H_
 
+#include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_MPRIS (g_barbar_mpris_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarMpris, g_barbar_mpris, BARBAR, MPRIS, GtkWidget)
-
-void g_barbar_mpris_start(BarBarMpris *mpris);
+G_DECLARE_FINAL_TYPE(BarBarMpris, g_barbar_mpris, BARBAR, MPRIS, BarBarSensor)
 
 G_END_DECLS
 
