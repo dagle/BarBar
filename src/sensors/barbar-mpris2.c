@@ -159,6 +159,27 @@ static void g_barbar_mpris_player_vanished(PlayerctlPlayerManager *manager,
   g_print("player: %s\n", player_name->name);
 }
 
+gboolean g_barbar_mpris_get_playing(BarBarMpris *mpris) { return 0; }
+
+gboolean g_barbar_mpris_is_seekable(BarBarMpris *mpris) { return 0; }
+
+gint g_barbar_mpris_get_position(BarBarMpris *mpris) { return 0; }
+gint g_barbar_mpris_get_duration(BarBarMpris *mpris) { return 0; }
+
+void g_barbar_mpris_seek(BarBarMpris *mpris, gint64 pos) { return; }
+
+double g_barbar_mpris_get_volume(BarBarMpris *mpris) { return 0; }
+// gboolean g_barbar_mpris_get_muted(BarBarMpris *mpris) { return 0; }
+
+void gtk_media_stream_set_muted(BarBarMpris *mpris, double volume) {}
+
+void g_barbar_mpris_set_muted(BarBarMpris *mpris, gboolean mute) {}
+
+void g_barbar_mpris_set_play_pause(BarBarMpris *mpris) {}
+
+void g_barbar_mpris_next(BarBarMpris *mpris) { return; }
+void g_barbar_mpris_prev(BarBarMpris *mpris) { return; }
+
 static void g_barbar_mpris_start(BarBarSensor *sensor) {
   BarBarMpris *mpris = BARBAR_MPRIS(sensor);
   GError *error = NULL;
