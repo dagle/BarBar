@@ -22,19 +22,43 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_CMD_H_
-#define _BARBAR_CMD_H_
+#ifndef _BARBAR_LAYERED_WINDOW_H_
+#define _BARBAR_LAYERED_WINDOW_H_
 
-#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_CMD (g_barbar_cmd_get_type())
+/**
+ * BarBarPosition:
+ * @BARBAR_POS_TOP: Put the bar at top.
+ * @BARBAR_POS_BOTTOM: Put the bar at bottom.
+ * @BARBAR_POS_LEFT: Put the bar at left.
+ * @BARBAR_POS_RIGHT: Put the bar at right.
+ *
+ * Describs the aviable positions to anchor the bar.
+ */
+typedef enum {
+  BARBAR_POS_TOP = 1 << 0,
+  BARBAR_POS_BOTTOM = 1 << 1,
+  BARBAR_POS_LEFT = 1 << 2,
+  BARBAR_POS_RIGHT = 1 << 3,
+} BarBarPosition;
 
-G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, BarBarSensor)
+#define BARBAR_TYPE_LAYERED_WINDOW (g_barbar_layered_window_get_type())
+
+#define BARBAR_TYPE_POSITION (g_barbar_layer_position_get_type())
+
+G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_layered_window, BARBAR, LAYERED_WINDOW,
+                     GtkWindow)
+
+GtkWidget *g_barbar_layered_windown_new(void);
+
+/* int g_barbar_run(BarBarBar *bar, int argc, char **argv, GtkWidget *w); */
+/* int g_barbar_bars_run(BarBarBar **bars, int argc, char **argv); */
 
 G_END_DECLS
 
-#endif /* _BARBAR_CMD_H_ */
+#endif /* _BARBAR_LAYERED_WINDOW_H_ */

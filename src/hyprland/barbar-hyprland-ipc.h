@@ -68,6 +68,12 @@ typedef enum {
   HYPRLAND_LOCKGROUPS
 } BarBarHyperlandEvent;
 
+struct BarBarHyprlandListner {
+  /* GSocketConnection *connection; */
+  BarBarHyprlandSubscribeCallback cb;
+  gpointer *data;
+};
+
 /* struct _BarBarSwayIpcAsyncData { */
 /*   // A pointer to the class pointer */
 /*   // A bit like a parrent pointer */

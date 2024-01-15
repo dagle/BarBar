@@ -14,23 +14,21 @@ libbarbar_src = files(
   'sensors/barbar-mem.c',
   'sensors/barbar-network.c',
   'sensors/barbar-backlight.c',
-  # 'sensors/barbar-wireplumber.c',
-  # 'sensors/barbar-cmd.c',
-
+  'sensors/barbar-cmd.c',
   # 'sensors/barbar-wireplumber.c',
   # 'sensors/barbar-mpris2.c',
 
+
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
-
 
   # 'river/barbar-river-layout.c',
   # 'river/barbar-river-mode.c',
   # 'sway/barbar-sway-ipc.c',
   # 'sway/barbar-sway-workspace.c',
   # 'sway/barbar-sway-window.c',
-  #'hyprland/barbar-hyprland-ipc.c',
-  #'hyprland/barbar-hyprland-workspace.c',
+  'hyprland/barbar-hyprland-ipc.c',
+  'hyprland/barbar-hyprland-workspace.c',
   # 'dwl/barbar-dwl-service.c',
   # 'dwl/barbar-dwl-tags.c',
   # 'barbar-temperature.c',
@@ -55,8 +53,8 @@ libbarbar_headers = [
   'sensors/barbar-mem.h',
   'sensors/barbar-network.h',
   'sensors/barbar-backlight.h',
+  'sensors/barbar-cmd.h',
   # 'sensors/barbar-wireplumber.h',
-  # 'sensors/barbar-cmd.c',
 
   # 'sensors/barbar-wireplumber.h',
   # 'sensors/barbar-mpris2.h',
@@ -69,8 +67,8 @@ libbarbar_headers = [
   # 'sway/barbar-sway-ipc.h',
   # 'sway/barbar-sway-workspace.h',
   # 'sway/barbar-sway-window.h',
-  #'hyprland/barbar-hyprland-ipc.h',
-  #'hyprland/barbar-hyprland-workspace.h',
+  'hyprland/barbar-hyprland-ipc.h',
+  'hyprland/barbar-hyprland-workspace.h',
   # 'dwl/barbar-dwl-service.h',
   # 'dwl/barbar-dwl-tags.h',
   # 'barbar-temperature.h',

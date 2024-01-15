@@ -72,12 +72,6 @@ gchar *g_barbar_hyprland_ipc_message_resp(GSocketConnection *ipc,
                                        err);
 }
 
-struct BarBarHyprlandListner {
-  /* GSocketConnection *connection; */
-  BarBarHyprlandSubscribeCallback cb;
-  gpointer *data;
-};
-
 #define EVENT_TYPE(cs, input, name, upper)                                     \
   if (!strncmp(input, #name ">>", sizeof(#name) + 1)) {                        \
     cs->cb(upper, line + sizeof(#name) + 1, cs->data);                         \
@@ -156,12 +150,15 @@ g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
 
   connection = g_socket_client_connect(
       socket_client, G_SOCKET_CONNECTABLE(address), NULL, error);
+  g_object_unref(socket_client);
+  g_object_unref(address);
 
   g_free(socket_path);
 
   if (!connection) {
     return NULL;
   }
+
   input_stream = g_io_stream_get_input_stream(G_IO_STREAM(connection));
   data_stream = g_data_input_stream_new(input_stream);
 

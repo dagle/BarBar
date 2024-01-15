@@ -14,5 +14,6 @@ void g_barbar_init(void) {
   g_barbar_network_get_type();
   g_barbar_river_tag_get_type();
   g_barbar_river_view_get_type();
-  // g_barbar_hyprland_workspace_get_type();
+  g_barbar_cmd_get_type();
+  g_barbar_hyprland_workspace_get_type();
 }
