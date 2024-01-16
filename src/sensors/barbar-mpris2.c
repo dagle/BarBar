@@ -5,18 +5,26 @@
 struct _BarBarMpris {
   BarBarSensor parent_instance;
 
-  char *player;
+  PlayerctlPlayerManager *manager;
+  PlayerctlPlayer *player;
+
+  char *player_name;
 };
 
 enum {
   PROP_0,
 
   PROP_PLAYER,
-  PROP_SONG,
-  PROP_DURATION,
-  PROP_LENGTH,
+
+  // PROP_SONG,
+  // PROP_DURATION,
+  // PROP_LENGTH,
 
   NUM_PROPERTIES,
+};
+
+enum {
+  STATE_UPDATE,
 };
 
 G_DEFINE_TYPE(BarBarMpris, g_barbar_mpris, BARBAR_TYPE_SENSOR)
@@ -30,12 +38,12 @@ static void g_barbar_mpris_start(BarBarSensor *sensor);
 void g_barbar_mpris_set_player(BarBarMpris *mpris, const char *player) {
   g_return_if_fail(BARBAR_IS_MPRIS(mpris));
 
-  if (mpris->player && !strcmp(mpris->player, player)) {
+  if (mpris->player_name && !strcmp(mpris->player_name, player)) {
     return;
   }
 
-  g_free(mpris->player);
-  mpris->player = g_strdup(player);
+  g_free(mpris->player_name);
+  mpris->player_name = g_strdup(player);
 
   g_object_notify_by_pspec(G_OBJECT(mpris), mpris_props[PROP_PLAYER]);
 }
@@ -103,19 +111,44 @@ static void g_barbar_mpris_on_metadata(PlayerctlPlayer *player,
 static void g_barbar_mpris_connect_events(PlayerctlPlayer *player,
                                           BarBarMpris *mpris) {}
 
+PlayerctlPlayer *g_barbar_mpris_get_player(BarBarMpris *mpris) {
+  return mpris->player;
+}
+
+gchar *g_barbar_mpris_format_player(BarBarMpris *mpris, const char *format) {
+  return NULL;
+}
+
+static void g_barbar_mpris_player_update(PlayerctlPlayer *player,
+                                         gpointer data) {
+  BarBarMpris *mpris = BARBAR_MPRIS(data);
+
+  g_signal_emit(mpris, STATE_UPDATE, 0, NULL);
+}
+
+static void g_barbar_mpris_player_vanished(PlayerctlPlayerManager *manager,
+                                           PlayerctlPlayerName *player_name,
+                                           gpointer data) {
+  BarBarMpris *mpris = BARBAR_MPRIS(data);
+
+  if (!mpris->player || strcmp(player_name->name, mpris->player_name)) {
+    return;
+  }
+
+  g_clear_pointer(&mpris->player, g_object_unref);
+}
+
 static void g_barbar_mpris_player_appeared(PlayerctlPlayerManager *manager,
                                            PlayerctlPlayerName *player_name,
                                            gpointer data) {
   BarBarMpris *mpris = BARBAR_MPRIS(data);
   PlayerctlPlayer *player = NULL;
   GError *err = NULL;
-  gchar *artist = NULL;
-  gchar *track = NULL;
-  gchar *str = NULL;
 
-  if (strcmp(player_name->name, mpris->player)) {
+  if (strcmp(player_name->name, mpris->player_name)) {
     return;
   }
+
   player = playerctl_player_new_from_name(player_name, &err);
 
   if (!player || err) {
@@ -123,62 +156,30 @@ static void g_barbar_mpris_player_appeared(PlayerctlPlayerManager *manager,
     g_error_free(err);
     return;
   }
-
-  char *player_status = NULL;
-  PlayerctlPlaybackStatus player_playback_status =
-      PLAYERCTL_PLAYBACK_STATUS_STOPPED;
-
-  artist = playerctl_player_get_artist(player, &err);
-  track = playerctl_player_get_title(player, &err);
-
-  // g_object_get(player, "status", &player_status, "playback-status",
-  //              &player_playback_status, NULL);
-  // gchar *str = g_strdup_printf("status: %s, playback-status: %d",
-  // player_status,
-  //                              player_playback_status);
-  str = g_strdup_printf("%s - %s", artist, track);
-
-  // gtk_label_set_label(GTK_LABEL(mpris->label), str);
-
-  g_free(str);
-  g_free(track);
-  g_free(artist);
-
-  // g_object_connect(player, "signal::play",
-  // G_CALLBACK(g_barbar_mpris_on_play),
-  //                  mpris, "signal::pause",
-  //                  G_CALLBACK(g_barbar_mpris_on_pause), mpris,
-  //                  "signal::stop", G_CALLBACK(g_barbar_mpris_on_stop), mpris,
-  //                  "signal::metadata",
-  //                  G_CALLBACK(g_barbar_mpris_on_metadata), mpris, NULL);
+  g_signal_connect(player, "notify::metadata",
+                   G_CALLBACK(g_barbar_mpris_player_update), data);
 }
 
-static void g_barbar_mpris_player_vanished(PlayerctlPlayerManager *manager,
-                                           PlayerctlPlayerName *player_name,
-                                           gpointer data) {
-  g_print("player: %s\n", player_name->name);
-}
-
-gboolean g_barbar_mpris_get_playing(BarBarMpris *mpris) { return 0; }
-
-gboolean g_barbar_mpris_is_seekable(BarBarMpris *mpris) { return 0; }
-
-gint g_barbar_mpris_get_position(BarBarMpris *mpris) { return 0; }
-gint g_barbar_mpris_get_duration(BarBarMpris *mpris) { return 0; }
-
-void g_barbar_mpris_seek(BarBarMpris *mpris, gint64 pos) { return; }
-
-double g_barbar_mpris_get_volume(BarBarMpris *mpris) { return 0; }
-// gboolean g_barbar_mpris_get_muted(BarBarMpris *mpris) { return 0; }
-
-void gtk_media_stream_set_muted(BarBarMpris *mpris, double volume) {}
-
-void g_barbar_mpris_set_muted(BarBarMpris *mpris, gboolean mute) {}
-
-void g_barbar_mpris_set_play_pause(BarBarMpris *mpris) {}
-
-void g_barbar_mpris_next(BarBarMpris *mpris) { return; }
-void g_barbar_mpris_prev(BarBarMpris *mpris) { return; }
+// gboolean g_barbar_mpris_get_playing(BarBarMpris *mpris) { return 0; }
+//
+// gboolean g_barbar_mpris_is_seekable(BarBarMpris *mpris) { return 0; }
+//
+// gint g_barbar_mpris_get_position(BarBarMpris *mpris) { return 0; }
+// gint g_barbar_mpris_get_duration(BarBarMpris *mpris) { return 0; }
+//
+// void g_barbar_mpris_seek(BarBarMpris *mpris, gint64 pos) { return; }
+//
+// double g_barbar_mpris_get_volume(BarBarMpris *mpris) { return 0; }
+// // gboolean g_barbar_mpris_get_muted(BarBarMpris *mpris) { return 0; }
+//
+// void gtk_media_stream_set_muted(BarBarMpris *mpris, double volume) {}
+//
+// void g_barbar_mpris_set_muted(BarBarMpris *mpris, gboolean mute) {}
+//
+// void g_barbar_mpris_set_play_pause(BarBarMpris *mpris) {}
+//
+// void g_barbar_mpris_next(BarBarMpris *mpris) { return; }
+// void g_barbar_mpris_prev(BarBarMpris *mpris) { return; }
 
 static void g_barbar_mpris_start(BarBarSensor *sensor) {
   BarBarMpris *mpris = BARBAR_MPRIS(sensor);

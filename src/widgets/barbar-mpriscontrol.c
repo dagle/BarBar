@@ -18,29 +18,21 @@
  */
 
 #include "barbar-mpriscontrol.h"
+#include "gtk/gtkcssprovider.h"
 #include "sensors/barbar-mpris2.h"
 
-// #include "gtkadjustment.h"
-// #include "gtkbutton.h"
-// #include "gtklabel.h"
-// #include "gtkprivate.h"
-// #include "gtkwidgetprivate.h"
-// #include <glib/gi18n-lib.h>
-
 /**
- * GtkMediaControls:
+ * BarBarMprisControls:
  *
- * `GtkMediaControls` is a widget to show controls for a video.
+ * `BarBarMprisControls` is a widget to interact with mpris
  *
- * ![An example GtkMediaControls](media-controls.png)
- *
- * Usually, `GtkMediaControls` is used as part of [class@Gtk.Video].
  */
 
 struct _BarBarMprisControls {
   GtkWidget parent_instance;
 
   BarBarMpris *mpris;
+  GtkCssProvider *provider;
 
   GtkAdjustment *time_adjustment;
   GtkAdjustment *volume_adjustment;
