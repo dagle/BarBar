@@ -30,11 +30,18 @@ enum {
   NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  NUM_SIGNALS,
+};
+
 G_DEFINE_TYPE(BarBarClock, g_barbar_clock, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static guint clock_signals[NUM_SIGNALS];
 
 static void g_barbar_clock_constructed(GObject *self);
 
@@ -187,6 +194,25 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
       DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, clock_props);
+
+  /**
+   * BarBarClock::tick:
+   * @sensor: This sensor
+   *
+   * Emit that the clock has ticked. This means that we want to refetch
+   * the player.
+   */
+  clock_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_CLOCK,                      /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
 }
 
 static gboolean g_barbar_clock_update(gpointer data);
@@ -216,6 +242,8 @@ static gboolean g_barbar_clock_update(gpointer data) {
   }
 
   g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_TIME]);
+
+  g_signal_emit(clock, clock_signals[TICK], 0);
 
   return G_SOURCE_CONTINUE;
 }

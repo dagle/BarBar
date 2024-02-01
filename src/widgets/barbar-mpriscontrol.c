@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
- * Authors: Benjamin Otte <otte@gnome.org>
  */
 
 #include "barbar-mpriscontrol.h"
 #include "gtk/gtkcssprovider.h"
-#include "sensors/barbar-mpris2.h"
+#include <stdio.h>
 
 /**
  * BarBarMprisControls:
@@ -31,7 +30,7 @@
 struct _BarBarMprisControls {
   GtkWidget parent_instance;
 
-  BarBarMpris *mpris;
+  PlayerctlPlayer *player;
   GtkCssProvider *provider;
 
   GtkAdjustment *time_adjustment;
@@ -53,7 +52,7 @@ struct _BarBarMprisControls {
 
 enum {
   PROP_0,
-  PROP_MPRIS,
+  PROP_PLAYER,
 
   NUM_PROPERTIES
 };
@@ -66,41 +65,74 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 
 static void time_adjustment_changed(GtkAdjustment *adjustment,
                                     BarBarMprisControls *controls) {
-  if (controls->mpris == NULL)
+  GError *err = NULL;
+  gint pos;
+
+  if (controls->player == NULL)
     return;
+
+  pos = playerctl_player_get_position(controls->player, &err);
+
+  if (err) {
+    printf("Error getting mpris position: %s", err->message);
+    g_error_free(err);
+    return;
+  }
 
   /* We just updated the adjustment and it's correct now */
-  if (gtk_adjustment_get_value(adjustment) ==
-      (double)g_barbar_mpris_get_position(controls->mpris) / G_USEC_PER_SEC)
+  if (gtk_adjustment_get_value(adjustment) == (double)pos / G_USEC_PER_SEC)
     return;
 
-  g_barbar_mpris_seek(controls->mpris,
-                      gtk_adjustment_get_value(adjustment) * G_USEC_PER_SEC +
-                          0.5);
+  playerctl_player_seek(
+      controls->player,
+      gtk_adjustment_get_value(adjustment) * G_USEC_PER_SEC + 0.5, &err);
+
+  if (err) {
+    printf("Failed seeking in mpris: %s", err->message);
+    g_error_free(err);
+    return;
+  }
 }
 
 static void volume_adjustment_changed(GtkAdjustment *adjustment,
                                       BarBarMprisControls *controls) {
-  if (controls->mpris == NULL)
+  PlayerctlPlayer *player;
+  GError *err = NULL;
+  double volume;
+
+  if (controls->player == NULL)
     return;
 
+  g_object_get(controls->player, "volume", &volume, NULL);
   /* We just updated the adjustment and it's correct now */
-  if (gtk_adjustment_get_value(adjustment) ==
-      g_barbar_mpris_get_volume(controls->mpris))
+  if (gtk_adjustment_get_value(adjustment) == volume) {
     return;
+  }
 
-  // g_barbar_mpris_set_muted(controls->mpris,
-  //                          gtk_adjustment_get_value(adjustment) == 0.0);
-  g_barbar_mpris_set_volume(controls->mpris,
-                            gtk_adjustment_get_value(adjustment));
+  playerctl_player_set_volume(controls->player,
+                              gtk_adjustment_get_value(adjustment), &err);
+
+  if (err) {
+    printf("Failed updating the volume in mpris: %s", err->message);
+    g_error_free(err);
+    return;
+  }
 }
 
 static void play_button_clicked(GtkWidget *button,
                                 BarBarMprisControls *controls) {
-  if (controls->mpris == NULL)
+  GError *err = NULL;
+
+  if (controls->player == NULL)
     return;
 
-  g_barbar_mpris_set_play_pause(controls->mpris);
+  playerctl_player_play(controls->player, &err);
+
+  if (err) {
+    printf("Failed to toggle play in mpris: %s", err->message);
+    g_error_free(err);
+    return;
+  }
 }
 
 static void gtk_media_controls_measure(GtkWidget *widget,
@@ -137,8 +169,8 @@ static void gtk_media_controls_get_property(GObject *object, guint property_id,
   BarBarMprisControls *controls = BARBAR_MPRIS_CONTROLS(object);
 
   switch (property_id) {
-  case PROP_MPRIS:
-    g_value_set_object(value, controls->mpris);
+  case PROP_PLAYER:
+    g_value_set_object(value, controls->player);
     break;
 
   default:
@@ -153,7 +185,7 @@ static void gtk_media_controls_set_property(GObject *object, guint property_id,
   BarBarMprisControls *controls = BARBAR_MPRIS_CONTROLS(object);
 
   switch (property_id) {
-  case PROP_MPRIS:
+  case PROP_PLAYER:
     g_barbar_mpris_controls_set_media_stream(controls,
                                              g_value_get_object(value));
     break;
@@ -177,14 +209,14 @@ g_barbar_mpris_controls_class_init(BarBarMprisControlsClass *klass) {
   gobject_class->set_property = gtk_media_controls_set_property;
 
   /**
-   * GtkMediaControls:media-stream: (attributes
+   * GtkMediaControls:player: (attributes
    * org.gtk.Property.get=gtk_media_controls_get_media_stream
    * org.gtk.Property.set=gtk_media_controls_set_media_stream)
    *
    * The media-stream managed by this object or %NULL if none.
    */
-  properties[PROP_MPRIS] = g_param_spec_object(
-      "media-stream", NULL, NULL, GTK_TYPE_MEDIA_STREAM,
+  properties[PROP_PLAYER] = g_param_spec_object(
+      "player", NULL, NULL, PLAYERCTL_TYPE_PLAYER,
       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
@@ -244,19 +276,25 @@ GtkWidget *gtk_media_controls_new(GtkMediaStream *stream) {
  *
  * Returns: (nullable) (transfer none): The media stream managed by @controls
  */
-BarBarMpris *g_barbar_mpris_controls_get_mpris(BarBarMprisControls *controls) {
+PlayerctlPlayer *
+g_barbar_mpris_controls_get_mpris(BarBarMprisControls *controls) {
   g_return_val_if_fail(GTK_IS_MEDIA_CONTROLS(controls), NULL);
 
-  return controls->mpris;
+  return controls->player;
+}
+static gint64 playerctl_player_get_duration(PlayerctlPlayer *player) {
+  return 0;
 }
 
 static void update_timestamp(BarBarMprisControls *controls) {
+  GError *err;
   gint64 timestamp, duration;
   char *time_string;
 
-  if (controls->mpris) {
-    timestamp = g_barbar_mpris_get_position(controls->mpris);
-    duration = g_barbar_mpris_get_duration(controls->mpris);
+  // TODO: !!
+  if (controls->player) {
+    timestamp = playerctl_player_get_position(controls->player, &err);
+    duration = playerctl_player_get_duration(controls->player);
   } else {
     timestamp = 0;
     duration = 0;
@@ -364,20 +402,35 @@ static void update_all(BarBarMprisControls *controls) {
 static void g_barbar_mpris_controls_notify_cb(BarBarMpris *mpris,
                                               GParamSpec *pspec,
                                               BarBarMprisControls *controls) {
-  if (g_str_equal(pspec->name, "position"))
+
+  if (g_str_equal(pspec->name, "playback-status")) {
+  }
+  if (g_str_equal(pspec->name, "loop-status")) {
+    update_loop(controls);
+  }
+  if (g_str_equal(pspec->name, "shuffle")) {
+    update_shuffle(controls);
+  }
+  if (g_str_equal(pspec->name, "position")) {
     update_timestamp(controls);
-  else if (g_str_equal(pspec->name, "duration"))
+  } else if (g_str_equal(pspec->name, "duration")) {
     update_duration(controls);
-  else if (g_str_equal(pspec->name, "playing"))
+  } else if (g_str_equal(pspec->name, "playing")) {
     update_playing(controls);
-  else if (g_str_equal(pspec->name, "seekable"))
+  } else if (g_str_equal(pspec->name, "seekable")) {
     update_seekable(controls);
-  else if (g_str_equal(pspec->name, "volume"))
+  } else if (g_str_equal(pspec->name, "volume")) {
     update_volume(controls);
+  } else if (g_str_equal(pspec->name, "metadata")) {
+    update_volume(controls);
+  }
+
+  // PROP_CAN_CONTROL,
+  // PROP_CAN_PLAY,
+  // PROP_CAN_PAUSE,
+  // PROP_CAN_SEEK,
   // PROP_CAN_GO_NEXT,
   // PROP_CAN_GO_PREVIOUS,
-  // else if (g_str_equal(pspec->name, "has-audio"))
-  //   update_volume(controls);
 }
 
 /**
@@ -388,12 +441,13 @@ static void g_barbar_mpris_controls_notify_cb(BarBarMpris *mpris,
  *
  * Sets the stream that is controlled by @controls.
  */
-void g_barbar_mpris_controls_set_media_stream(BarBarMprisControls *controls,
-                                              BarBarMpris *mpris) {
+void g_barbar_mpris_controls_set_mpris(BarBarMprisControls *controls,
+                                       PlayerctlPlayer *player) {
   g_return_if_fail(BARBAR_IS_MPRIS_CONTROLS(controls));
-  g_return_if_fail(mpris == NULL || BARBAR_IS_MPRIS(mpris));
+  g_return_if_fail(PLAYERCTL_IS_PLAYER(player));
+  // g_return_if_fail(mpris == NULL || BARBAR_IS_MPRIS(mpris));
 
-  if (controls->mpris == mpris)
+  if (controls->mpris == player)
     return;
 
   if (controls->mpris) {
@@ -412,5 +466,5 @@ void g_barbar_mpris_controls_set_media_stream(BarBarMprisControls *controls,
   update_all(controls);
   gtk_widget_set_sensitive(controls->box, mpris != NULL);
 
-  g_object_notify_by_pspec(G_OBJECT(controls), properties[PROP_MPRIS]);
+  g_object_notify_by_pspec(G_OBJECT(controls), properties[PROP_PLAYER]);
 }

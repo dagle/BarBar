@@ -28,6 +28,7 @@
 #include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <playerctl/playerctl.h>
 
 G_BEGIN_DECLS
 
@@ -35,21 +36,10 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarMpris, g_barbar_mpris, BARBAR, MPRIS, BarBarSensor)
 
-gboolean g_barbar_mpris_get_playing(BarBarMpris *mpris);
-gboolean g_barbar_mpris_is_seekable(BarBarMpris *mpris);
-gint g_barbar_mpris_get_position(BarBarMpris *mpris);
+gchar *g_barbar_mpris_format_player(BarBarMpris *mpris, const char *format);
+PlayerctlPlayer *g_barbar_mpris_get_current_player(BarBarMpris *mpris);
 
-void g_barbar_mpris_seek(BarBarMpris *mpris, gint64 pos);
-
-double g_barbar_mpris_get_volume(BarBarMpris *mpris);
-
-void g_barbar_mpris_set_volume(BarBarMpris *mpris, double volume);
-
-void g_barbar_mpris_set_muted(BarBarMpris *mpris, gboolean mute);
-
-void g_barbar_mpris_set_play_pause(BarBarMpris *mpris);
-
-gint g_barbar_mpris_get_duration(BarBarMpris *mpris);
+char *get_current_player_print(void);
 
 G_END_DECLS
 

@@ -18,22 +18,21 @@
 
 #pragma once
 
-#include "sensors/barbar-mpris.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_MPRIS_CONTROLS (g_barbar_mpris_controls_get_type())
+#define BARBAR_TYPE_LABEL (g_barbar_label_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarMprisControls, g_barbar_mpris_controls, BARBAR,
-                     MPRIS_CONTROLS, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarLabel, g_barbar_label, BARBAR, LABEL, GtkWidget)
 
-GtkWidget *g_barbar_mpris_controls_new(GtkMediaStream *stream);
+/* GtkWidget *g_barbar_mpris_controls_new(GtkMediaStream *stream); */
 
 /* GtkMediaStream *gtk_media_controls_get_media_stream(GtkMediaControls
  * *controls); */
 
-void g_barbar_mpris_controls_set_media_stream(BarBarMprisControls *controls,
-                                              BarBarMpris *mpris);
+/* void g_barbar_mpris_controls_set_media_stream(BarBarMprisControls *controls,
+ */
+/*                                               BarBarMpris *mpris); */
 
 G_END_DECLS

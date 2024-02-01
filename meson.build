@@ -20,6 +20,7 @@ gio = dependency('gio-2.0')
 giounix = dependency('gio-unix-2.0')
 json = dependency('json-glib-1.0')
 udev = dependency('libudev')
+module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 
@@ -29,7 +30,7 @@ libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
-# template_glib = dependency('template-glib-1.0')
+template_glib = dependency('template-glib-1.0')
 
 gtk = dependency('gtk4')
 
@@ -53,9 +54,11 @@ deps = [
   libgtop,
   libwireplumber,
   playerctl,
+  template_glib,
   # libgweather,
   # libgeoclue,
   m_dep,
+  module,
 ]
 
 LIBS = [glib, gio, gobject]

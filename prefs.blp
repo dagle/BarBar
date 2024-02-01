@@ -5,15 +5,12 @@ BarBar.Bar {
   bar-pos: bot;
   Gtk.ActionBar {
     [start]
-    BarBar.HyprlandWorkspace {
+    BarBar.RiverTag {
     }
-    // [start]
-    // BarBar.RiverTag {
-    // }
 
-    // [center]
-    // BarBar.RiverView {
-    // }
+    [center]
+    BarBar.RiverView {
+    }
 
     [end]
     Gtk.Label {
@@ -34,20 +31,50 @@ BarBar.Bar {
       inverted: true;
     }
 
-    // [end]
-    // Gtk.Label {
-      // label: bind $BarBar.label_format("enp13s0: {down-speed:kb,.0}⬇️ {up-speed:kb,.0}⬆️ ", network);
-    // }
+    [end]
+    Gtk.Label clock_label {
+      // label: bind $barbar_strdup_printf("The time is now exactly!", clock) as <string>;
+    }
+
+    [end]
+    Gtk.Label {
+    // BarBar.Label blabel {
+    //  format: "{{Network.interface}}: {{size_nomalize(Network.down-speed)}}b ⬇️ | {{size_nomalize(Network.up-speed)}}b ⬆️ "
+      label: bind $barbar_strdup_printf("%s: %d⬇️ | %d⬆️ ", network.interface, network.down-speed, network.up-speed) as <string>;
+    }
+
+    [end]
+    Gtk.Label {
+      label: bind battery.percent;
+    }
+
+    [end]
+    Gtk.LevelBar {
+      value: bind battery.percent;
+      orientation: vertical;
+      inverted: true;
+    }
+
+    [end]
+    Gtk.ScaleButton {
+      adjustment: Adjustment {
+        lower: 0.0;
+        upper: 1.0;
+        page-increment: 0.1;
+        step-increment: 0.1;
+        value: bind backlight.percent bidirectional;
+      };
+    }
 
     // [end]
     // Gtk.ScaleButton {
-    //   adjustment: Adjustment {
-    //     lower: 0.0;
-    //     upper: 1.0;
-    //     page-increment: 0.1;
-    //     step-increment: 0.1;
-    //     value: bind plumb.value bidirectional;
-    //   };
+    //    adjustment: Adjustment {
+    //      lower: 0.0;
+    //      upper: 1.0;
+    //      page-increment: 0.1;
+    //      step-increment: 0.1;
+    //      value: bind plumb.value bidirectional;
+    //    };
     // }
   }
 }
@@ -55,6 +82,7 @@ BarBar.Bar {
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";
+  tick => $update(clock_label);
 }
 
 BarBar.Mem mem {
@@ -67,8 +95,14 @@ BarBar.Network network {
   interface: "wlan0";
 }
 
+BarBar.Backlight backlight {
+}
+
+BarBar.Battery battery {
+}
+
 // BarBar.Wireplumber plumb {
 // }
 
-// BarBar.Mpris mpris {
-//}
+BarBar.Mpris mpris {
+}

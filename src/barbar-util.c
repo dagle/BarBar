@@ -24,6 +24,47 @@ GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget) {
   return NULL;
 }
 
+G_MODULE_EXPORT void custom_printf(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+
+  GString *str = g_string_new("");
+
+  while (*format != '\0') {
+    const char *begin = strchr(format, '%');
+    if (begin == NULL) {
+      g_string_append(str, format);
+      break;
+    }
+
+    if (begin != format) {
+      g_string_append_len(str, format, begin - format);
+    }
+
+    begin++; // Move past '%'
+    switch (*begin) {
+    case 'd':
+      g_string_append_printf(str, "%d", va_arg(args, int));
+      break;
+    case 'f':
+      g_string_append_printf(str, "%f", va_arg(args, double));
+      break;
+    case 's':
+      g_string_append_printf(str, "%s", va_arg(args, char *));
+      break;
+    default:
+      putchar('%');    // Print '%' character if no matching specifier found
+      putchar(*begin); // Print the character following '%'
+      break;
+    }
+
+    begin++;
+    format = begin;
+  }
+
+  va_end(args);
+}
+
 static gboolean is_number(const char *str, int *i) {
 
   char *endptr;

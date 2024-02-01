@@ -1,5 +1,8 @@
-- [ ] a format string thing
-- [ ] a widget class
--- [ ] sub widgets
+Can we create a auto-manager, that works that configure a device and presents it self
+as a device? This would be great for batteries, mpris etc since we could just read the device directly.
 
-- [ ] We shouldn't use constructor unless we set parents parameters, which we don't do atm.
+
+# mpris
+- [x] create a format function
+- [ ] be able to listen to multiple players
+- [ ] send/create updates correctly

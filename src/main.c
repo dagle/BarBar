@@ -3,6 +3,7 @@
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
 
+#include "sensors/barbar-clock.h"
 #include "sensors/barbar-sensor.h"
 #include "status-notifier.h"
 
@@ -60,9 +61,61 @@ void g_barbar_status_watcher_bus_acquired_handler2(GDBusConnection *connection,
 //
 //   // Perform your application logic here
 // }
+G_MODULE_EXPORT char *bepa(GtkWidget *label, char *time) {
+  if (time) {
+    return strdup(time);
+  }
+  return NULL;
+}
+
+G_MODULE_EXPORT char *barbar_strdup_printf(GtkWidget *label, const char *format,
+                                           ...) {
+  gchar *buffer;
+  va_list args;
+
+  va_start(args, format);
+  buffer = g_strdup_vprintf(format, args);
+  va_end(args);
+
+  return buffer;
+}
+
+G_MODULE_EXPORT void set_title(GtkWidget *label, GParamSpec *pspec,
+                               GtkWidget *clock) {
+  char *time;
+  g_object_get(clock, "time", &time, NULL);
+  gtk_label_set_text(GTK_LABEL(label), time);
+  // return g_strdup_printf("%s", time);
+}
+
+G_MODULE_EXPORT void update(GtkWidget *label, GtkWidget *clock) {
+  const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(clock));
+  printf("update: %s\n", className);
+  // printf("update called\n");
+  char *time;
+  g_object_get(clock, "time", &time, NULL);
+  gtk_label_set_text(GTK_LABEL(label), time);
+}
+
 static void activate2(GtkApplication *app, void *data) {
-  GtkBuilder *builder =
-      gtk_builder_new_from_file("/home/dagle/.config/barbar/config.ui");
+  GtkBuilderScope *scope;
+  GtkBuilder *builder;
+  scope = gtk_builder_cscope_new();
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), bepa);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), set_title);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), update);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  barbar_strdup_printf);
+
+  builder = gtk_builder_new();
+  // gtk_builder_set_scope(builder, scope);
+
+  // builder =
+  // gtk_builder_new_from_file("/home/dagle/.config/barbar/config.ui");
+  gtk_builder_add_from_file(builder, "/home/dagle/.config/barbar/config.ui",
+                            NULL);
+  // gtk_builder_cscope_add_callback_symbol(builder, "bepa", G_CALLBACK(bepa));
+  // gtk_builder_cscope_add_callback
   GSList *list = gtk_builder_get_objects(builder);
 
   for (GSList *it = list; it; it = it->next) {

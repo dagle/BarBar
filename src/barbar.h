@@ -9,7 +9,7 @@
 #include "sensors/barbar-cpu.h"
 #include "sensors/barbar-disk.h"
 #include "sensors/barbar-mem.h"
-#include "sensors/barbar-mpris2.h"
+#include "sensors/barbar-mpris.h"
 #include "sensors/barbar-network.h"
 #include "sensors/barbar-sensor.h"
 #include "sensors/barbar-temperature.h"

@@ -110,8 +110,9 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
    *
    * What device to listen use for battery
    */
-  battery_props[PROP_DEVICE] = g_param_spec_string(
-      "device", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  battery_props[PROP_DEVICE] =
+      g_param_spec_string("device", "device", "A path to a device", NULL,
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
    * BarBarBattery:percent:
@@ -128,54 +129,75 @@ static void g_barbar_battery_init(BarBarBattery *self) {
   self->interval = DEFAULT_INTERVAL;
 }
 
-static void g_barbar_battery_up(UpDevice *dev, BarBarBattery *battery) {
-
+static void g_barbar_battery_update(UpDevice *dev, BarBarBattery *battery) {
   double percent;
   g_object_get(dev, "percentage", &percent, NULL);
   percent = percent / 100;
   g_barbar_battery_set_percent(battery, percent);
 }
 
-static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
-                                    gpointer data) {
-
-  BarBarBattery *battery = BARBAR_BATTERY(data);
-  GError *err = NULL;
-
-  // GDBusConnection *login1_connection =
-  //     g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
-  //
-  // GDBusProxy *proxy = g_dbus_proxy_new_sync(
-  //     login1_connection, G_DBUS_PROXY_FLAGS_NONE, NULL, LOGIN_NAME,
-  //     LOGIN_PATH, LOGIN_INTERFACE, NULL, &err);
-
-  // if (!login1_connection) {
-  // throw std::runtime_error("Unable to connect to the SYSTEM Bus!...");
-  // } else {
-  // login1_id = g_dbus_connection_signal_subscribe(
-  // 		login1_connection, "org.freedesktop.login1",
-  // "org.freedesktop.login1.Manager", 		"PrepareForSleep",
-  // "/org/freedesktop/login1", NULL, G_DBUS_SIGNAL_FLAGS_NONE,
-  // 		prepareForSleep_cb, this, NULL);
-  // }
-
-  // event_box_.signal_button_press_event().connect(sigc::mem_fun(*this,
-  // &UPower::handleToggle));
-
-  // g_signal_connect(client, "device-added", G_CALLBACK(deviceAdded_cb), this);
-  // g_signal_connect(client, "device-removed", G_CALLBACK(deviceRemoved_cb),
-  // this);
+static void g_barbar_battery_cb(UpDevice *dev, GParamSpec *pspec,
+                                gpointer user_data) {
+  BarBarBattery *battery = BARBAR_BATTERY(user_data);
+  g_barbar_battery_update(dev, battery);
 }
 
-void g_barbar_battery_setup_device(BarBarBattery *battery) {}
+// static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
+//                                     gpointer data) {
+//
+//   BarBarBattery *battery = BARBAR_BATTERY(data);
+//   GError *err = NULL;
+//
+//   // GDBusConnection *login1_connection =
+//   //     g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
+//   //
+//   // GDBusProxy *proxy = g_dbus_proxy_new_sync(
+//   //     login1_connection, G_DBUS_PROXY_FLAGS_NONE, NULL, LOGIN_NAME,
+//   //     LOGIN_PATH, LOGIN_INTERFACE, NULL, &err);
+//
+//   // if (!login1_connection) {
+//   // throw std::runtime_error("Unable to connect to the SYSTEM Bus!...");
+//   // } else {
+//   // login1_id = g_dbus_connection_signal_subscribe(
+//   // 		login1_connection, "org.freedesktop.login1",
+//   // "org.freedesktop.login1.Manager", 		"PrepareForSleep",
+//   // "/org/freedesktop/login1", NULL, G_DBUS_SIGNAL_FLAGS_NONE,
+//   // 		prepareForSleep_cb, this, NULL);
+//   // }
+//
+//   // event_box_.signal_button_press_event().connect(sigc::mem_fun(*this,
+//   // &UPower::handleToggle));
+//
+//   // g_signal_connect(client, "device-added", G_CALLBACK(deviceAdded_cb),
+//   this);
+//   // g_signal_connect(client, "device-removed", G_CALLBACK(deviceRemoved_cb),
+//   // this);
+// }
+
+static void g_barbar_battery_setup_device(BarBarBattery *battery) {
+  if (!battery->device) {
+    battery->dev = up_client_get_display_device(battery->client);
+  } else {
+    g_autoptr(GPtrArray) array = up_client_get_devices2(battery->client);
+    for (int i = 0; i < array->len; i++) {
+      g_autoptr(UpDevice) device = UP_DEVICE(array->pdata[i]);
+      gchar *path;
+      g_object_get(device, "native-path", &path, NULL);
+      if (!strcmp(path, battery->device)) {
+        battery->dev = g_object_ref(device);
+      }
+      g_free(path);
+    }
+  }
+}
 
 static void g_barbar_battery_start(BarBarSensor *sensor) {
   BarBarBattery *battery = BARBAR_BATTERY(sensor);
   battery->client = up_client_new();
-  battery->dev = up_client_get_display_device(battery->client);
+  g_barbar_battery_setup_device(battery);
 
-  g_barbar_battery_up(battery->dev, battery);
+  g_barbar_battery_update(battery->dev, battery);
 
-  g_signal_connect(battery->dev, "notify", G_CALLBACK(g_barbar_battery_up),
-                   battery);
+  g_signal_connect(battery->dev, "notify::percentage",
+                   G_CALLBACK(g_barbar_battery_cb), battery);
 }

@@ -16,7 +16,7 @@ libbarbar_src = files(
   'sensors/barbar-backlight.c',
   'sensors/barbar-cmd.c',
   # 'sensors/barbar-wireplumber.c',
-  # 'sensors/barbar-mpris2.c',
+  'sensors/barbar-mpris.c',
 
 
   'river/barbar-river-tags.c',
@@ -57,7 +57,7 @@ libbarbar_headers = [
   # 'sensors/barbar-wireplumber.h',
 
   # 'sensors/barbar-wireplumber.h',
-  # 'sensors/barbar-mpris2.h',
+  'sensors/barbar-mpris.h',
 
   'river/barbar-river-tags.h',
   'river/barbar-river-view.h',
@@ -133,7 +133,7 @@ if get_option('introspection')
     nsversion: '1.0',
     symbol_prefix: ['g_barbar', 'barbar'],
     identifier_prefix : ['BarBar'],
-    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0'],
+    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0'],
     dependencies: deps,
     extra_args: gir_args,
     fatal_warnings: true,
@@ -144,13 +144,14 @@ endif
 if get_option('vala')
   gnome.generate_vapi(barbar_package,
     sources: gmime_gir[0],
-    packages: [ 'gio-2.0', 'gtk4' ],
+    packages: [ 'gio-2.0', 'gtk4'],
     install: true)
 endif
 
 executable('barbar',
   libbarbar_src + 'main.c', wayland_src, gdbus_src, 
   dependencies: deps,
+  link_args: ['-Wl,--export-dynamic'],
   install: true
 )
 
