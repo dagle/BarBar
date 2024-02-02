@@ -15,12 +15,15 @@ libbarbar_src = files(
   'sensors/barbar-network.c',
   'sensors/barbar-backlight.c',
   'sensors/barbar-cmd.c',
+  'sensors/barbar-temperature.c',
   # 'sensors/barbar-wireplumber.c',
   'sensors/barbar-mpris.c',
 
 
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
+
+  'widgets/barbar-label.c',
 
   # 'river/barbar-river-layout.c',
   # 'river/barbar-river-mode.c',
@@ -54,6 +57,7 @@ libbarbar_headers = [
   'sensors/barbar-network.h',
   'sensors/barbar-backlight.h',
   'sensors/barbar-cmd.h',
+  'sensors/barbar-temperature.h',
   # 'sensors/barbar-wireplumber.h',
 
   # 'sensors/barbar-wireplumber.h',
@@ -62,6 +66,7 @@ libbarbar_headers = [
   'river/barbar-river-tags.h',
   'river/barbar-river-view.h',
 
+  'widgets/barbar-label.h',
   # 'river/barbar-river-layout.h',
   # 'river/barbar-river-mode.h',
   # 'sway/barbar-sway-ipc.h',
@@ -71,7 +76,6 @@ libbarbar_headers = [
   'hyprland/barbar-hyprland-workspace.h',
   # 'dwl/barbar-dwl-service.h',
   # 'dwl/barbar-dwl-tags.h',
-  # 'barbar-temperature.h',
   # 'barbar-weather.h',
   # 'barbar-inhibitor.h',
   # 'tray/barbar-watcher.h',

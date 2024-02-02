@@ -74,7 +74,7 @@ static void time_adjustment_changed(GtkAdjustment *adjustment,
   pos = playerctl_player_get_position(controls->player, &err);
 
   if (err) {
-    printf("Error getting mpris position: %s", err->message);
+    g_printerr("Mpris control: Error getting mpris position: %s", err->message);
     g_error_free(err);
     return;
   }
@@ -88,7 +88,7 @@ static void time_adjustment_changed(GtkAdjustment *adjustment,
       gtk_adjustment_get_value(adjustment) * G_USEC_PER_SEC + 0.5, &err);
 
   if (err) {
-    printf("Failed seeking in mpris: %s", err->message);
+    g_printerr("Mpris control: Failed seeking: %s", err->message);
     g_error_free(err);
     return;
   }
@@ -113,7 +113,7 @@ static void volume_adjustment_changed(GtkAdjustment *adjustment,
                               gtk_adjustment_get_value(adjustment), &err);
 
   if (err) {
-    printf("Failed updating the volume in mpris: %s", err->message);
+    g_printerr("Mpris control: Failed updating the volume: %s", err->message);
     g_error_free(err);
     return;
   }
@@ -129,7 +129,7 @@ static void play_button_clicked(GtkWidget *button,
   playerctl_player_play(controls->player, &err);
 
   if (err) {
-    printf("Failed to toggle play in mpris: %s", err->message);
+    g_printerr("Mpris control: Failed to toggle play: %s", err->message);
     g_error_free(err);
     return;
   }

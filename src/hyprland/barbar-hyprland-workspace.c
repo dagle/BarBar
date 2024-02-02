@@ -228,7 +228,7 @@ static void parse_initional_workspaces(BarBarHyprlandWorkspace *hypr,
   gboolean ret = json_parser_load_from_stream(parser, input_stream, NULL, &err);
 
   if (!ret) {
-    printf("json error: %s\n", err->message);
+    g_printerr("Hyprland workspace: Failed to parse json: %s", err->message);
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -328,11 +328,8 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   GdkMonitor *monitor;
 
   GError *error = NULL;
-  // gchar *buf = NULL;
-  // int len;
 
   BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(widget);
-  // BarBarHyprlandIpc *ipc;
 
   gdk_display = gdk_display_get_default();
 
@@ -343,13 +340,16 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
 
   if (error) {
-    printf("error: %s\n", error->message);
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+               error->message);
     return;
   }
 
   g_barbar_hyprland_ipc_send_command(ipc, "j/workspaces", &error);
   if (error) {
-    printf("error: %s\n", error->message);
+    g_printerr(
+        "Hyprland workspace: Error sending command for initial workspaces: %s",
+        error->message);
     return;
   }
   parse_initional_workspaces(hypr, ipc);

@@ -20,6 +20,8 @@
 
 #include "hyprland/barbar-hyprland-workspace.h"
 
+#include "widgets/barbar-label.h"
+
 void g_barbar_init(void);
 
 #endif /* __BARBAR_H__ */

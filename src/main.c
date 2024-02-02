@@ -88,7 +88,7 @@ G_MODULE_EXPORT void set_title(GtkWidget *label, GParamSpec *pspec,
   // return g_strdup_printf("%s", time);
 }
 
-G_MODULE_EXPORT void update(GtkWidget *label, GtkWidget *clock) {
+G_MODULE_EXPORT void update3(GtkWidget *label, GtkWidget *clock) {
   const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(clock));
   printf("update: %s\n", className);
   // printf("update called\n");
@@ -103,7 +103,7 @@ static void activate2(GtkApplication *app, void *data) {
   scope = gtk_builder_cscope_new();
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), bepa);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), set_title);
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), update);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), update2);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   barbar_strdup_printf);
 
@@ -126,12 +126,18 @@ static void activate2(GtkApplication *app, void *data) {
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
       gtk_window_present(window);
     } else if (BARBAR_IS_SENSOR(object)) {
+      // const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(object));
+      // printf("name: %s\n", className);
       g_object_ref(object);
       BarBarSensor *sensor = BARBAR_SENSOR(object);
       g_barbar_sensor_start(sensor);
     }
   }
   g_slist_free(list);
+  // GObject *object = g_object_new(BARBAR_TYPE_TEMPERATURE, NULL);
+  // g_object_ref(object);
+  // BarBarSensor *sensor = BARBAR_SENSOR(object);
+  // g_barbar_sensor_start(sensor);
 
   // GtkWindow *window = GTK_WINDOW(gtk_builder_get_object(builder, "window1"));
   // gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));

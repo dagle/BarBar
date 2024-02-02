@@ -246,7 +246,7 @@ static void g_barbar_mpris_player_appeared(PlayerctlPlayerManager *manager,
   mpris->current_player = playerctl_player_new_from_name(player_name, &err);
 
   if (!mpris->current_player || err) {
-    fprintf(stderr, "Unable to read file: %s\n", err->message);
+    g_printerr("mpris: unable to create player: %s\n", err->message);
     g_error_free(err);
     return;
   }

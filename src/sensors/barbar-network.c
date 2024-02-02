@@ -44,6 +44,11 @@ enum {
   NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  NUM_SIGNALS,
+};
+
 #ifndef PROFILE_COUNT
 #define PROFILE_COUNT 1
 #endif
@@ -56,6 +61,8 @@ G_DEFINE_TYPE(BarBarNetwork, g_barbar_network, BARBAR_TYPE_SENSOR)
 static GParamSpec *network_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static guint network_signals[NUM_SIGNALS];
 
 static void g_barbar_network_set_interface(BarBarNetwork *network,
                                            const char *interface) {
@@ -162,6 +169,25 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
       "down-speed", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     network_props);
+
+  /**
+   * BarBarNetwork::tick:
+   * @sensor: This sensor
+   *
+   * Emit that the network has ticked. This means that we want to refetch
+   * the network.
+   */
+  network_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_NETWORK,                    /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
 }
 
 static void g_barbar_network_init(BarBarNetwork *self) {
@@ -228,6 +254,8 @@ static gboolean g_barbar_network_update(gpointer data) {
 
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_UP_SPEED]);
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_DOWN_SPEED]);
+
+  g_signal_emit(net, network_signals[TICK], 0);
 
   return G_SOURCE_CONTINUE;
 }

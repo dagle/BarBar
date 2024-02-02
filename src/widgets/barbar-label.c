@@ -26,6 +26,8 @@
 #include "barbar-label.h"
 #include <tmpl-glib.h>
 struct _BarBarLabel {
+  GtkWidget parent_instance;
+
   GtkWidget *child;
   char *templ;
   TmplTemplate *tmpl;
@@ -34,6 +36,7 @@ struct _BarBarLabel {
 G_DEFINE_TYPE(BarBarLabel, g_barbar_label, GTK_TYPE_WIDGET)
 
 enum {
+  PROP_0,
   PROP_TEMPL,
   PROP_LABEL,
   PROP_CHILD,
@@ -52,53 +55,50 @@ static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   g_free(label->templ);
   if (!templ) {
     label->templ = NULL;
-    g_object_notify_by_pspec(G_OBJECT(clock), label_props[PROP_TEMPL]);
+    g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_TEMPL]);
     return;
   }
 
   label->templ = g_strdup(templ);
 
   label->tmpl = tmpl_template_new(NULL);
+
   if (!tmpl_template_parse_string(label->tmpl, label->templ, &error)) {
+    g_printerr("Label: Error building template: %s\n", error->message);
+    g_error_free(error);
   }
 }
 
-G_MODULE_EXPORT void update(GtkWidget *object, GObject *sensor) {
+G_MODULE_EXPORT void update2(GtkWidget *object, GObject *sensor) {
+  const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(sensor));
   GError *error = NULL;
   BarBarLabel *label = BARBAR_LABEL(object);
-  const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(sensor));
   char *str;
   g_autoptr(TmplScope) scope = NULL;
 
   TmplSymbol *symbol = NULL;
   scope = tmpl_scope_new();
+  printf("templ: %s\n", label->templ);
 
   symbol = tmpl_scope_get(scope, className);
   tmpl_symbol_assign_object(symbol, sensor);
 
   if (!(str = tmpl_template_expand_string(label->tmpl, scope, &error))) {
-    g_printerr("%s\n", error->message);
+    g_printerr("Label: Error expanding the template: %s\n", error->message);
     return;
   }
+  printf("str: %s\n", str);
 
   gtk_label_set_text(GTK_LABEL(label->child), str);
   g_free(str);
-
-  char *time;
-  g_object_get(clock, "time", &time, NULL);
-  gtk_label_set_text(GTK_LABEL(label), time);
 }
 
-// static void g_barbar_label_set_label(BarBarLabel *label, const char *label) {
-//   g_return_if_fail(BARBAR_IS_LABEL(label));
-//
-//   // g_free(label->templ);
-//   // label->templ = g_strdup(templ);
-//
-//   // const char *old = gtk_label_get_text(GTK_LABEL(label->child));
-//
-//   g_object_notify_by_pspec(G_OBJECT(clock), label_props[PROP_LABEL]);
-// }
+static void g_barbar_label_set_label(BarBarLabel *label, const char *text) {
+  g_return_if_fail(BARBAR_IS_LABEL(label));
+  return;
+
+  g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_LABEL]);
+}
 
 static void g_barbar_label_set_property(GObject *object, guint property_id,
                                         const GValue *value,
@@ -149,7 +149,6 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
    * BarBarLabel:templ:
    *
    * A template string used when a sensors is updated
-   *
    */
   label_props[PROP_TEMPL] =
       g_param_spec_string("templ", "Template", "Template string", NULL,
@@ -158,18 +157,17 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
    * BarBarLabel:label:
    *
    * The label string
-   *
    */
-  label_props[PROP_TEMPL] =
+  label_props[PROP_LABEL] =
       g_param_spec_string("label", "Label", "The formated label", NULL,
                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   /**
    * BarBarLabel:child:
    *
+   * Child widget
    */
-  label_props[PROP_LABEL] = g_param_spec_object(
+  label_props[PROP_CHILD] = g_param_spec_object(
       "child", "Child", "Child label", GTK_TYPE_LABEL, G_PARAM_READABLE);
-
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, label_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);

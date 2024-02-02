@@ -26,6 +26,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarLabel, g_barbar_label, BARBAR, LABEL, GtkWidget)
 
+void update2(GtkWidget *object, GObject *sensor);
 /* GtkWidget *g_barbar_mpris_controls_new(GtkMediaStream *stream); */
 
 /* GtkMediaStream *gtk_media_controls_get_media_stream(GtkMediaControls

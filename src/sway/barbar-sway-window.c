@@ -127,7 +127,7 @@ static void g_barbar_sway_handle_window_change(gchar *payload, uint32_t len,
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
   if (!ret) {
-    printf("json error: %s\n", err->message);
+    g_printerr("Sway window: Failed to parse json: %s", err->message);
     return;
   }
 
@@ -189,7 +189,7 @@ static void g_barbar_sway_initial_window(BarBarSwayWindow *sway, gchar *payload,
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
   if (!ret) {
-    printf("json error: %s\n", err->message);
+    g_printerr("Sway window: Failed to parse json: %s", err->message);
     return;
   }
 
@@ -225,8 +225,8 @@ void g_barbar_sway_window_start(BarBarSwayWindow *sway) {
 
   ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
-    printf("Error: %s\n", error->message);
-    // TODO: Error stuff
+    g_printerr("Sway window: Couldn't connect to the sway ipc %s",
+               error->message);
     return;
   }
 

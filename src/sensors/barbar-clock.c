@@ -187,7 +187,7 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
   /**
    * BarBarClock:interval:
    *
-   * How often memory should be pulled for info.
+   * How often the clock should be updated
    */
   clock_props[PROP_INTERVAL] = g_param_spec_uint(
       "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
@@ -200,7 +200,7 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
    * @sensor: This sensor
    *
    * Emit that the clock has ticked. This means that we want to refetch
-   * the player.
+   * the clock.
    */
   clock_signals[TICK] =
       g_signal_new("tick",                                 /* signal_name */

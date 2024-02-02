@@ -346,7 +346,7 @@ static void g_barbar_sway_handle_workspaces_change(gchar *payload, uint32_t len,
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
   if (!ret) {
-    printf("json error: %s\n", err->message);
+    g_printerr("Sway workspace: Failed to parse json: %s", err->message);
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -420,7 +420,7 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
   if (!ret) {
-    printf("json error: %s\n", err->message);
+    g_printerr("Sway workspace: Failed to parse json: %s", err->message);
     return;
   }
 
@@ -467,7 +467,8 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
 
   ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
-    printf("Error: %s\n", error->message);
+    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
+               error->message);
     // TODO: Error stuff
     return;
   }

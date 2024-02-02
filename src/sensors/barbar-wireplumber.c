@@ -159,7 +159,7 @@ static void on_plugin_loaded(WpCore *core, GAsyncResult *res, gpointer *data) {
   GError *error;
 
   if (!wp_core_load_component_finish(core, res, &error)) {
-    fprintf(stderr, "%s\n", error->message);
+    g_printerr("Wireplumber: failed to load compenent: %s\n", error->message);
     wp->exit_code = 1;
     return;
   }

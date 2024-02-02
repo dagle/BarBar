@@ -17,35 +17,46 @@ BarBar.Bar {
       label: bind clock.time;
     }
 
-    [end]
-    Gtk.LevelBar {
-      value: bind mem.percent;
-      orientation: vertical;
-      inverted: true;
-    }
+    // [end]
+    // Gtk.LevelBar {
+    //   value: bind mem.percent;
+    //   orientation: vertical;
+    //   inverted: true;
+    // }
+
+    // [end]
+    // Gtk.LevelBar {
+    //   value: bind cpu.percent;
+    //   orientation: vertical;
+    //   inverted: true;
+    // }
+
+    // [end]
+    // BarBar.Label clock_label {
+    //   templ: "{{BarBarClock.time}}";
+    //   // label: bind $barbar_strdup_printf("The time is now exactly!", clock) as <string>;
+    // }
 
     [end]
-    Gtk.LevelBar {
-      value: bind cpu.percent;
-      orientation: vertical;
-      inverted: true;
-    }
-
-    [end]
-    Gtk.Label clock_label {
-      // label: bind $barbar_strdup_printf("The time is now exactly!", clock) as <string>;
+    BarBar.Label network_label {
+      templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
     }
 
     [end]
     Gtk.Label {
-    // BarBar.Label network_label {
-    //  format: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down-speed}}b ⬇️ | {{BarBarNetwork.up-speed}}b ⬆️ "
-      label: bind $barbar_strdup_printf("%s: %d⬇️ | %d⬆️ ", network.interface, network.down-speed, network.up-speed) as <string>;
+       label: bind battery.percent;
     }
 
     [end]
     Gtk.Label {
-      label: bind battery.percent;
+      label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      use-markup: true;
+    }
+
+    [end]
+    BarBar.Label temp {
+      //templ: "{{BarBarTemperature.temperature}}";
+      templ: "{{i32(BarBarTemperature.temperature)}} ";
     }
 
     [end]
@@ -82,7 +93,7 @@ BarBar.Bar {
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";
-  tick => $update(clock_label);
+  // tick => $update2(clock_label);
 }
 
 BarBar.Mem mem {
@@ -93,6 +104,7 @@ BarBar.Cpu cpu {
 
 BarBar.Network network {
   interface: "wlan0";
+  tick => $update2(network_label);
 }
 
 BarBar.Backlight backlight {
@@ -103,6 +115,10 @@ BarBar.Battery battery {
 
 // BarBar.Wireplumber plumb {
 // }
+
+BarBar.Temperature temperature {
+  tick => $update2(temp);
+}
 
 BarBar.Mpris mpris {
 }

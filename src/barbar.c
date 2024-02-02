@@ -12,6 +12,8 @@ void g_barbar_init(void) {
   // g_barbar_battery_get_type();
   // g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();
+  g_barbar_label_get_type();
+  g_barbar_temperature_get_type();
   g_barbar_network_get_type();
   g_barbar_river_tag_get_type();
   g_barbar_river_view_get_type();

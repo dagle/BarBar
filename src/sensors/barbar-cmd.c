@@ -41,7 +41,7 @@ void g_barbar_cmd_set_cmd(BarBarCmd *self, const char *cmd) {
 
   gboolean ret = g_shell_parse_argv(cmd, &argc, &parsed_cmd, &err);
   if (!ret) {
-    printf("Command %s failed: %s\n", cmd, err->message);
+    g_printerr("Command: failed to parse %s: %s\n", cmd, err->message);
   }
   self->cmd = parsed_cmd;
 
@@ -171,7 +171,7 @@ static gboolean g_barbar_cmd_update(gpointer data) {
       &err);
 
   if (err) {
-    printf("Cmd failed: %s", err->message);
+    g_printerr("Command: failed: %s\n", err->message);
     g_error_free(err);
     g_object_unref(proc);
     return G_SOURCE_REMOVE;
