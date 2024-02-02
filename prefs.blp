@@ -38,8 +38,8 @@ BarBar.Bar {
 
     [end]
     Gtk.Label {
-    // BarBar.Label blabel {
-    //  format: "{{Network.interface}}: {{size_nomalize(Network.down-speed)}}b ⬇️ | {{size_nomalize(Network.up-speed)}}b ⬆️ "
+    // BarBar.Label network_label {
+    //  format: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down-speed}}b ⬇️ | {{BarBarNetwork.up-speed}}b ⬆️ "
       label: bind $barbar_strdup_printf("%s: %d⬇️ | %d⬆️ ", network.interface, network.down-speed, network.up-speed) as <string>;
     }
 
