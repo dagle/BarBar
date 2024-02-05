@@ -11,6 +11,7 @@ void g_barbar_init(void) {
   g_barbar_cpu_get_type();
   g_barbar_backlight_get_type();
   g_barbar_battery_get_type();
+  g_barbar_inhibitor_get_type();
   // g_barbar_battery_get_type();
   // g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();

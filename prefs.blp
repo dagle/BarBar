@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using BarBar 1.0;
 
-BarBar.Bar {
+BarBar.Bar bar {
   bar-pos: top;
   Gtk.ActionBar {
     [start]
@@ -66,6 +66,14 @@ BarBar.Bar {
       inverted: true;
     }
 
+    BarBar.SensorWidget {
+      sensor: BarBar.Inhibitor {
+      }
+      child: Gtk.ToggleButton {
+        label: "inhibitor";
+      }
+    }
+
     [end]
     Gtk.ScaleButton {
       adjustment: Adjustment {
@@ -108,6 +116,7 @@ BarBar.Clock clock {
   // tick => $update2(clock_label);
 }
 
+
 BarBar.Mem mem {
 }
 
@@ -115,7 +124,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "enp13s0";
+  interface: "wlan0";
   tick => $update2(network_label);
 }
 

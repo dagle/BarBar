@@ -1,12 +1,15 @@
 #include "barbar-inhibitor.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
+#include "sensors/barbar-sensorcontext.h"
 #include <gdk/wayland/gdkwayland.h>
+#include <gtk/gtk.h>
 #include <stdio.h>
 
 struct _BarBarInhibitor {
-  GtkWidget parent_instance;
+  GObject parent_instance;
 
-  GtkWidget *label;
+  GtkWidget *widget;
+  struct wl_surface *wl_surface;
 
   struct zwp_idle_inhibit_manager_v1 *manager;
   struct zwp_idle_inhibitor_v1 *inhibitor;
@@ -26,7 +29,20 @@ static GParamSpec *inhibitor_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-G_DEFINE_TYPE(BarBarInhibitor, g_barbar_inhibitor, GTK_TYPE_WIDGET)
+static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr);
+
+static void
+barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarInhibitor, g_barbar_inhibitor, G_TYPE_OBJECT,
+    G_IMPLEMENT_INTERFACE(BARBAR_TYPE_SENSOR_CONTEXT,
+                          barbar_sensor_context_iface_init));
+
+static void
+barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface) {
+  iface->start = g_barbar_inhibitor_start;
+}
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
@@ -50,8 +66,6 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-static void g_barbar_inhibitor_constructed(GObject *object);
-
 static void g_barbar_inhibitor_dispose(GObject *object) {
   BarBarInhibitor *inhibitor = BARBAR_INHIBITOR(object);
 
@@ -61,29 +75,22 @@ static void g_barbar_inhibitor_dispose(GObject *object) {
   if (inhibitor->manager) {
     g_clear_pointer(&inhibitor->manager, zwp_idle_inhibit_manager_v1_destroy);
   }
-  g_object_unref(inhibitor->label);
 }
 
-void g_barbar_inhibitor_toggle(BarBarInhibitor *inhibitor) {
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(inhibitor));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  struct wl_surface *wl_surface = gdk_wayland_surface_get_wl_surface(surface);
+static void g_barbar_inhibitor_toggle(BarBarInhibitor *inhibitor) {
   inhibitor->enabled = !inhibitor->enabled;
 
   if (inhibitor->enabled) {
-    gtk_widget_add_css_class(inhibitor->label, "deactivated");
     if (!inhibitor->inhibitor) {
       inhibitor->inhibitor = zwp_idle_inhibit_manager_v1_create_inhibitor(
-          inhibitor->manager, wl_surface);
+          inhibitor->manager, inhibitor->wl_surface);
     }
   } else {
-    gtk_widget_add_css_class(inhibitor->label, "deactivated");
     if (!inhibitor->inhibitor) {
       g_clear_pointer(&inhibitor->inhibitor, zwp_idle_inhibitor_v1_destroy);
     }
   }
 
-  // label_.get_style_context()->remove_class("deactivated");
   g_object_notify_by_pspec(G_OBJECT(inhibitor), inhibitor_props[PROP_ENABLED]);
 }
 
@@ -125,45 +132,43 @@ static void g_barbar_inhibitor_get_property(GObject *object, guint property_id,
 
 static void g_barbar_inhibitor_class_init(BarBarInhibitorClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_inhibitor_set_property;
   gobject_class->get_property = g_barbar_inhibitor_get_property;
-  gobject_class->constructed = g_barbar_inhibitor_constructed;
   gobject_class->dispose = g_barbar_inhibitor_dispose;
+
   inhibitor_props[PROP_ENABLED] =
       g_param_spec_boolean("enabled", NULL, NULL, FALSE, G_PARAM_READWRITE);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     inhibitor_props);
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  gtk_widget_class_set_css_name(widget_class, "inhibitor");
 }
 
-static void g_barbar_inhibitor_init(BarBarInhibitor *self) {}
-
-static void g_barbar_inhibitor_constructed(GObject *object) {
-  BarBarInhibitor *inhibitor = BARBAR_INHIBITOR(object);
-  G_OBJECT_CLASS(g_barbar_inhibitor_parent_class)->constructed(object);
-  inhibitor->enabled = FALSE;
-  inhibitor->label = gtk_button_new_with_label("sleepy");
-  gtk_widget_set_parent(inhibitor->label, GTK_WIDGET(inhibitor));
+static void g_barbar_inhibitor_init(BarBarInhibitor *self) {
+  self->enabled = FALSE;
 }
 
-void g_barbar_inhibitor_start(BarBarInhibitor *inhibitor) {
+static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr) {
   GdkDisplay *gdk_display;
   struct wl_registry *wl_registry;
   struct wl_display *wl_display;
 
+  g_return_if_fail(self);
+  g_return_if_fail(ptr);
+
+  BarBarInhibitor *inhibitor = BARBAR_INHIBITOR(self);
+  GtkWidget *widget = GTK_WIDGET(self);
+
   gdk_display = gdk_display_get_default();
 
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(inhibitor));
+  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(widget));
   GdkSurface *surface = gtk_native_get_surface(native);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);
   wl_registry = wl_display_get_registry(wl_display);
+  inhibitor->wl_surface = gdk_wayland_surface_get_wl_surface(surface);
 
   wl_registry_add_listener(wl_registry, &wl_registry_listener, inhibitor);
   wl_display_roundtrip(wl_display);
-  g_signal_connect_swapped(inhibitor->label, "clicked",
-                           G_CALLBACK(g_barbar_inhibitor_toggle), inhibitor);
 }

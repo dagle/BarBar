@@ -22,21 +22,22 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_MPD_H_
-#define _BARBAR_MPD_H_
+#ifndef _BARBAR_INHIBITOR_H_
+#define _BARBAR_INHIBITOR_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_MPD (g_barbar_mpd_get_type())
+#define BARBAR_TYPE_INHIBITOR (g_barbar_inhibitor_get_type())
 
-// TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarMpd, g_barbar_mpd, BARBAR, MPD, GObject)
+G_DECLARE_FINAL_TYPE(BarBarInhibitor, g_barbar_inhibitor, BARBAR, INHIBITOR,
+                     GObject)
 
-void g_barbar_mpd_update(BarBarMpd *mpd);
+/* void g_barbar_inhibitor_start(BarBarInhibitor *inhibitor); */
 
 G_END_DECLS
 
-#endif /* _BARBAR_MPD_H_ */
+#endif /* _BARBAR_INHIBITOR_H_ */

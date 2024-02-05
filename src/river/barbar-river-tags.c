@@ -252,7 +252,6 @@ static void g_barbar_river_tag_map(GtkWidget *widget) {
   GtkWindow *window =
       GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
   if (window == NULL || !gtk_layer_is_layer_window(window)) {
-    // print an error
     printf("Parent window not found!\n");
     return;
   }
