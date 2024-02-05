@@ -39,11 +39,11 @@ gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         fallback : ['gtk4-layer-shell', 'gtk_layer_shell'])
 
 deps = [
+  gtk_layer_shell_dep,
   glib,
   gobject,
   gio,
   gtk,
-  gtk_layer_shell_dep,
   wayland_client,
   thread_dep,
   # libmpdclient,

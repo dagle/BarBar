@@ -1,6 +1,7 @@
 libbarbar_src = files(
   'barbar.c',
   'barbar-bar.c',
+  'barbar-background.c',
   'barbar-util.c',
   # 'barbar-disk.c',
   # 'barbar-mpd.c',
@@ -43,6 +44,7 @@ libbarbar_src = files(
 libbarbar_headers = [
   'barbar.h',
   'barbar-bar.h',
+  'barbar-background.h',
   'barbar-util.h',
   # 'barbar-disk.h',
   # 'barbar-mpd.h',

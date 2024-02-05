@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BAR_H_
-#define _BARBAR_BAR_H_
+#ifndef _BARBAR_BACKGROUND_H_
+#define _BARBAR_BACKGROUND_H_
 
 #include <glib-object.h>
 #include <glib.h>
@@ -31,32 +31,13 @@
 
 G_BEGIN_DECLS
 
-/**
- * BarBarPosition:
- * @BARBAR_POS_TOP: Put the bar at top.
- * @BARBAR_POS_BOTTOM: Put the bar at bottom.
- * @BARBAR_POS_LEFT: Put the bar at left.
- * @BARBAR_POS_RIGHT: Put the bar at right.
- *
- * Describs the aviable positions to anchor the bar.
- */
-typedef enum {
-  BARBAR_POS_TOP,
-  BARBAR_POS_BOTTOM,
-  BARBAR_POS_LEFT,
-  BARBAR_POS_RIGHT,
-} BarBarPosition;
+#define BARBAR_TYPE_BACKGROUND (g_barbar_background_get_type())
 
-GType g_barbar_position_get_type(void);
+G_DECLARE_FINAL_TYPE(BarBarBackground, g_barbar_background, BARBAR, BACKGROUND,
+                     GtkWindow)
 
-#define BARBAR_TYPE_BAR (g_barbar_bar_get_type())
-
-#define BARBAR_TYPE_POSITION (g_barbar_position_get_type())
-
-G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWindow)
-
-GtkWidget *g_barbar_bar_new(void);
+GtkWidget *g_barbar_background_new(void);
 
 G_END_DECLS
 
-#endif /* _BARBAR_BAR_H_ */
+#endif /* _BARBAR_BACKGROUND_H_ */

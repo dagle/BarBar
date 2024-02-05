@@ -2,7 +2,7 @@ using Gtk 4.0;
 using BarBar 1.0;
 
 BarBar.Bar {
-  bar-pos: bot;
+  bar-pos: top;
   Gtk.ActionBar {
     [start]
     BarBar.RiverTag {
@@ -42,14 +42,14 @@ BarBar.Bar {
       templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
     }
 
-    [end]
-    Gtk.Label {
-       label: bind battery.percent;
-    }
+    // [end]
+    // Gtk.Label {
+    //    label: bind battery.percent;
+    // }
 
     [end]
     Gtk.Label {
-      label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
       use-markup: true;
     }
 
@@ -90,6 +90,18 @@ BarBar.Bar {
   }
 }
 
+BarBar.Background {
+  top-margin: 45;
+  bottom-margin: 30;
+  right-margin: 800;
+  Gtk.LevelBar {
+    value: bind mem.percent;
+    orientation: vertical;
+    inverted: true;
+  }
+}
+
+
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";
@@ -103,7 +115,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "wlan0";
+  interface: "enp13s0";
   tick => $update2(network_label);
 }
 

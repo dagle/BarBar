@@ -1,6 +1,7 @@
 #ifndef __BARBAR_H__
 #define __BARBAR_H__
 
+#include "barbar-background.h"
 #include "barbar-bar.h"
 #include "sensors/barbar-backlight.h"
 #include "sensors/barbar-battery.h"

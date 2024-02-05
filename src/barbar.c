@@ -2,6 +2,8 @@
 
 void g_barbar_init(void) {
   // lets init like this now
+  g_barbar_bar_get_type();
+  g_barbar_background_get_type();
   g_barbar_position_get_type();
   g_barbar_sensor_get_type();
   g_barbar_clock_get_type();

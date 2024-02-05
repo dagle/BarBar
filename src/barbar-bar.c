@@ -41,6 +41,8 @@ enum {
   NUM_PROPERTIES,
 };
 
+// TODO: set_size(width, height)
+
 GType g_barbar_position_get_type(void) {
 
   static gsize gtk_bar_role_type;
@@ -95,7 +97,9 @@ static void g_barbar_bar_set_pos(BarBarBar *bar, BarBarPosition pos) {
     return;
   }
 
-  // g_barbar_bar_set_pos_internal(bar, pos);
+  bar->pos = pos;
+
+  g_barbar_bar_set_pos_internal(bar, pos);
 
   g_object_notify_by_pspec(G_OBJECT(bar), bar_props[PROP_BAR_POS]);
 }
@@ -246,9 +250,9 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
 }
 
 static void g_barbar_bar_init(BarBarBar *self) {
-  self->pos = BARBAR_POS_TOP;
-  self->height = 20;
-  self->screen_num = 0;
+  GtkWindow *gtk_window = GTK_WINDOW(self);
+
+  gtk_layer_init_for_window(gtk_window);
 }
 
 static void g_barbar_bar_constructed(GObject *object) {
@@ -257,7 +261,6 @@ static void g_barbar_bar_constructed(GObject *object) {
 
   GtkWindow *gtk_window = GTK_WINDOW(object);
 
-  gtk_layer_init_for_window(gtk_window);
   gtk_layer_set_namespace(gtk_window, "bar");
   gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_TOP);
   gtk_layer_auto_exclusive_zone_enable(gtk_window);
@@ -300,7 +303,7 @@ static void g_barbar_bar_constructed(GObject *object) {
  *
  * Creates a new `BarBarBar`.
  *
- * Returns: a new `BarBarBar`.
+ * Returns: (transfer full): a new `BarBarBar`.
  */
 GtkWidget *g_barbar_bar_new(void) {
   BarBarBar *bar;

@@ -1,4 +1,3 @@
-#include "barbar-bar.h"
 #include "barbar.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
@@ -97,6 +96,19 @@ G_MODULE_EXPORT void update3(GtkWidget *label, GtkWidget *clock) {
   gtk_label_set_text(GTK_LABEL(label), time);
 }
 
+static void add_provider(GtkWidget *widget) {
+  GdkDisplay *display = gtk_widget_get_display(widget);
+
+  GtkCssProvider *css_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_path(css_provider,
+                                  "/home/dagle/.config/barbar/style.css");
+
+  gtk_style_context_add_provider_for_display(display,
+                                             GTK_STYLE_PROVIDER(css_provider),
+                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
+  g_object_unref(css_provider);
+}
+
 static void activate2(GtkApplication *app, void *data) {
   GtkBuilderScope *scope;
   GtkBuilder *builder;
@@ -115,13 +127,18 @@ static void activate2(GtkApplication *app, void *data) {
   gtk_builder_add_from_file(builder, "/home/dagle/.config/barbar/config.ui",
                             NULL);
   // gtk_builder_cscope_add_callback_symbol(builder, "bepa", G_CALLBACK(bepa));
-  // gtk_builder_cscope_add_callback
+  // gtk_  builder_cscope_add_callback
+
   GSList *list = gtk_builder_get_objects(builder);
 
   for (GSList *it = list; it; it = it->next) {
     GObject *object = it->data;
 
     if (BARBAR_IS_BAR(object)) {
+      GtkWindow *window = GTK_WINDOW(object);
+      gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
+      gtk_window_present(window);
+    } else if (BARBAR_IS_BACKGROUND(object)) {
       GtkWindow *window = GTK_WINDOW(object);
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
       gtk_window_present(window);
@@ -198,7 +215,6 @@ int main(int argc, char **argv) {
   //     g_barbar_status_watcher_bus_acquired_handler2, NULL, NULL, NULL);
   // g_main_loop_run(loop);
   gtk_init();
-  g_barbar_bar_get_type();
   g_barbar_init();
   // GtkWidget *bar = g_barbar_bar_new();
   // g_object_unref(bar);
