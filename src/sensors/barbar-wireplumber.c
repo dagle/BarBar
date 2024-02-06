@@ -237,11 +237,11 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   // wp_object_manager_request_object_features (self->om, WP_TYPE_GLOBAL_PROXY,
   //     WP_PIPEWIRE_OBJECT_FEATURES_MINIMAL);
 
-  wp.pending_plugins++;
+  wp->pending_plugins++;
   wp_core_load_component(wp->core, "libwireplumber-module-default-nodes-api",
                          "module", NULL, NULL, NULL, on_plugin_loaded, &wp);
 
-  wp.pending_plugins++;
+  wp->pending_plugins++;
   wp_core_load_component(wp->core, "libwireplumber-module-mixer-api", "module",
                          NULL, NULL, NULL, on_plugin_loaded, &wp);
 

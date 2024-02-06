@@ -34,8 +34,8 @@ enum {
   NUM_PROPERTIES,
 };
 
-#define LOGIN_PATH "/org/freedesktop/login1"
-#define LOGIN_INTERFACE "org.freedesktop.login1.Manager"
+#define LOGIN_PATH "/org/freedesktop/login1/session/self"
+#define LOGIN_INTERFACE "org.freedesktop.login1.Session"
 #define LOGIN_NAME "org.freedesktop.login1"
 
 G_DEFINE_TYPE(BarBarBacklight, g_barbar_backlight, BARBAR_TYPE_SENSOR)

@@ -69,7 +69,7 @@ static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   }
 }
 
-G_MODULE_EXPORT void update2(GtkWidget *object, GObject *sensor) {
+G_MODULE_EXPORT void label_update(GtkWidget *object, GObject *sensor) {
   const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(sensor));
   GError *error = NULL;
   BarBarLabel *label = BARBAR_LABEL(object);
@@ -78,7 +78,6 @@ G_MODULE_EXPORT void update2(GtkWidget *object, GObject *sensor) {
 
   TmplSymbol *symbol = NULL;
   scope = tmpl_scope_new();
-  printf("templ: %s\n", label->templ);
 
   symbol = tmpl_scope_get(scope, className);
   tmpl_symbol_assign_object(symbol, sensor);
@@ -87,7 +86,6 @@ G_MODULE_EXPORT void update2(GtkWidget *object, GObject *sensor) {
     g_printerr("Label: Error expanding the template: %s\n", error->message);
     return;
   }
-  printf("str: %s\n", str);
 
   gtk_label_set_text(GTK_LABEL(label->child), str);
   g_free(str);

@@ -82,7 +82,7 @@ BarBar.Bar {
     }
 
     [end]
-    Gtk.ScaleButton {
+    Gtk.ScaleButton backbutton {
       adjustment: Adjustment {
         lower: 0.0;
         upper: 1.0;
@@ -124,7 +124,7 @@ BarBar.Bar {
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";
-  // tick => $update2(clock_label);
+  // tick => $label_update(clock_label);
 }
 
 
@@ -136,7 +136,7 @@ BarBar.Cpu cpu {
 
 BarBar.Network network {
   interface: "wlan0";
-  tick => $update2(network_label);
+  tick => $label_update(network_label);
 }
 
 BarBar.Backlight backlight {
@@ -149,7 +149,7 @@ BarBar.Battery battery {
 // }
 
 BarBar.Temperature temperature {
-  tick => $update2(temp);
+  tick => $label_update(temp);
 }
 
 BarBar.Mpris mpris {

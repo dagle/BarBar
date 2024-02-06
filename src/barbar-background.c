@@ -190,19 +190,6 @@ static void g_barbar_bar_constructed(GObject *object) {
   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
     gtk_layer_set_anchor(gtk_window, i, TRUE);
   }
-
-  GtkCssProvider *css_provider;
-  GdkDisplay *display;
-
-  display = gtk_widget_get_display(GTK_WIDGET(gtk_window));
-
-  css_provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_path(css_provider,
-                                  "/home/dagle/.config/barbar/style.css");
-
-  gtk_style_context_add_provider_for_display(display,
-                                             GTK_STYLE_PROVIDER(css_provider),
-                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
 }
 
 /**

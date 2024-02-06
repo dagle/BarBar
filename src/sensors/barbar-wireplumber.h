@@ -38,8 +38,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
                      WIREPLUMBER, BarBarSensor)
 
-void g_barbar_wireplumber_start(BarBarSensor *sensor);
-
 G_END_DECLS
 
 #endif /* _BARBAR_BAR_H_ */
