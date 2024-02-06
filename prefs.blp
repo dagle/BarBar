@@ -1,9 +1,14 @@
 using Gtk 4.0;
 using BarBar 1.0;
 
-BarBar.Bar bar {
+// At toplevel, you should define windows or signals
+// Barbar.Bar is a window
+BarBar.Bar {
   bar-pos: top;
+  // we can specify a screen or the current screen is in use
+  // screen-num: 1
   Gtk.ActionBar {
+    // We have custom widgets for river, hyprland, dwl etc
     [start]
     BarBar.RiverTag {
     }
@@ -12,45 +17,45 @@ BarBar.Bar bar {
     BarBar.RiverView {
     }
 
+    // A simple clock containing a clock, it's binds to the signal
+    // and that is it.
     [end]
     Gtk.Label {
       label: bind clock.time;
     }
 
+    // We are not limited to labels, we can do more fancy stuff too.
+    [end]
+    Gtk.LevelBar {
+      value: bind mem.percent;
+      orientation: vertical;
+      inverted: true;
+    }
+
+    [end]
+    Gtk.LevelBar {
+      value: bind cpu.percent;
+      orientation: vertical;
+      inverted: true;
+    }
+
+    // But what if we want if we want to do something with the value before we print it to the label?
+    // We use an experession for this! Here we use the printf function.
+    // If you need more powerful things, you can define your own functions in a programming language.
+    // See manual for this
     // [end]
-    // Gtk.LevelBar {
-    //   value: bind mem.percent;
-    //   orientation: vertical;
-    //   inverted: true;
+    // Gtk.Label {
+      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // use-markup: true;
     // }
 
-    // [end]
-    // Gtk.LevelBar {
-    //   value: bind cpu.percent;
-    //   orientation: vertical;
-    //   inverted: true;
-    // }
-
-    // [end]
-    // BarBar.Label clock_label {
-    //   templ: "{{BarBarClock.time}}";
-    //   // label: bind $barbar_strdup_printf("The time is now exactly!", clock) as <string>;
-    // }
-
+    // But wait there is more! We have a custom label widget. It's a bit different.
+    // The difference is that it takes a signal from a sensor and then uses a template
+    // to display it. It uses template-glib and have access to all properties and can 
+    // loops, if's and much more.
     [end]
     BarBar.Label network_label {
       templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
-    }
-
-    // [end]
-    // Gtk.Label {
-    //    label: bind battery.percent;
-    // }
-
-    [end]
-    Gtk.Label {
-      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-      use-markup: true;
     }
 
     [end]
@@ -66,12 +71,14 @@ BarBar.Bar bar {
       inverted: true;
     }
 
+    [end]
     BarBar.SensorWidget {
-      sensor: BarBar.Inhibitor {
-      }
-      child: Gtk.ToggleButton {
-        label: "inhibitor";
-      }
+       sensor: BarBar.Inhibitor inhibit {
+       };
+       child: Gtk.ToggleButton {
+          label: "inhibitor";
+          active: bind inhibit.enabled bidirectional;
+       };
     }
 
     [end]
@@ -98,18 +105,22 @@ BarBar.Bar bar {
   }
 }
 
-BarBar.Background {
-  top-margin: 45;
-  bottom-margin: 30;
-  right-margin: 800;
-  Gtk.LevelBar {
-    value: bind mem.percent;
-    orientation: vertical;
-    inverted: true;
-  }
-}
+// But wait what is this?!
+// Well, barbar is a really bad name.
+// We can do even more! Lets draw some widgets on
+// the background!
+// BarBar.Background {
+//   top-margin: 45;
+//   bottom-margin: 30;
+//   right-margin: 800;
+//   Gtk.LevelBar {
+//     value: bind mem.percent;
+//     orientation: vertical;
+//     inverted: true;
+//   }
+// }
 
-
+// Here we define some sensors.
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";

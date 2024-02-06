@@ -132,7 +132,6 @@ static void g_barbar_inhibitor_get_property(GObject *object, guint property_id,
 
 static void g_barbar_inhibitor_class_init(BarBarInhibitorClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_inhibitor_set_property;
   gobject_class->get_property = g_barbar_inhibitor_get_property;
@@ -158,7 +157,7 @@ static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr) {
   g_return_if_fail(ptr);
 
   BarBarInhibitor *inhibitor = BARBAR_INHIBITOR(self);
-  GtkWidget *widget = GTK_WIDGET(self);
+  GtkWidget *widget = GTK_WIDGET(ptr);
 
   gdk_display = gdk_display_get_default();
 

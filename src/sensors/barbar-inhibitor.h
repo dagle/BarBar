@@ -25,7 +25,7 @@
 #ifndef _BARBAR_INHIBITOR_H_
 #define _BARBAR_INHIBITOR_H_
 
-#include "barbar-sensor.h"
+#include "sensors/barbar-sensorcontext.h"
 #include <glib-object.h>
 #include <glib.h>
 

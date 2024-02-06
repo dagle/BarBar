@@ -37,6 +37,8 @@ enum {
 
 G_DEFINE_TYPE(BarBarClock, g_barbar_clock, BARBAR_TYPE_SENSOR)
 
+static void g_barbar_clock_start(BarBarSensor *sensor);
+
 static GParamSpec *clock_props[NUM_PROPERTIES] = {
     NULL,
 };
@@ -248,7 +250,7 @@ static gboolean g_barbar_clock_update(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_clock_start(BarBarSensor *sensor) {
+static void g_barbar_clock_start(BarBarSensor *sensor) {
   BarBarClock *clock = BARBAR_CLOCK(sensor);
 
   if (clock->source_id > 0) {

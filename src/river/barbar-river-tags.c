@@ -35,7 +35,7 @@ static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_river_tag_map(GtkWidget *widget);
+static void g_barbar_river_tag_root(GtkWidget *widget);
 static void g_barbar_river_tag_constructed(GObject *object);
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data);
@@ -57,7 +57,7 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
   gobject_class->get_property = g_barbar_river_tag_get_property;
   gobject_class->constructed = g_barbar_river_tag_constructed;
 
-  widget_class->root = g_barbar_river_tag_map;
+  widget_class->root = g_barbar_river_tag_root;
 
   river_tags_props[PROP_TAGNUMS] =
       g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
@@ -229,7 +229,7 @@ static void g_barbar_river_tag_constructed(GObject *object) {
   G_OBJECT_CLASS(g_barbar_river_tag_parent_class)->constructed(object);
 }
 
-static void g_barbar_river_tag_map(GtkWidget *widget) {
+static void g_barbar_river_tag_root(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;

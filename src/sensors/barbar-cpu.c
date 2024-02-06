@@ -43,6 +43,7 @@ static GParamSpec *cpu_props[CPU_NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarCpu, g_barbar_cpu, BARBAR_TYPE_SENSOR)
 
+static void g_barbar_cpu_start(BarBarSensor *sensor);
 static void g_barbar_cpu_constructed(GObject *object);
 static gboolean g_barbar_cpu_update(gpointer data);
 
@@ -147,7 +148,7 @@ static gboolean g_barbar_cpu_update(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_cpu_start(BarBarSensor *sensor) {
+static void g_barbar_cpu_start(BarBarSensor *sensor) {
   BarBarCpu *cpu = BARBAR_CPU(sensor);
   if (cpu->source_id > 0) {
     g_source_remove(cpu->source_id);

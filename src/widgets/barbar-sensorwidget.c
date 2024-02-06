@@ -45,11 +45,39 @@ enum {
   NUM_PROPERTIES,
 };
 
-static GParamSpec *label_props[NUM_PROPERTIES] = {
+static GParamSpec *sw_props[NUM_PROPERTIES] = {
     NULL,
 };
 
 static void g_barbar_sensor_widget_map(GtkWidget *widget);
+
+static void g_barbar_sensor_wiget_set_child(BarBarSensorWidget *widget,
+                                            GtkWidget *child) {
+  g_return_if_fail(BARBAR_IS_SENSOR_WIDGET(widget));
+  g_return_if_fail(GTK_IS_WIDGET(child));
+
+  if (widget->child) {
+    g_object_unref(widget->child);
+  }
+
+  widget->child = g_object_ref(child);
+
+  g_object_notify_by_pspec(G_OBJECT(widget), sw_props[PROP_CHILD]);
+}
+
+static void g_barbar_sensor_wiget_set_sensor(BarBarSensorWidget *widget,
+                                             BarBarSensorContext *sensor) {
+  g_return_if_fail(BARBAR_IS_SENSOR_WIDGET(widget));
+  g_return_if_fail(BARBAR_IS_SENSOR_CONTEXT(sensor));
+
+  if (widget->sensor) {
+    g_object_unref(widget->sensor);
+  }
+
+  widget->sensor = g_object_ref(sensor);
+
+  g_object_notify_by_pspec(G_OBJECT(widget), sw_props[PROP_SENSOR]);
+}
 
 static void g_barbar_sensor_widget_set_property(GObject *object,
                                                 guint property_id,
@@ -58,12 +86,12 @@ static void g_barbar_sensor_widget_set_property(GObject *object,
   BarBarSensorWidget *widget = BARBAR_SENSOR_WIDGET(object);
 
   switch (property_id) {
-  // case PROP_TEMPL:
-  //   g_barbar_label_set_templ(label, g_value_get_string(value));
-  //   break;
-  // case PROP_LABEL:
-  //   g_barbar_label_set_label(label, g_value_get_string(value));
-  //   break;
+  case PROP_CHILD:
+    g_barbar_sensor_wiget_set_child(widget, g_value_get_object(value));
+    break;
+  case PROP_SENSOR:
+    g_barbar_sensor_wiget_set_sensor(widget, g_value_get_object(value));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -75,19 +103,13 @@ static void g_barbar_sensor_widget_get_property(GObject *object,
                                                 GParamSpec *pspec) {
 
   BarBarSensorWidget *widget = BARBAR_SENSOR_WIDGET(object);
-  // BarBarLabel *label = BARBAR_LABEL(object);
   switch (property_id) {
-  // case PROP_CHILD:
-  //   g_value_set_object(value, label->child);
-  //   break;
-  // case PROP_TEMPL:
-  //   g_value_set_string(value, label->templ);
-  //   break;
-  // case PROP_LABEL: {
-  //   const char *str = gtk_label_get_text(GTK_LABEL(label->child));
-  //   g_value_set_string(value, str);
-  //   break;
-  // }
+  case PROP_CHILD:
+    g_value_set_object(value, widget->child);
+    break;
+  case PROP_SENSOR:
+    g_value_set_object(value, widget->sensor);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -107,18 +129,18 @@ static void g_barbar_sensor_widget_class_init(BarBarSensorWidgetClass *class) {
    *
    * The label string
    */
-  label_props[PROP_SENSOR] =
-      g_param_spec_string("sensor", "Sensor", "The sensor", NULL,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  sw_props[PROP_SENSOR] = g_param_spec_object(
+      "sensor", "Sensor", "The sensor", BARBAR_TYPE_SENSOR_CONTEXT,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   /**
    * BarBarSensorWidget:child:
    *
    * Child widget
    */
-  label_props[PROP_CHILD] =
-      g_param_spec_object("child", "Child", "Child label", GTK_TYPE_LABEL,
-                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, label_props);
+  sw_props[PROP_CHILD] =
+      g_param_spec_object("child", "Child", "Child widget", GTK_TYPE_WIDGET,
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, sw_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
 }
@@ -127,8 +149,11 @@ static void g_barbar_sensor_widget_init(BarBarSensorWidget *self) {}
 
 static void g_barbar_sensor_widget_map(GtkWidget *widget) {
   BarBarSensorWidget *sw = BARBAR_SENSOR_WIDGET(widget);
+  gtk_widget_set_parent(sw->child, widget);
 
-  GTK_WIDGET_CLASS(g_barbar_sensor_widget_parent_class)->root(widget);
+  GTK_WIDGET_CLASS(g_barbar_sensor_widget_parent_class)->map(widget);
 
-  g_barbar_sensor_start(sw->sensor);
+  if (sw->sensor) {
+    barbar_sensor_context_start(sw->sensor, widget);
+  }
 }

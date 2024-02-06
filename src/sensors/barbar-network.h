@@ -36,8 +36,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
                      BarBarSensor)
 
-void g_barbar_network_start(BarBarSensor *sensor);
-
 G_END_DECLS
 
 #endif /* _BARBAR_NETWORK_H_ */

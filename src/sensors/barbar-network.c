@@ -64,6 +64,8 @@ static GParamSpec *network_props[NUM_PROPERTIES] = {
 
 static guint network_signals[NUM_SIGNALS];
 
+static void g_barbar_network_start(BarBarSensor *sensor);
+
 static void g_barbar_network_set_interface(BarBarNetwork *network,
                                            const char *interface) {
   g_return_if_fail(BARBAR_IS_NETWORK(network));
@@ -260,7 +262,7 @@ static gboolean g_barbar_network_update(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_network_start(BarBarSensor *sensor) {
+static void g_barbar_network_start(BarBarSensor *sensor) {
   BarBarNetwork *net = BARBAR_NETWORK(sensor);
   if (net->source_id > 0) {
     g_source_remove(net->source_id);

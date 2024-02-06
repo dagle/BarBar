@@ -14,6 +14,7 @@
 #include "sensors/barbar-mpris.h"
 #include "sensors/barbar-network.h"
 #include "sensors/barbar-sensor.h"
+#include "sensors/barbar-sensorcontext.h"
 #include "sensors/barbar-temperature.h"
 #include "sensors/barbar-wireplumber.h"
 
@@ -23,6 +24,7 @@
 #include "hyprland/barbar-hyprland-workspace.h"
 
 #include "widgets/barbar-label.h"
+#include "widgets/barbar-sensorwidget.h"
 
 void g_barbar_init(void);
 

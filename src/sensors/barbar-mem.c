@@ -38,11 +38,11 @@ enum {
 // G_DEFINE_TYPE(BarBarMem, g_barbar_mem, GTK_TYPE_WIDGET)
 G_DEFINE_TYPE(BarBarMem, g_barbar_mem, BARBAR_TYPE_SENSOR)
 
+static void g_barbar_mem_start(BarBarSensor *sensor);
+
 static GParamSpec *mem_props[MEM_NUM_PROPERTIES] = {
     NULL,
 };
-
-static void g_barbar_get_mem_percentage(BarBarMem *m, GValue *value) {}
 
 void g_barbar_mem_set_interval(BarBarMem *self, uint interval) {
   g_return_if_fail(BARBAR_IS_MEM(self));
@@ -136,7 +136,7 @@ gboolean g_barbar_mem_update(gpointer data) {
   return G_SOURCE_CONTINUE;
 }
 
-void g_barbar_mem_start(BarBarSensor *sensor) {
+static void g_barbar_mem_start(BarBarSensor *sensor) {
   BarBarMem *mem = BARBAR_MEM(sensor);
   if (mem->source_id > 0) {
     g_source_remove(mem->source_id);

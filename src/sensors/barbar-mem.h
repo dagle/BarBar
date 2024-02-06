@@ -35,8 +35,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, BarBarSensor)
 
-void g_barbar_mem_start(BarBarSensor *sensor);
-
 G_END_DECLS
 
 #endif /* _BARBAR_MEM_H_ */
