@@ -7,18 +7,15 @@ gi.require_version("BarBar", "1.0")
 
 from gi.repository import Gtk
 from gi.repository import BarBar
-from gi.repository import GLib
 
 Gtk.init()
 BarBar.init()
 
 manager = []
-ui = GLib.get_user_config_dir() + '/barbar/config.ui'
 
 def on_activate(app):
-    builder = Gtk.Builder()
-
-    builder.add_from_file(ui)
+    BarBar.default_style_provider("barbar/style.css")
+    builder = BarBar.default_builder("barbar/config.ui")
 
     list = builder.get_objects()
 

@@ -53,46 +53,22 @@ G_MODULE_EXPORT char *barbar_strdup_printf(GtkWidget *label, const char *format,
 static void activate(GtkApplication *app, void *data) {
   GtkBuilderScope *scope;
   GtkBuilder *builder;
-  char *ui_path;
-  char *style_path;
-  GtkCssProvider *css_provider;
-  GdkDisplay *display;
 
   scope = gtk_builder_cscope_new();
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), label_update);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   barbar_strdup_printf);
 
-  display = gdk_display_get_default();
+  barbar_default_style_provider("barbar/style.css");
 
-  css_provider = gtk_css_provider_new();
-  style_path =
-      g_strdup_printf("%s/%s", g_get_user_config_dir(), "/barbar/style.css");
-  gtk_css_provider_load_from_path(css_provider,
-                                  "/home/dagle/.config/barbar/style.css");
-  g_free(style_path);
-
-  gtk_style_context_add_provider_for_display(display,
-                                             GTK_STYLE_PROVIDER(css_provider),
-                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
-
-  builder = gtk_builder_new();
-
-  ui_path =
-      g_strdup_printf("%s/%s", g_get_user_config_dir(), "/barbar/config.ui");
-  gtk_builder_add_from_file(builder, ui_path, NULL);
-  g_free(ui_path);
+  builder = barbar_default_builder("barbar/config.ui", NULL);
 
   GSList *list = gtk_builder_get_objects(builder);
 
   for (GSList *it = list; it; it = it->next) {
     GObject *object = it->data;
 
-    if (BARBAR_IS_BAR(object)) {
-      GtkWindow *window = GTK_WINDOW(object);
-      gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
-      gtk_window_present(window);
-    } else if (BARBAR_IS_BACKGROUND(object)) {
+    if (GTK_IS_WINDOW(object)) {
       GtkWindow *window = GTK_WINDOW(object);
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
       gtk_window_present(window);

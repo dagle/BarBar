@@ -109,16 +109,16 @@ BarBar.Bar {
 // Well, barbar is a really bad name.
 // We can do even more! Lets draw some widgets on
 // the background!
-// BarBar.Background {
-//   top-margin: 45;
-//   bottom-margin: 30;
-//   right-margin: 800;
-//   Gtk.LevelBar {
-//     value: bind mem.percent;
-//     orientation: vertical;
-//     inverted: true;
-//   }
-// }
+BarBar.Background {
+  top-margin: 45;
+  bottom-margin: 30;
+  right-margin: 800;
+  Gtk.LevelBar {
+    value: bind mem.percent;
+    orientation: vertical;
+    inverted: true;
+  }
+}
 
 // Here we define some sensors.
 BarBar.Clock clock {
@@ -135,7 +135,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "wlan0";
+  interface: "enp13s0";
   tick => $label_update(network_label);
 }
 

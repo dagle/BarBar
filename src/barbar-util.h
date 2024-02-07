@@ -33,6 +33,12 @@ G_BEGIN_DECLS
 
 GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget);
 
+void barbar_default_style_provider(const char *path);
+
+GtkBuilder *barbar_default_builder(const char *path, GError **err);
+
+GtkBuilder *barbar_default_blueprint(const char *path, GError *err);
+
 G_END_DECLS
 
 #endif /* _BARBAR_UTIL_H_ */

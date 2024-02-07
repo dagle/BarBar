@@ -14,21 +14,18 @@
 local lgi = require("lgi")
 local Gtk = lgi.require("Gtk", "4.0")
 local BarBar = lgi.require("BarBar", "1.0")
-local GLib = lgi.require("GLib")
 
 Gtk.init()
 BarBar.init()
 
 local manager = {}
-local ui = GLib.get_user_config_dir() .. "/barbar/config.ui"
 
 local app = Gtk.Application({
 	application_id = "com.github.barbar",
 })
 app.on_activate = function()
-	local builder = Gtk.Builder()
-
-	builder:add_from_file(ui)
+	BarBar.default_style_provider("barbar/style.css")
+	local builder = BarBar.default_builder("barbar/config.ui")
 
 	local list = builder:get_objects()
 

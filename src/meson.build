@@ -22,8 +22,6 @@ libbarbar_src = files(
   'sensors/barbar-inhibitor.c',
   'sensors/barbar-sensorcontext.c',
 
-
-
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
 

@@ -1,14 +1,12 @@
 import BarBar from 'gi://BarBar';
 import Gtk from 'gi://Gtk?version=4.0';
-import GLib from 'gi://GLib';
 
 let manager = [];
-let ui = GLib.get_user_config_dir() + "/barbar/config.ui"
 
 function activate(app) {
-  let builder = new Gtk.Builder();
 
-  builder.add_from_file(ui);
+  BarBar.default_style_provider("barbar/style.css");
+  let builder = BarBar.default_builder("barbar/config.ui");
 
   let list = builder.get_objects();
 
@@ -19,6 +17,11 @@ function activate(app) {
     } else if (obj instanceof BarBar.Sensor) {
       manager.push(obj);
       obj.start();
+    } else if (obj instanceof Gtk.ScaleButton){
+      let minus = obj.get_minus_button();
+      let plus = obj.get_plus_button();
+      minus.set_visible(false);
+      plus.set_visible(false);
     }
   }
 }

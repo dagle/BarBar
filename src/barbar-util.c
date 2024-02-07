@@ -24,6 +24,66 @@ GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget) {
   return NULL;
 }
 
+/**
+ * barbar_default_style_provider:
+ * @path: path relative in config to find config
+ *
+ * Load the css style in config
+ *
+ */
+void barbar_default_style_provider(const char *path) {
+  GtkCssProvider *css_provider;
+  GdkDisplay *display;
+  char *style_path;
+
+  css_provider = gtk_css_provider_new();
+  style_path = g_strdup_printf("%s/%s", g_get_user_config_dir(), path);
+  gtk_css_provider_load_from_path(css_provider, style_path);
+  g_free(style_path);
+
+  display = gdk_display_get_default();
+
+  gtk_style_context_add_provider_for_display(display,
+                                             GTK_STYLE_PROVIDER(css_provider),
+                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
+  g_object_unref(css_provider);
+}
+
+/**
+ * barbar_default_builder:
+ * @path: path relative in config to find config
+ * @err: Return location for an error
+ *
+ * Load the builder in config
+ *
+ * Returns: (transfer full): returns a builder
+ */
+GtkBuilder *barbar_default_builder(const char *path, GError **err) {
+  GtkBuilder *builder;
+  char *ui_path;
+
+  builder = gtk_builder_new();
+
+  ui_path = g_strdup_printf("%s/%s", g_get_user_config_dir(), path);
+  gtk_builder_add_from_file(builder, ui_path, err);
+  g_free(ui_path);
+
+  return builder;
+}
+
+/**
+ * barbar_default_blueprint:
+ * @err: Return location for an error
+ *
+ * Load the builder from config
+ *
+ * Returns: (transfer full): returns a builder
+ */
+GtkBuilder *barbar_default_blueprint(const char *path, GError *err) {
+  // TODO:
+  return NULL;
+}
+
 G_MODULE_EXPORT void custom_printf(const char *format, ...) {
   va_list args;
   va_start(args, format);
@@ -85,7 +145,7 @@ static gboolean is_variant_number(GParamSpec *pspec) {
   return FALSE;
 }
 
-// TODO
+// delete this?
 GString *print_props(const gchar *format, GObject *object) {
   if (format == NULL) {
     return NULL;

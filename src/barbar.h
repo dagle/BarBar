@@ -3,6 +3,7 @@
 
 #include "barbar-background.h"
 #include "barbar-bar.h"
+#include "barbar-util.h"
 #include "sensors/barbar-backlight.h"
 #include "sensors/barbar-battery.h"
 #include "sensors/barbar-clock.h"
