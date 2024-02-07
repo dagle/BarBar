@@ -22,21 +22,17 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_WIREPLUMBER_H_
-#define _BARBAR_WIREPLUMBER_H_
+#pragma once
 
-#include "barbar-sensor.h"
+#include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <wp/wp.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_WIREPLUMBER (g_barbar_wireplumber_get_type())
+#define BARBAR_TYPE_POMODORO (g_barbar_pomodoro_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
-                     WIREPLUMBER, BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarPomodoro, g_barbar_pomodoro, BARBAR, POMODORO,
+                     BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_BAR_H_ */

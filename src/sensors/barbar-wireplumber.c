@@ -1,25 +1,33 @@
 #include "barbar-wireplumber.h"
 #include "wp/core.h"
+#include "wp/log.h"
 #include <stdio.h>
 
 struct _BarBarWireplumber {
   BarBarSensor parent_instance;
 
-  char *path;
-  double value;
+  char *name_id;
+  double volume;
+  gboolean mute;
 
   gint exit_code;
+  GPtrArray *apis;
 
   WpCore *core;
   WpObjectManager *om;
   guint pending_plugins;
+
+  guint32 id;
+  WpPlugin *mixer_api;
+  WpPlugin *def_nodes_api;
 };
 
 enum {
   PROP_0,
 
-  PROP_DEVICE,
-  PROP_VALUE,
+  PROP_ID,
+  PROP_PERCENT,
+  // PROP_MUTED,
 
   NUM_PROPERTIES,
 };
@@ -30,32 +38,38 @@ static GParamSpec *wireplumber_props[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR_TYPE_SENSOR)
 
+void g_barbar_wireplumber_start(BarBarSensor *sensor);
 void g_barbar_wireplumber_set_device(BarBarWireplumber *self,
                                      const char *device) {
   g_return_if_fail(BARBAR_IS_WIREPLUMBER(self));
 
-  if (device && self->path) {
-    if (!strcmp(self->path, device)) {
+  if (device && self->name_id) {
+    if (!strcmp(self->name_id, device)) {
       return;
     }
   }
-  g_free(self->path);
+  g_free(self->name_id);
 
-  self->path = strdup(device);
+  self->name_id = strdup(device);
 
-  g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_DEVICE]);
+  g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_ID]);
 }
 
-void g_barbar_wireplumber_set_value(BarBarWireplumber *self, double value) {
+void g_barbar_wireplumber_set_value(BarBarWireplumber *self, double volume) {
   g_return_if_fail(BARBAR_IS_WIREPLUMBER(self));
+  gboolean ret;
+  GVariant *variant;
 
-  if (self->value == value) {
+  if (self->volume == volume) {
     return;
   }
 
-  self->value = value;
-
-  g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_VALUE]);
+  variant = g_variant_new_double(volume);
+  g_signal_emit_by_name(self->mixer_api, "set-volume", self->id, variant, &ret);
+  if (ret) {
+    self->volume = volume;
+    g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_PERCENT]);
+  }
 }
 
 static void g_barbar_wireplumber_set_property(GObject *object,
@@ -65,10 +79,10 @@ static void g_barbar_wireplumber_set_property(GObject *object,
   BarBarWireplumber *wireplumber = BARBAR_WIREPLUMBER(object);
 
   switch (property_id) {
-  case PROP_DEVICE:
+  case PROP_ID:
     g_barbar_wireplumber_set_device(wireplumber, g_value_get_string(value));
     break;
-  case PROP_VALUE:
+  case PROP_PERCENT:
     g_barbar_wireplumber_set_value(wireplumber, g_value_get_double(value));
     break;
   default:
@@ -82,11 +96,11 @@ static void g_barbar_wireplumber_get_property(GObject *object,
   BarBarWireplumber *wireplumber = BARBAR_WIREPLUMBER(object);
 
   switch (property_id) {
-  case PROP_DEVICE:
-    g_value_set_string(value, wireplumber->path);
+  case PROP_ID:
+    g_value_set_string(value, wireplumber->name_id);
     break;
-  case PROP_VALUE:
-    g_value_set_double(value, wireplumber->value);
+  case PROP_PERCENT:
+    g_value_set_double(value, wireplumber->volume);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -100,134 +114,137 @@ static void g_barbar_wireplumber_class_init(BarBarWireplumberClass *class) {
   sensor_class->start = g_barbar_wireplumber_start;
   gobject_class->set_property = g_barbar_wireplumber_set_property;
   gobject_class->get_property = g_barbar_wireplumber_get_property;
-  wireplumber_props[PROP_DEVICE] = g_param_spec_string(
-      "device", NULL, NULL, "/", G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  wireplumber_props[PROP_ID] = g_param_spec_string(
+      "name-id", NULL, NULL, "", G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
-  wireplumber_props[PROP_VALUE] = g_param_spec_double(
-      "value", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READWRITE);
+  wireplumber_props[PROP_PERCENT] = g_param_spec_double(
+      "percent", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     wireplumber_props);
 }
 
 static void g_barbar_wireplumber_init(BarBarWireplumber *self) {}
 
-// static gboolean g_barbar_wireplumber_update(gpointer data) {
+// static void on_plugin_loaded(WpCore *core, GAsyncResult *res, gpointer *data)
+// {
 //   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(data);
-//   printf("value: %f\n", wp->value);
-//   return TRUE;
-// }
-
-// g_timeout_add_full(0, 1000, g_barbar_wireplumber_update, wp, NULL);
-
-// static void update_volume(BarBarWireplumber *wp) {}
-
-// static void manager_installed(WpObjectManager *om, gpointer data) {
-//   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(data);
-//   WpPlugin *default_nodes = wp_plugin_find(wp->core, "default-nodes-api");
+//   WpPlugin *plugin;
+//   GError *error;
 //
-//   if (!default_nodes) {
-//
-//     return;
+//   if (!wp_core_load_component_finish(core, res, &error)) {
+//     g_printerr("Wireplumber: failed to load compenent: %s\n",
+//     error->message); wp->exit_code = 1; return;
 //   }
 //
-//   WpPlugin *mixer = wp_plugin_find(wp->core, "mixer-api");
-//
-//   if (!default_nodes) {
-//
-//     return;
+//   if (--wp->pending_plugins == 0) {
+//     g_autoptr(WpPlugin) mixer_api = wp_plugin_find(core, "mixer-api");
+//     g_object_set(mixer_api, "scale", 1 /* cubic */, NULL);
+//     wp_core_install_object_manager(wp->core, wp->om);
 //   }
-//
-//   char *node_name;
-//   guint id;
-//   g_signal_emit_by_name(default_nodes, "get-default-configured-node-name",
-//                         "Audio/Sink", &node_name);
-//   g_signal_emit_by_name(default_nodes, "get-default-node", "Audio/Sink",
-//   &id);
-//
-//   update_volume(wp);
-//
-//   // g_object_unref(nodes);
-//   // g_object_unref(mixer);
 // }
+//
 
-static void plugin_activated(GObject *object, GAsyncResult *res,
-                             gpointer data) {}
-
-static void on_plugin_loaded(WpCore *core, GAsyncResult *res, gpointer *data) {
-  BarBarWireplumber *wp = BARBAR_WIREPLUMBER(data);
-  WpPlugin *plugin;
-  GError *error;
-
-  if (!wp_core_load_component_finish(core, res, &error)) {
-    g_printerr("Wireplumber: failed to load compenent: %s\n", error->message);
-    wp->exit_code = 1;
-    return;
-  }
-
-  if (--wp->pending_plugins == 0) {
-    g_autoptr(WpPlugin) mixer_api = wp_plugin_find(core, "mixer-api");
-    g_object_set(mixer_api, "scale", 1 /* cubic */, NULL);
-    wp_core_install_object_manager(wp->core, wp->om);
-  }
-}
-
-static void do_print_volume(BarBarWireplumber *self, WpPipewireObject *proxy) {
-  g_autoptr(WpPlugin) mixer_api = wp_plugin_find(self->core, "mixer-api");
+static void get_volume_internal(BarBarWireplumber *self,
+                                WpPipewireObject *proxy) {
   GVariant *variant = NULL;
-  gboolean mute = FALSE;
-  gdouble volume = 1.0;
   guint32 id = wp_proxy_get_bound_id(WP_PROXY(proxy));
 
-  g_signal_emit_by_name(mixer_api, "get-volume", id, &variant);
+  g_signal_emit_by_name(self->mixer_api, "get-volume", id, &variant);
   if (!variant) {
     fprintf(stderr, "Node %d does not support volume\n", id);
     return;
   }
-  g_variant_lookup(variant, "volume", "d", &volume);
-  g_variant_lookup(variant, "mute", "b", &mute);
-  g_clear_pointer(&variant, g_variant_unref);
+  g_variant_lookup(variant, "volume", "d", &self->volume);
+  g_variant_lookup(variant, "mute", "b", &self->mute);
 
-  printf("Volume: %.2f%s", volume, mute ? " [MUTED]\n" : "\n");
+  g_clear_pointer(&variant, g_variant_unref);
+  g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_PERCENT]);
+  // g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_MUTED]);
 }
 
-static gboolean valid_id(gint id) { return id <= 0 || id >= G_MAXUINT32; }
+static gboolean valid_id(gint id) { return id > 0 || id < G_MAXUINT32; }
 
-static void get_volume_run(BarBarWireplumber *self) {
-  g_autoptr(WpPlugin) def_nodes_api = NULL;
-  g_autoptr(GError) error = NULL;
+static void mixer_changed(BarBarWireplumber *self, guint32 id) {
   g_autoptr(WpPipewireObject) proxy = NULL;
-  guint32 id;
+  if (id == self->id) {
+    g_autoptr(WpPipewireObject) proxy = NULL;
 
-  def_nodes_api = wp_plugin_find(self->core, "default-nodes-api");
+    proxy = wp_object_manager_lookup(self->om, WP_TYPE_GLOBAL_PROXY,
+                                     WP_CONSTRAINT_TYPE_G_PROPERTY, "bound-id",
+                                     "=u", self->id, NULL);
+    if (!proxy) {
+      fprintf(stderr, "Node '%d' not found\n", self->id);
+      return;
+    }
+    get_volume_internal(self, proxy);
+  }
+}
+static void default_node_changed(BarBarWireplumber *self) {
+  // TODO:
+}
 
-  g_signal_emit_by_name(def_nodes_api, "get-default-node", "Audio/Sink", &id);
+static void manager_installed(BarBarWireplumber *self) {
+  g_autoptr(WpPipewireObject) proxy = NULL;
 
-  if (!valid_id(id)) {
-    fprintf(stderr, "'%d' is not a valid ID (returned by default-nodes-api)",
-            id);
+  self->def_nodes_api = wp_plugin_find(self->core, "default-nodes-api");
+
+  self->mixer_api = wp_plugin_find(self->core, "mixer-api");
+
+  if (!self->def_nodes_api) {
+    printf("no nodes api\n");
     return;
   }
-  // if (!translate_id(def_nodes_api, cmdline.get_volume.id, &id, &error)) {
-  //   fprintf(stderr, "Translate ID error: %s\n\n", error->message);
-  //   goto out;
-  // }
 
+  g_signal_emit_by_name(self->def_nodes_api, "get-default-node", "Audio/Sink",
+                        &self->id);
+  g_signal_emit_by_name(self->def_nodes_api, "get-default-configured-node-name",
+                        "Audio/Sink", &self->name_id);
+
+  g_object_notify_by_pspec(G_OBJECT(self), wireplumber_props[PROP_ID]);
+
+  if (!valid_id(self->id)) {
+    fprintf(stderr, "'%d' is not a valid ID (returned by default-nodes-api)",
+            self->id);
+    return;
+  }
   proxy = wp_object_manager_lookup(self->om, WP_TYPE_GLOBAL_PROXY,
                                    WP_CONSTRAINT_TYPE_G_PROPERTY, "bound-id",
-                                   "=u", id, NULL);
+                                   "=u", self->id, NULL);
   if (!proxy) {
-    fprintf(stderr, "Node '%d' not found\n", id);
+    fprintf(stderr, "Node '%d' not found\n", self->id);
     return;
   }
 
-  do_print_volume(self, proxy);
+  get_volume_internal(self, proxy);
+
+  g_signal_connect_swapped(self->mixer_api, "changed",
+                           G_CALLBACK(mixer_changed), self);
+  g_signal_connect_swapped(self->def_nodes_api, "changed",
+                           G_CALLBACK(default_node_changed), self);
+}
+
+static void on_plugin_activated(WpObject *p, GAsyncResult *res,
+                                BarBarWireplumber *wp) {
+  g_autoptr(GError) error = NULL;
+
+  if (!wp_object_activate_finish(p, res, &error)) {
+    fprintf(stderr, "%s", error->message);
+    return;
+  }
+
+  if (--wp->pending_plugins == 0) {
+    wp_core_install_object_manager(wp->core, wp->om);
+  }
 }
 
 void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(sensor);
+  GError *error = NULL;
   wp_init(WP_INIT_PIPEWIRE);
   wp->core = wp_core_new(NULL, NULL);
   wp->om = wp_object_manager_new();
+
+  wp->apis = g_ptr_array_new_with_free_func(g_object_unref);
 
   wp_object_manager_add_interest(wp->om, WP_TYPE_NODE,
                                  WP_CONSTRAINT_TYPE_PW_PROPERTY, "media.class",
@@ -237,13 +254,39 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   // wp_object_manager_request_object_features (self->om, WP_TYPE_GLOBAL_PROXY,
   //     WP_PIPEWIRE_OBJECT_FEATURES_MINIMAL);
 
-  wp->pending_plugins++;
-  wp_core_load_component(wp->core, "libwireplumber-module-default-nodes-api",
-                         "module", NULL, NULL, NULL, on_plugin_loaded, &wp);
+  if (!wp_core_load_component(wp->core,
+                              "libwireplumber-module-default-nodes-api",
+                              "module", NULL, &error)) {
+    g_printerr("Wireplumber: %s\n", error->message);
+    g_error_free(error);
+    return;
+  }
 
-  wp->pending_plugins++;
-  wp_core_load_component(wp->core, "libwireplumber-module-mixer-api", "module",
-                         NULL, NULL, NULL, on_plugin_loaded, &wp);
+  if (!wp_core_load_component(wp->core, "libwireplumber-module-mixer-api",
+                              "module", NULL, &error)) {
+    g_printerr("Wireplumber: %s\n", error->message);
+    g_error_free(error);
+    return;
+  }
+
+  g_ptr_array_add(wp->apis, wp_plugin_find(wp->core, "default-nodes-api"));
+  g_ptr_array_add(wp->apis, ({
+                    WpPlugin *p = wp_plugin_find(wp->core, "mixer-api");
+                    g_object_set(G_OBJECT(p), "scale", 1 /* cubic */, NULL);
+                    p;
+                  }));
+
+  // future version will use this api
+  // wp->pending_plugins++;
+  // wp_core_load_component(wp->core,
+  // "libwireplumber-module-default-nodes-api",
+  //                        "module", NULL, NULL, NULL, on_plugin_loaded,
+  //                        &wp);
+  //
+  // wp->pending_plugins++;
+  // wp_core_load_component(wp->core, "libwireplumber-module-mixer-api",
+  // "module",
+  //                        NULL, NULL, NULL, on_plugin_loaded, &wp);
 
   /* connect */
   if (!wp_core_connect(wp->core)) {
@@ -251,5 +294,13 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
     return;
   }
 
-  g_signal_connect_swapped(wp->om, "installed", G_CALLBACK(get_volume_run), wp);
+  g_signal_connect_swapped(wp->om, "installed", G_CALLBACK(manager_installed),
+                           wp);
+
+  for (guint i = 0; i < wp->apis->len; i++) {
+    WpPlugin *plugin = g_ptr_array_index(wp->apis, i);
+    wp->pending_plugins++;
+    wp_object_activate(WP_OBJECT(plugin), WP_PLUGIN_FEATURE_ENABLED, NULL,
+                       (GAsyncReadyCallback)on_plugin_activated, wp);
+  }
 }

@@ -17,10 +17,11 @@ libbarbar_src = files(
   'sensors/barbar-backlight.c',
   'sensors/barbar-cmd.c',
   'sensors/barbar-temperature.c',
-  # 'sensors/barbar-wireplumber.c',
   'sensors/barbar-mpris.c',
   'sensors/barbar-inhibitor.c',
   'sensors/barbar-sensorcontext.c',
+  'sensors/barbar-wireplumber.c',
+  'sensors/barbar-keyboard.c',
 
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
@@ -63,9 +64,9 @@ libbarbar_headers = [
   'sensors/barbar-temperature.h',
   'sensors/barbar-inhibitor.h',
   'sensors/barbar-sensorcontext.h',
-  # 'sensors/barbar-wireplumber.h',
+  'sensors/barbar-wireplumber.h',
+  'sensors/barbar-keyboard.h',
 
-  # 'sensors/barbar-wireplumber.h',
   'sensors/barbar-mpris.h',
 
   'river/barbar-river-tags.h',
