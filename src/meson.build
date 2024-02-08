@@ -22,6 +22,7 @@ libbarbar_src = files(
   'sensors/barbar-sensorcontext.c',
   'sensors/barbar-wireplumber.c',
   'sensors/barbar-keyboard.c',
+  'sensors/barbar-pomodoro.c',
 
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
@@ -66,6 +67,7 @@ libbarbar_headers = [
   'sensors/barbar-sensorcontext.h',
   'sensors/barbar-wireplumber.h',
   'sensors/barbar-keyboard.h',
+  'sensors/barbar-pomodoro.h',
 
   'sensors/barbar-mpris.h',
 

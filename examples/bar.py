@@ -4,9 +4,11 @@ CDLL('libgtk4-layer-shell.so')
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("BarBar", "1.0")
+gi.require_version("Vte", "3.91")
 
 from gi.repository import Gtk
 from gi.repository import BarBar
+from gi.repository import Vte
 
 Gtk.init()
 BarBar.init()

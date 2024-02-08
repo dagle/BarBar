@@ -1,102 +1,257 @@
 #include "barbar-pomodoro.h"
 #include <gtk/gtk.h>
 
-struct _BarBarKeyboard {
+struct _BarBarPomodoro {
   BarBarSensor parent_instance;
 
-  GdkDevice *device;
+  guint length;
+  guint rest;
+  guint current;
+
+  gboolean working;
+
+  guint source_id;
 };
 
 enum {
   PROP_0,
 
-  PROP_CAPSLOCK,
-  PROP_NUMLOCK,
-  PROP_SCROLLLOCK,
+  PROP_CURRENT,
+
+  PROP_LENGTH,
+  PROP_REST,
+
+  PROP_WORK,
+  PROP_RUNNING,
+
+  // PROP_RESET,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarKeyboard, g_barbar_keyboard, BARBAR_TYPE_SENSOR);
+G_DEFINE_TYPE(BarBarPomodoro, g_barbar_pomodoro, BARBAR_TYPE_SENSOR);
 
-static GParamSpec *keyboard_props[NUM_PROPERTIES] = {
+static GParamSpec *pomodoro_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_keyboard_start(BarBarSensor *sensor);
+static void g_barbar_pomodoro_start(BarBarSensor *sensor);
 
-static void g_barbar_keyboard_get_property(GObject *object, guint property_id,
-                                           GValue *value, GParamSpec *pspec) {
-  BarBarKeyboard *keyboard = BARBAR_KEYBOARD(object);
+static void g_barbar_pomodoro_set_length(BarBarPomodoro *pomodoro,
+                                         guint length) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
 
-  if (!keyboard->device) {
-    g_value_set_boolean(value, FALSE);
+  if (pomodoro->length == length) {
     return;
   }
 
+  pomodoro->length = length;
+
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_LENGTH]);
+}
+
+static void g_barbar_pomodoro_set_rest(BarBarPomodoro *pomodoro, guint rest) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
+
+  if (pomodoro->rest == rest) {
+    return;
+  }
+
+  pomodoro->rest = rest;
+
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_REST]);
+}
+
+static void g_barbar_pomodoro_set_current(BarBarPomodoro *pomodoro,
+                                          guint current) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
+
+  if (pomodoro->current == current) {
+    return;
+  }
+
+  pomodoro->current = current;
+
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_CURRENT]);
+}
+static gboolean g_barbar_pomodoro_tick(gpointer data) {
+  BarBarPomodoro *pomodoro = BARBAR_POMODORO(data);
+
+  // If we are at the end of a session, we change modes
+  if (!pomodoro->current) {
+    if (pomodoro->working) {
+      pomodoro->working = FALSE;
+      pomodoro->current = pomodoro->rest;
+    } else {
+      pomodoro->working = TRUE;
+      pomodoro->current = pomodoro->length;
+    }
+    g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_REST]);
+  } else {
+    pomodoro->current--;
+  }
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_CURRENT]);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void g_barbar_pomodoro_set_running(BarBarPomodoro *pomodoro,
+                                          gboolean run) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
+
+  if ((pomodoro->source_id > 0 && run) || (pomodoro->source_id <= 0 && !run)) {
+    return;
+  }
+
+  if (run) {
+    pomodoro->source_id =
+        g_timeout_add_full(0, 1000, g_barbar_pomodoro_tick, pomodoro, NULL);
+  } else {
+    g_source_remove(pomodoro->source_id);
+    pomodoro->source_id = 0;
+  }
+
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_RUNNING]);
+}
+
+static void g_barbar_pomodoro_set_reset(BarBarPomodoro *pomodoro) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
+
+  if (pomodoro->source_id > 0) {
+    g_source_remove(pomodoro->source_id);
+  }
+
+  pomodoro->current = pomodoro->length;
+  pomodoro->working = TRUE;
+  pomodoro->source_id = 0;
+}
+
+static void g_barbar_pomodoro_get_property(GObject *object, guint property_id,
+                                           GValue *value, GParamSpec *pspec) {
+  BarBarPomodoro *pomodoro = BARBAR_POMODORO(object);
+
   switch (property_id) {
-  case PROP_CAPSLOCK:
-    g_value_set_boolean(value,
-                        gdk_device_get_caps_lock_state(keyboard->device));
+  case PROP_LENGTH:
+    g_value_set_uint(value, pomodoro->length);
     break;
-  case PROP_NUMLOCK:
-    g_value_set_boolean(value, gdk_device_get_num_lock_state(keyboard->device));
+  case PROP_REST:
+    g_value_set_uint(value, pomodoro->rest);
     break;
-  case PROP_SCROLLLOCK:
-    g_value_set_boolean(value,
-                        gdk_device_get_scroll_lock_state(keyboard->device));
+  case PROP_CURRENT:
+    g_value_set_uint(value, pomodoro->current);
+    break;
+  case PROP_WORK:
+    g_value_set_boolean(value, pomodoro->working);
+    break;
+  case PROP_RUNNING:
+    g_value_set_boolean(value, pomodoro->source_id > 0);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-static void g_barbar_keyboard_class_init(BarBarKeyboardClass *class) {
+static void g_barbar_pomodoro_set_property(GObject *object, guint property_id,
+                                           const GValue *value,
+                                           GParamSpec *pspec) {
+  BarBarPomodoro *pomodoro = BARBAR_POMODORO(object);
+
+  switch (property_id) {
+  case PROP_LENGTH:
+    g_barbar_pomodoro_set_length(pomodoro, g_value_get_uint(value));
+    break;
+  case PROP_REST:
+    g_barbar_pomodoro_set_rest(pomodoro, g_value_get_uint(value));
+    break;
+  case PROP_CURRENT:
+    g_barbar_pomodoro_set_current(pomodoro, g_value_get_uint(value));
+    break;
+  case PROP_WORK:
+    g_barbar_pomodoro_set_current(pomodoro, g_value_get_uint(value));
+    break;
+  case PROP_RUNNING:
+    g_barbar_pomodoro_set_running(pomodoro, g_value_get_boolean(value));
+    break;
+  // case PROP_RESET:
+  //   g_barbar_pomodoro_set_reset(pomodoro);
+  //   break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
+
+static void g_barbar_pomodoro_class_init(BarBarPomodoroClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor = BARBAR_SENSOR_CLASS(class);
 
-  // gobject_class->set_property = g_barbar_mpris_set_property;
-  gobject_class->get_property = g_barbar_keyboard_get_property;
-  sensor->start = g_barbar_keyboard_start;
+  gobject_class->set_property = g_barbar_pomodoro_set_property;
+  gobject_class->get_property = g_barbar_pomodoro_get_property;
+  sensor->start = g_barbar_pomodoro_start;
 
   /**
-   * BarBarKeyboard:caps-lock:
+   * BarBarPomodoro:length:
    *
-   * The name of the player we want to watch
+   * The length of a work session.
    *
    */
-  keyboard_props[PROP_CAPSLOCK] =
-      g_param_spec_boolean("caps-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
+  pomodoro_props[PROP_LENGTH] =
+      g_param_spec_uint("length", "Length", "How long we work", 0, G_MAXUINT32,
+                        25 * 60, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
-   * BarBarKeyboard:num-lock:
+   * BarBarPomodoro:rest:
    *
-   * The name of the player we want to watch
+   * The lentgth of a rest between session
    *
    */
-  keyboard_props[PROP_NUMLOCK] =
-      g_param_spec_boolean("num-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
+  pomodoro_props[PROP_REST] =
+      g_param_spec_uint("rest", "Rest", "How long we rest", 0, G_MAXUINT32,
+                        5 * 60, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
-   * BarBarKeyboard:scroll-lock:
+   * BarBarPomodoro:current:
    *
-   * The name of the player we want to watch
+   * The current clock for either work or rest session.
    *
    */
-  keyboard_props[PROP_SCROLLLOCK] =
-      g_param_spec_boolean("scroll-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
+  pomodoro_props[PROP_CURRENT] = g_param_spec_uint(
+      "current", "Current", "Current type in the mode", 0, G_MAXUINT32, 25 * 60,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarPomodoro:work:
+   *
+   * If we are in work or rest mode
+   *
+   */
+  pomodoro_props[PROP_WORK] =
+      g_param_spec_boolean("work", "Work", "Are we currently in working", TRUE,
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarPomodoro:running:
+   *
+   * If we are currently running
+   *
+   */
+  pomodoro_props[PROP_RUNNING] =
+      g_param_spec_boolean("running", "Running", "Is the clock running", FALSE,
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+  // /**
+  //  * BarBarPomodoro:reset:
+  //  *
+  //  * Reset the timer
+  //  *
+  //  */
+  // pomodoro_props[PROP_RESET] =
+  //     g_param_spec_boolean("reset", "Reset", "Reset the time",
+  //     FALSE,
+  //                          G_PARAM_WRITEABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
-                                    keyboard_props);
+                                    pomodoro_props);
 }
 
-static void g_barbar_keyboard_init(BarBarKeyboard *class) {}
+static void g_barbar_pomodoro_init(BarBarPomodoro *class) {}
 
-// TODO: can update the device dynamically?
-static void g_barbar_keyboard_start(BarBarSensor *sensor) {
-  BarBarKeyboard *keyboard = BARBAR_KEYBOARD(sensor);
-
-  GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
-
-  keyboard->device = gdk_seat_get_keyboard(seat);
-}
+static void g_barbar_pomodoro_start(BarBarSensor *sensor) {}

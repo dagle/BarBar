@@ -1,5 +1,7 @@
 import BarBar from 'gi://BarBar';
 import Gtk from 'gi://Gtk?version=4.0';
+import Vte from 'gi://Vte?version=3.91';
+import GLib from 'gi://GLib?version=2.0';
 
 let manager = [];
 
@@ -7,6 +9,12 @@ function activate(app) {
 
   BarBar.default_style_provider("barbar/style.css");
   let builder = BarBar.default_builder("barbar/config.ui");
+
+  let term = new Vte.Terminal();
+  term.spawn_async(Vte.PtyFlags.DEFAULT, null, ['/bin/nvim'],
+    null, GLib.SpawnFlags.DEFAULT, null, -1, null, null);
+  let background = builder.get_object("background");
+  background.set_child(term);
 
   let list = builder.get_objects();
 

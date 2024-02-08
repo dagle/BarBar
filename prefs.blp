@@ -1,5 +1,6 @@
 using Gtk 4.0;
 using BarBar 1.0;
+using Vte 3.91;
 
 // At toplevel, you should define windows or signals
 // Barbar.Bar is a window
@@ -125,15 +126,13 @@ BarBar.Bar {
 // Well, barbar is a really bad name.
 // We can do even more! Lets draw some widgets on
 // the background!
-BarBar.Background {
+BarBar.Background background {
   top-margin: 45;
   bottom-margin: 30;
-  right-margin: 800;
-  Gtk.LevelBar {
-    value: bind mem.percent;
-    orientation: vertical;
-    inverted: true;
-  }
+  right-margin: 200;
+  left-margin: 200;
+  //Vte.Terminal {
+  //}
 }
 
 // Here we define some sensors.

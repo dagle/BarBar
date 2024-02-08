@@ -15,6 +15,7 @@
 #include "sensors/barbar-mem.h"
 #include "sensors/barbar-mpris.h"
 #include "sensors/barbar-network.h"
+#include "sensors/barbar-pomodoro.h"
 #include "sensors/barbar-sensor.h"
 #include "sensors/barbar-sensorcontext.h"
 #include "sensors/barbar-temperature.h"
