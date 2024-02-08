@@ -29,13 +29,22 @@ enum {
   NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  MODE_CHANGED,
+  NUM_SIGNALS,
+};
+
 G_DEFINE_TYPE(BarBarPomodoro, g_barbar_pomodoro, BARBAR_TYPE_SENSOR);
 
 static GParamSpec *pomodoro_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+static guint pomodoro_signals[NUM_SIGNALS];
+
 static void g_barbar_pomodoro_start(BarBarSensor *sensor);
+static void g_barbar_pomodoro_constructed(GObject *object);
 
 static void g_barbar_pomodoro_set_length(BarBarPomodoro *pomodoro,
                                          guint length) {
@@ -82,9 +91,11 @@ static gboolean g_barbar_pomodoro_tick(gpointer data) {
     if (pomodoro->working) {
       pomodoro->working = FALSE;
       pomodoro->current = pomodoro->rest;
+      g_signal_emit(pomodoro, pomodoro_signals[MODE_CHANGED], 0, FALSE);
     } else {
       pomodoro->working = TRUE;
       pomodoro->current = pomodoro->length;
+      g_signal_emit(pomodoro, pomodoro_signals[MODE_CHANGED], 0, TRUE);
     }
     g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_REST]);
   } else {
@@ -93,6 +104,25 @@ static gboolean g_barbar_pomodoro_tick(gpointer data) {
   g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_CURRENT]);
 
   return G_SOURCE_CONTINUE;
+}
+static void g_barbar_pomodoro_set_work(BarBarPomodoro *pomodoro,
+                                       gboolean working) {
+  g_return_if_fail(BARBAR_IS_POMODORO(pomodoro));
+
+  if (pomodoro->working == working) {
+    return;
+  }
+
+  pomodoro->working = working;
+  if (pomodoro->source_id > 0) {
+    if (working) {
+      pomodoro->current = pomodoro->length;
+    } else {
+      pomodoro->current = pomodoro->rest;
+    }
+    g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_CURRENT]);
+  }
+  g_object_notify_by_pspec(G_OBJECT(pomodoro), pomodoro_props[PROP_WORK]);
 }
 
 static void g_barbar_pomodoro_set_running(BarBarPomodoro *pomodoro,
@@ -167,7 +197,7 @@ static void g_barbar_pomodoro_set_property(GObject *object, guint property_id,
     g_barbar_pomodoro_set_current(pomodoro, g_value_get_uint(value));
     break;
   case PROP_WORK:
-    g_barbar_pomodoro_set_current(pomodoro, g_value_get_uint(value));
+    g_barbar_pomodoro_set_work(pomodoro, g_value_get_boolean(value));
     break;
   case PROP_RUNNING:
     g_barbar_pomodoro_set_running(pomodoro, g_value_get_boolean(value));
@@ -186,6 +216,7 @@ static void g_barbar_pomodoro_class_init(BarBarPomodoroClass *class) {
 
   gobject_class->set_property = g_barbar_pomodoro_set_property;
   gobject_class->get_property = g_barbar_pomodoro_get_property;
+  gobject_class->constructed = g_barbar_pomodoro_constructed;
   sensor->start = g_barbar_pomodoro_start;
 
   /**
@@ -247,11 +278,63 @@ static void g_barbar_pomodoro_class_init(BarBarPomodoroClass *class) {
   //     g_param_spec_boolean("reset", "Reset", "Reset the time",
   //     FALSE,
   //                          G_PARAM_WRITEABLE);
+  /**
+   * BarBarPomodoro::tick:
+   * @sensor: This sensor
+   *
+   * Emit that the clock has ticked. This means that we want to refetch
+   * the clock.
+   */
+  pomodoro_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_POMODORO,                   /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
+  /**
+   * BarBarPomodoro::mode-change:
+   * @sensor: This sensor
+   * @working: if we changed to work mode
+   *
+   * Emit that the clock has ticked. This means that we want to refetch
+   * the clock.
+   */
+  pomodoro_signals[MODE_CHANGED] =
+      g_signal_new("mode-change",                          /* signal_name */
+                   BARBAR_TYPE_POMODORO,                   /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   1,                                      /* n_params */
+                   G_TYPE_BOOLEAN                          /* mode */
+      );
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     pomodoro_props);
 }
 
-static void g_barbar_pomodoro_init(BarBarPomodoro *class) {}
+static void g_barbar_pomodoro_init(BarBarPomodoro *self) {}
+
+static void g_barbar_pomodoro_constructed(GObject *object) {
+  BarBarPomodoro *self = BARBAR_POMODORO(object);
+
+  if (self->working) {
+    if (self->current > self->length) {
+      self->current = self->length;
+    }
+  } else {
+    if (self->current > self->rest) {
+      self->current = self->rest;
+    }
+  }
+}
 
 static void g_barbar_pomodoro_start(BarBarSensor *sensor) {}

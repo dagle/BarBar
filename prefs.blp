@@ -119,6 +119,10 @@ BarBar.Bar {
     //      value: bind plumb.value bidirectional;
     //    };
     // }
+    [end]
+    Gtk.Label {
+      label: bind pomodoro.current;
+    }
   }
 }
 
@@ -169,4 +173,15 @@ BarBar.Keyboard key {
 
 BarBar.Temperature temperature {
   tick => $label_update(temp);
+}
+
+StringList {
+  strings [
+    "",
+  ]
+}
+
+BarBar.Pomodoro pomodoro {
+  length: 10;
+  running: true;
 }
