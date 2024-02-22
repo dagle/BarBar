@@ -28,6 +28,7 @@
 #include "status-notifier.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -37,9 +38,9 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_TRAY (g_barbar_tray_get_type())
 
 // TODO: This shouldn't have GObject as parent
-G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GObject)
+G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GtkWidget)
 
-void g_barbar_tray_update(BarBarTray *self);
+/* void g_barbar_tray_update(BarBarTray *self); */
 
 G_END_DECLS
 

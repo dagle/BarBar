@@ -2,21 +2,18 @@
 #include "barbar-watcher.h"
 #include <stdio.h>
 
-static int num = 1;
+// static int num = 1;
 struct _BarBarTray {
-  GObject parent;
+  GtkWidget parent;
 
-  // TODO:This should be in parent
-  char *label;
+  // int icon_size;
+  // int spacing;
+  // gboolean reverse_direction;
+  // gboolean show_passive;
+  // gboolean wild;
 
-  int icon_size;
-  int spacing;
-  gboolean reverse_direction;
-  gboolean show_passive;
-  gboolean wild;
-
-  char *name;
-  BarBarStatusWatcher *watcher;
+  // char *name;
+  // BarBarStatusWatcher *watcher;
 
   // A list of clients we should listen to
   GArray clients;
@@ -33,7 +30,7 @@ enum {
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarTray, g_barbar_tray, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarTray, g_barbar_tray, GTK_TYPE_WIDGET)
 
 static GParamSpec *tray_props[NUM_PROPERTIES] = {
     NULL,

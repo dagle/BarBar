@@ -1,94 +1,145 @@
 #include "barbar-watcher.h"
+#include "barbar-dbusmenu.h"
+#include "barbar-tray-item.h"
 #include <gio/gio.h>
 #include <stdio.h>
 
 struct _BarBarStatusWatcher {
-  GObject parent;
+  GtkWidget parent_instance;
 
-  gboolean inited;
-  GError *init_error;
-  StatusNotifierWatcher *watcher;
-  // TODO:This should be in parent
-  // char *label;
+  guint id;
+  StatusNotifierWatcher *skeleton;
+
+  BarBarDbusMenu *menu;
+
+  GList *items;
+  GList *hosts;
 };
 
-static void g_barbar_status_watcher_iface_init(GInitableIface *iface);
-G_DEFINE_TYPE_WITH_CODE(
-    BarBarStatusWatcher, g_barbar_status_watcher, G_TYPE_OBJECT,
-    G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, g_barbar_status_watcher_iface_init))
+enum {
+  PROP_0,
 
-static GObject *constructor(GType type, guint n_construct_params,
-                            GObjectConstructParam *construct_params) {
-  static GObject *self = NULL;
+  NUM_PROPERTIES,
+};
 
-  if (self == NULL) {
-    self = G_OBJECT_CLASS(g_barbar_status_watcher_parent_class)
-               ->constructor(type, n_construct_params, construct_params);
-    g_object_add_weak_pointer(self, (gpointer)&self);
+static GParamSpec *watcher_props[NUM_PROPERTIES] = {
+    NULL,
+};
 
-    // class->watcher = status_notifier_watcher_skeleton_new();
-    return self;
-  }
+G_DEFINE_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, GTK_TYPE_WIDGET)
 
-  return g_object_ref(self);
-}
+static void g_barbar_watcher_set_property(GObject *object, guint property_id,
+                                          const GValue *value,
+                                          GParamSpec *pspec) {}
 
-static gboolean g_barbar_status_watcher_initable(GInitable *initable,
-                                                 GCancellable *cancellable,
-                                                 GError **out_error) {
-  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(initable);
+static void g_barbar_watcher_get_property(GObject *object, guint property_id,
+                                          GValue *value, GParamSpec *pspec) {}
 
-  if (watcher->inited) {
-    if (watcher->init_error) {
-      *out_error = g_error_copy(watcher->init_error);
-      return FALSE;
-    }
-    return TRUE;
-  } else {
-    // TODO
-    // g_propagate_error (out_error, g_error_copy (watcher->init_error));
-  }
-  // g_error_copy
-
-  // if (portal->init_error != NULL)
-  //   {
-  //     return FALSE;
-  //   }
-  //
-  // g_assert (portal->bus != NULL);
-  return TRUE;
-}
-
-static void g_barbar_status_watcher_iface_init(GInitableIface *iface) {
-  iface->init = g_barbar_status_watcher_initable;
-}
-void g_barbar_status_watcher_name_acquired_handler(GDBusConnection *connection,
-                                                   const gchar *name,
-                                                   gpointer user_data);
-
-static void g_barbar_status_watcher_iface_run(BarBarStatusWatcher *watcher) {
-  guint i = g_bus_own_name(
-      G_BUS_TYPE_SESSION, "org.kde.StatusNotifierWatcher",
-      G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | G_BUS_NAME_OWNER_FLAGS_REPLACE,
-      NULL, g_barbar_status_watcher_name_acquired_handler, NULL, NULL, NULL);
-  // g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(watcher->watcher),
-  // conn->gobj(),
-  //                                  "/StatusNotifierWatcher", &error);
-}
-
-void g_barbar_status_watcher_name_acquired_handler(GDBusConnection *connection,
-                                                   const gchar *name,
-                                                   gpointer user_data) {}
-
-// static void g_barbar_status_watcher_name_acquired_handler() {}
-
-// static void g_barbar_status_watcher_name_lost_handler() {}
-
+static void g_barbar_tray_root(GtkWidget *widget);
+static void g_barbar_watcher_constructed(GObject *object);
 static void
 g_barbar_status_watcher_class_init(BarBarStatusWatcherClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
-  gobject_class->constructor = constructor;
+  gobject_class->set_property = g_barbar_watcher_set_property;
+  gobject_class->get_property = g_barbar_watcher_get_property;
+  // gobject_class->constructed = g_barbar_watcher_constructed;
+
+  widget_class->root = g_barbar_tray_root;
+
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
+  // gtk_widget_class_set_css_name(widget_class, "tray");
+  gtk_widget_class_set_css_name(widget_class, "river-tag");
+}
+
+static gboolean
+g_barbar_tray_handle_register_host(StatusNotifierWatcher *skeleton,
+                                   GDBusMethodInvocation *invocation,
+                                   const gchar *service, gpointer data) {
+  return TRUE;
+}
+
+static gboolean
+g_barbar_tray_handle_register_item(StatusNotifierWatcher *skeleton,
+                                   GDBusMethodInvocation *invocation,
+                                   const gchar *service, gpointer data) {
+  BarBarTrayItem *item;
+  const gchar *object_path;
+  const gchar *bus_name;
+  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(data);
+
+  if (*service == '/') {
+    object_path = service;
+    bus_name = g_dbus_method_invocation_get_sender(invocation);
+  } else {
+    bus_name = service;
+    object_path = "/StatusNotifierItem";
+  }
+
+  if (g_dbus_is_name(bus_name) == FALSE) {
+    g_dbus_method_invocation_return_error(
+        invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+        "D-Bus bus name '%s' is not valid", bus_name);
+    return TRUE;
+  }
+
+  status_notifier_watcher_complete_register_item(watcher->skeleton, invocation);
+
+  gchar *tmp = g_strdup_printf("%s%s", bus_name, object_path);
+  status_notifier_watcher_emit_item_registered(watcher->skeleton, tmp);
+  g_free(tmp);
+
+  item = g_barbar_tray_item_new(bus_name, object_path);
+
+  gtk_widget_set_parent(GTK_WIDGET(item), GTK_WIDGET(watcher));
+
+  watcher->items = g_list_append(watcher->items, item);
+
+  return TRUE;
+}
+
+static void on_bus_acquired(GDBusConnection *connection, const gchar *name,
+                            gpointer user_data) {
+  GError *error = NULL;
+  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(user_data);
+  watcher->skeleton = status_notifier_watcher_skeleton_new();
+
+  g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(watcher->skeleton),
+                                   connection, "/StatusNotifierWatcher",
+                                   &error);
+
+  if (error != NULL) {
+    g_printerr("Failure to setup watcher: %s", error->message);
+    return;
+  }
+  g_print("got bus %s\n", name);
+
+  g_signal_connect(watcher->skeleton, "handle-register-item",
+                   G_CALLBACK(g_barbar_tray_handle_register_item), watcher);
+  g_signal_connect(watcher->skeleton, "handle-register-host",
+                   G_CALLBACK(g_barbar_tray_handle_register_host), watcher);
+}
+
+static void on_name_acquired(GDBusConnection *connection, const gchar *name,
+                             gpointer user_data) {
+  g_print("Acquired the name %s\n", name);
+}
+
+static void on_name_lost(GDBusConnection *connection, const gchar *name,
+                         gpointer user_data) {
+  g_print("Lost the name %s\n", name);
+}
+
+static void g_barbar_tray_root(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(g_barbar_status_watcher_parent_class)->root(widget);
+
+  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(widget);
+
+  watcher->id = g_bus_own_name(
+      G_BUS_TYPE_SESSION, "org.kde.StatusNotifierWatcher",
+      G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | G_BUS_NAME_OWNER_FLAGS_REPLACE,
+      on_bus_acquired, on_name_acquired, on_name_lost, widget, NULL);
 }
 
 static void g_barbar_status_watcher_init(BarBarStatusWatcher *self) {}

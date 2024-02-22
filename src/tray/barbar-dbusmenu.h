@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_STATUS_WATCHER_H_
-#define _BARBAR_STATUS_WATCHER_H_
+#ifndef _BARBAR_DBUSMENU_H_
+#define _BARBAR_DBUSMENU_H_
 
 #include "status-notifier.h"
 #include <glib-object.h>
@@ -35,16 +35,15 @@ G_BEGIN_DECLS
 // This module is only called status_watcher, it's really a status-notifier
 // The difference is that you can have multiple status-notifiers for
 // one or more bars.
-#define BARBAR_TYPE_STATUS_WATCHER (g_barbar_status_watcher_get_type())
+#define BARBAR_TYPE_DBUS_MENU (g_barbar_dbus_menu_get_type())
 
-// TODO: Watcher shouldn't be a widget in the future
-G_DECLARE_FINAL_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, BARBAR,
-                     STATUS_WATCHER, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, BARBAR, DBUS_MENU,
+                     GtkWidget)
 
 /* void g_barbar_status_watcher_update(BarBarStatusWatcher *self); */
 
-BarBarStatusWatcher *g_barbar_status_watcher_new(void);
+/* BarBarStatusWatcher *g_barbar_status_watcher_new(void); */
 
 G_END_DECLS
 
-#endif /* _BARBAR_STATUS_WATCHER_H_ */
+#endif /* _BARBAR_DBUSMENU_H_ */

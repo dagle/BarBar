@@ -29,6 +29,9 @@
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-sensorwidget.h"
 
+#include "tray/barbar-tray-item.h"
+#include "tray/barbar-watcher.h"
+
 void g_barbar_init(void);
 
 #endif /* __BARBAR_H__ */
