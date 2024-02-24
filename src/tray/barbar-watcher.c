@@ -10,8 +10,6 @@ struct _BarBarStatusWatcher {
   guint id;
   StatusNotifierWatcher *skeleton;
 
-  BarBarDbusMenu *menu;
-
   GList *items;
   GList *hosts;
 };

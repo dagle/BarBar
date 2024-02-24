@@ -32,9 +32,6 @@
 
 G_BEGIN_DECLS
 
-// This module is only called status_watcher, it's really a status-notifier
-// The difference is that you can have multiple status-notifiers for
-// one or more bars.
 #define BARBAR_TYPE_DBUS_MENU (g_barbar_dbus_menu_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, BARBAR, DBUS_MENU,
