@@ -10,17 +10,6 @@ function activate(app) {
   BarBar.default_style_provider("barbar/style.css");
   let builder = BarBar.default_builder("barbar/config.ui");
 
-  // let term = new Vte.Terminal();
-  // term.spawn_async(Vte.PtyFlags.DEFAULT, null, ['/bin/nvim'],
-  //   null, GLib.SpawnFlags.DEFAULT, null, -1, null, null);
-  // let background = builder.get_object("background");
-  // background.set_child(term);
-  let volume = builder.get_object("volume");
-  for (let i of volume.icons) {
-    print(i);
-  }
-  // print(volume.icons);
-
   let list = builder.get_objects();
 
   for (let obj of list) {
