@@ -268,11 +268,16 @@ class TrayItem {
   }
 
   _dbus_menu(menu) {
-    // console.log("menu: ", menu);
+    console.log("menu: ", menu);
     try {
       let [revison, layout] = menu.GetLayoutSync(0, -1, ["type", "label", "visible", "enabled", "children-display", "accessible-desc"]);
       // let obj = layout[1][1];
-      // console.log("layout:", layout[2][2].print(true));
+
+      for (const element of layout[2]) {
+        console.log("layout:", element.print(true));
+      }
+
+      console.log("layout:", layout[2][7].print(true));
     } catch (e) {
       logError(e);
     }
@@ -291,7 +296,7 @@ class TrayItem {
         // );
         this._menu = new DbusMenuProxy(
           Gio.DBus.session,
-          proxy.g_name_owner,
+          this._busName,
           proxy.Menu,
           this._dbus_menu.bind(this),
           null,
@@ -374,7 +379,7 @@ function activate(app) {
   let serviceInstance = new Service();
 
   try {
-    StatusNotifierWatcherIFace.bus_own_name();
+    // StatusNotifierWatcherIFace.bus_own_name();
     Gio.bus_own_name(
       Gio.BusType.SESSION,
       'org.kde.StatusNotifierWatcher',

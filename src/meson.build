@@ -44,6 +44,7 @@ libbarbar_src = files(
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
+  'tray/barbar-dbusmenu.c',
 )
 
 libbarbar_headers = [
@@ -89,9 +90,10 @@ libbarbar_headers = [
   # 'dwl/barbar-dwl-tags.h',
   # 'barbar-weather.h',
   # 'barbar-inhibitor.h',
-  
+
   'tray/barbar-watcher.h',
   'tray/barbar-tray-item.h',
+  'tray/barbar-dbusmenu.h',
 ]
 
 wl_mod = import('unstable-wayland')

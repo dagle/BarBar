@@ -29,6 +29,7 @@
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-sensorwidget.h"
 
+#include "tray/barbar-dbusmenu.h"
 #include "tray/barbar-tray-item.h"
 #include "tray/barbar-watcher.h"
 

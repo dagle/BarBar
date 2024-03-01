@@ -37,9 +37,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, BARBAR, DBUS_MENU,
                      GtkWidget)
 
-/* void g_barbar_status_watcher_update(BarBarStatusWatcher *self); */
-
-/* BarBarStatusWatcher *g_barbar_status_watcher_new(void); */
+BarBarDBusMenu *g_barbar_dbus_menu_new(const gchar *bus_name,
+                                       const gchar *path);
 
 G_END_DECLS
 

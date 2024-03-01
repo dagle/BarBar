@@ -27,6 +27,7 @@ void g_barbar_init(void) {
   g_barbar_cmd_get_type();
   g_barbar_hyprland_workspace_get_type();
 
+  g_barbar_dbus_menu_get_type();
   g_barbar_status_watcher_get_type();
   g_barbar_tray_item_get_type();
 }
