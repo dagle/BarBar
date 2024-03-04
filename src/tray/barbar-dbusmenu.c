@@ -64,7 +64,122 @@ static void g_barbar_dbus_menu_get_property(GObject *object, guint property_id,
   }
 }
 
-static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent) {
+static GMenu *parse_tree2(GVariant **layout, int parent) {
+  GVariant *child_props;
+  GVariantIter iter;
+
+  GVariant *idv = g_variant_get_child_value(*layout, 0);
+  gint id = g_variant_get_int32(idv);
+
+  child_props = g_variant_get_child_value(*layout, 1);
+  g_variant_iter_init(&iter, child_props);
+
+  GVariant *child;
+  GVariantIter children;
+  child_props = g_variant_get_child_value(*layout, 2);
+  g_variant_iter_init(&children, child_props);
+  while ((child = g_variant_iter_next_value(&children)) != NULL) {
+
+    if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
+      GVariant *tmp = g_variant_get_variant(child);
+      g_variant_unref(child);
+      child = tmp;
+    }
+
+    parse_tree2(&child, id);
+  }
+
+  return NULL;
+}
+
+static gboolean is_seperator(GVariant *entry) {
+  GVariant *child = g_variant_get_child_value(entry, 1);
+  GVariant *type = g_variant_lookup_value(child, "type", G_VARIANT_TYPE_STRING);
+
+  if (type) {
+    gsize length;
+    const gchar *kind = g_variant_get_string(type, &length);
+    if (strcmp("separator", kind)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+static GMenuItem *parse_item(GVariant *entry);
+
+static GMenu *parse_menu(GVariant *submenu) {
+  GVariant *child;
+  GVariantIter children;
+  GMenuItem *item = NULL;
+  GMenu *menu = NULL;
+
+  g_variant_iter_init(&children, submenu);
+  while ((child = g_variant_iter_next_value(&children)) != NULL) {
+    if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
+      GVariant *tmp = g_variant_get_variant(child);
+      g_variant_unref(child);
+      child = tmp;
+    }
+    item = parse_item(child);
+    if (item) {
+      if (!menu) {
+        menu = g_menu_new();
+      }
+      g_menu_append_item(menu, item);
+    }
+  }
+  return menu;
+}
+
+static GMenuItem *parse_item(GVariant *entry) {
+  GVariantIter iter;
+  gchar *prop;
+  GVariant *value;
+  GVariant *child;
+
+  GVariant *idv = g_variant_get_child_value(entry, 0);
+  gint id = g_variant_get_int32(idv);
+
+  child = g_variant_get_child_value(entry, 1);
+
+  g_variant_iter_init(&iter, child);
+
+  GMenuItem *menu_item;
+  menu_item = g_object_new(G_TYPE_MENU_ITEM, NULL);
+
+  while (g_variant_iter_loop(&iter, "{sv}", &prop, &value)) {
+    if (strcmp("label", prop) == 0) {
+      gsize length;
+      const gchar *label = g_variant_get_string(value, &length);
+      if (!label) {
+        continue;
+      }
+      if (g_ascii_strcasecmp("label empty", label)) {
+        g_menu_item_set_label(menu_item, label);
+      }
+    }
+    if (strcmp("icon-name", prop) == 0) {
+    }
+
+    if (strcmp("enabled", prop) == 0) {
+    }
+    // if shortcut, add shortcut
+    // toggle-type / toggle-state
+  }
+
+  GVariant *submenu = g_variant_get_child_value(entry, 2);
+  GMenu *menu = parse_menu(submenu);
+  if (menu) {
+    g_menu_item_set_submenu(menu_item, G_MENU_MODEL(menu));
+  }
+
+  return menu_item;
+}
+
+static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent,
+                           gboolean section) {
 
   GVariant *idv = g_variant_get_child_value(layout, 0);
   gint id = g_variant_get_int32(idv);
@@ -75,32 +190,78 @@ static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent) {
   GVariant *value;
 
   child_props = g_variant_get_child_value(layout, 1);
+  if (is_seperator(child_props)) {
+  }
+
   g_variant_iter_init(&iter, child_props);
 
+  // we first look if we are a label.
+  // if so, we create a new item.
+  // if there is an icon, we add it to the item (it can be icon-data).
+  // if enabled we connect an action to the item.
+  // if shortcut, add shortcut
+  //
+  // toggle-type / toggle-state
+  //
+  // dispotion, this isn't really possible atm, maybe we can set a tag in the
+  // future.
+  //
+  // else it's a separator?
+  // we now check if there is a type and a seperator
+  GVariant *type =
+      g_variant_lookup_value(child_props, "type", G_VARIANT_TYPE_STRING);
+
+  if (type) {
+    gsize length;
+    const gchar *kind = g_variant_get_string(type, &length);
+    if (strcmp("separator", kind)) {
+      printf("key-lookup: %s\n", kind);
+      // g_menu_append_section(self->internal, str, NULL);
+    }
+  }
+
+  GVariant *label =
+      g_variant_lookup_value(child_props, "label", G_VARIANT_TYPE_STRING);
+
+  if (label) {
+    gsize length;
+    const gchar *str = g_variant_get_string(label, &length);
+    printf("key-lookup: %s\n", str);
+  }
+
+  // we need to be able to detect if we are in the root or
+  // not
   while (g_variant_iter_loop(&iter, "{sv}", &prop, &value)) {
     if (strcmp("label", prop) == 0) {
       gsize length;
       const gchar *str = g_variant_get_string(value, &length);
+      printf("str: %s\n", str);
       if (g_ascii_strcasecmp("label empty", str)) {
-        g_menu_append(self->internal, str, NULL);
+        if (!section) {
+          g_menu_append(self->internal, str, NULL);
+        } else {
+          GMenu *section = g_menu_new();
+          g_menu_append(section, str, NULL);
+          g_menu_append_section(self->internal, NULL, G_MENU_MODEL(section));
+        }
       }
     }
   }
 
-  // GVariant *child;
-  // GVariantIter children;
-  // child_props = g_variant_get_child_value(layout, 2);
-  // g_variant_iter_init(&children, child_props);
-  // while ((child = g_variant_iter_next_value(&children)) != NULL) {
-  //
-  //   if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
-  //     GVariant *tmp = g_variant_get_variant(child);
-  //     g_variant_unref(child);
-  //     child = tmp;
-  //   }
-  //
-  //   parse_tree(self, child, id);
-  // }
+  GVariant *child;
+  GVariantIter children;
+  child_props = g_variant_get_child_value(layout, 2);
+  g_variant_iter_init(&children, child_props);
+  while ((child = g_variant_iter_next_value(&children)) != NULL) {
+
+    if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
+      GVariant *tmp = g_variant_get_variant(child);
+      g_variant_unref(child);
+      child = tmp;
+    }
+    parse_tree(self, child, id, section);
+    section = !section;
+  }
 
   g_variant_unref(idv);
 
@@ -108,7 +269,13 @@ static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent) {
 }
 
 static gboolean parse_root(BarBarDBusMenu *self, GVariant *layout) {
-  return parse_tree(self, layout, 0);
+  GVariant *submenu = g_variant_get_child_value(layout, 2);
+  GMenu *menu = parse_menu(submenu);
+  if (menu) {
+    self->internal = menu;
+    // g_menu_model_items_changed(G_MENU_MODEL(menu), position, removed, added);
+  }
+  return parse_tree(self, layout, 0, TRUE);
 }
 
 static void layout_callback(GObject *object, GAsyncResult *res, gpointer data) {
@@ -222,12 +389,7 @@ static void g_barbar_dbus_menu_class_init(BarBarDBusMenuClass *class) {
                                     dbus_menu_props);
 }
 
-static void g_barbar_dbus_menu_init(BarBarDBusMenu *self) {
-  self->internal = g_menu_new();
-
-  self->handler_id = g_signal_connect(self->internal, "items-changed",
-                                      G_CALLBACK(menu_changed), self);
-}
+static void g_barbar_dbus_menu_init(BarBarDBusMenu *self) {}
 
 BarBarDBusMenu *g_barbar_dbus_menu_new(const gchar *bus_name,
                                        const gchar *path) {

@@ -275,9 +275,10 @@ class TrayItem {
 
       for (const element of layout[2]) {
         console.log("layout:", element.print(true));
+        // console.log("layout:", element);
       }
 
-      console.log("layout:", layout[2][7].print(true));
+      // console.log("layout:", layout[2][7].print(true));
     } catch (e) {
       logError(e);
     }
