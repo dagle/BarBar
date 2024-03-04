@@ -25,6 +25,7 @@ struct _BarBarTrayItem {
   GdkPixbuf *overlay_pixmap;
 
   BarBarDBusMenu *menu;
+  // GMenu *menu;
 
   GtkWidget *image;
   GtkWidget *button;
@@ -377,13 +378,15 @@ static void populate(BarBarTrayItem *self, StatusNotifierItem *item) {
 
   const char *icon_theme = status_notifier_item_get_icon_theme_path(item);
   if (icon_theme && strlen(icon_theme) > 0) {
-    const char *const *path = {&icon_theme, NULL};
+    const char *const path[] = {icon_theme, NULL};
     self->icon_theme = gtk_icon_theme_new();
     // gtk_icon_theme_add_search_path(self->icon_theme, icon_theme);
+    // printf("icon-theme: %s\n", icon_theme);
     gtk_icon_theme_set_resource_path(self->icon_theme, path);
   }
 
   self->icon_name = safe_strdup(status_notifier_item_get_icon_name(item));
+  // printf("icon-name: %s\n", self->icon_name);
 
   if (self->icon_pixmap) {
     g_object_unref(self->icon_pixmap);
@@ -418,7 +421,17 @@ static void populate(BarBarTrayItem *self, StatusNotifierItem *item) {
   const gchar *path = status_notifier_item_get_menu(item);
 
   if (path) {
+    printf("path!\n");
+    GMenuItem *item;
     self->menu = g_barbar_dbus_menu_new(self->bus_name, path);
+    // self->menu = g_menu_new();
+    // g_menu_insert(self->menu, -1, "label1", "action");
+    // g_menu_insert(self->menu, -1, "label2", "action");
+    // g_menu_insert(self->menu, -1, "label3", "action");
+    // item = g_menu_item_new("label", "action");
+    // g_menu_item_set_attribute(item, "attribute", "b", TRUE);
+    // // g_menu_item_set_link(item, G_MENU_LINK_SUBMENU,
+    // G_MENU_MODEL(submenu)); g_menu_append_item(self->menu, item);
   }
 }
 

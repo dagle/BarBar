@@ -9,7 +9,8 @@ struct _BarBarDBusMenu {
   gchar *object_path;
   gchar *bus_name;
 
-  GMenu *menu;
+  GMenu *internal;
+  gint handler_id;
 
   // GtkWidget *menu;
 };
@@ -62,6 +63,7 @@ static void g_barbar_dbus_menu_get_property(GObject *object, guint property_id,
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
+
 static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent) {
 
   GVariant *idv = g_variant_get_child_value(layout, 0);
@@ -74,28 +76,31 @@ static gboolean parse_tree(BarBarDBusMenu *self, GVariant *layout, int parent) {
 
   child_props = g_variant_get_child_value(layout, 1);
   g_variant_iter_init(&iter, child_props);
+
   while (g_variant_iter_loop(&iter, "{sv}", &prop, &value)) {
     if (strcmp("label", prop) == 0) {
       gsize length;
       const gchar *str = g_variant_get_string(value, &length);
-      g_menu_append(self->menu, str, NULL);
+      if (g_ascii_strcasecmp("label empty", str)) {
+        g_menu_append(self->internal, str, NULL);
+      }
     }
   }
 
-  GVariant *child;
-  GVariantIter children;
-  child_props = g_variant_get_child_value(layout, 2);
-  g_variant_iter_init(&children, child_props);
-  while ((child = g_variant_iter_next_value(&children)) != NULL) {
-
-    if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
-      GVariant *tmp = g_variant_get_variant(child);
-      g_variant_unref(child);
-      child = tmp;
-    }
-
-    parse_tree(self, child, id);
-  }
+  // GVariant *child;
+  // GVariantIter children;
+  // child_props = g_variant_get_child_value(layout, 2);
+  // g_variant_iter_init(&children, child_props);
+  // while ((child = g_variant_iter_next_value(&children)) != NULL) {
+  //
+  //   if (g_variant_is_of_type(child, G_VARIANT_TYPE_VARIANT)) {
+  //     GVariant *tmp = g_variant_get_variant(child);
+  //     g_variant_unref(child);
+  //     child = tmp;
+  //   }
+  //
+  //   parse_tree(self, child, id);
+  // }
 
   g_variant_unref(idv);
 
@@ -157,13 +162,15 @@ static void g_barbar_dbus_menu_constructed(GObject *object) {
 }
 
 static gboolean g_barbar_dbus_menu_is_mutable(GMenuModel *model) {
-  return FALSE;
+  return TRUE;
 }
 
 static gint g_barbar_dbus_menu_get_n_items(GMenuModel *model) {
   BarBarDBusMenu *menu = BARBAR_DBUS_MENU(model);
 
-  return g_menu_model_get_n_items(G_MENU_MODEL(menu->menu));
+  int i = g_menu_model_get_n_items(G_MENU_MODEL(menu->internal));
+  printf("num items: %d\n", i);
+  return i;
 }
 
 static void g_barbar_dbus_menu_get_item_attributes(GMenuModel *model,
@@ -172,16 +179,23 @@ static void g_barbar_dbus_menu_get_item_attributes(GMenuModel *model,
 
   BarBarDBusMenu *menu = BARBAR_DBUS_MENU(model);
 
-  return G_MENU_MODEL_GET_CLASS(menu->menu)
-      ->get_item_attributes(G_MENU_MODEL(menu->menu), position, table);
+  return G_MENU_MODEL_GET_CLASS(menu->internal)
+      ->get_item_attributes(G_MENU_MODEL(menu->internal), position, table);
 }
 
 static void g_barbar_dbus_menu_get_item_links(GMenuModel *model, gint position,
                                               GHashTable **table) {
   BarBarDBusMenu *menu = BARBAR_DBUS_MENU(model);
 
-  G_MENU_MODEL_GET_CLASS(menu->menu)
-      ->get_item_links(G_MENU_MODEL(menu->menu), position, table);
+  G_MENU_MODEL_GET_CLASS(menu->internal)
+      ->get_item_links(G_MENU_MODEL(menu->internal), position, table);
+}
+
+static void menu_changed(GMenuModel *model, gint position, gint removed,
+                         gint added, gpointer user_data) {
+
+  BarBarDBusMenu *menu = user_data;
+  g_menu_model_items_changed(G_MENU_MODEL(menu), position, removed, added);
 }
 
 static void g_barbar_dbus_menu_class_init(BarBarDBusMenuClass *class) {
@@ -209,7 +223,10 @@ static void g_barbar_dbus_menu_class_init(BarBarDBusMenuClass *class) {
 }
 
 static void g_barbar_dbus_menu_init(BarBarDBusMenu *self) {
-  self->menu = g_menu_new();
+  self->internal = g_menu_new();
+
+  self->handler_id = g_signal_connect(self->internal, "items-changed",
+                                      G_CALLBACK(menu_changed), self);
 }
 
 BarBarDBusMenu *g_barbar_dbus_menu_new(const gchar *bus_name,
