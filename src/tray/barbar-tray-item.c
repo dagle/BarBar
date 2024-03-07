@@ -25,10 +25,17 @@ struct _BarBarTrayItem {
   GdkPixbuf *overlay_pixmap;
 
   BarBarDBusMenu *menu;
-  // GMenu *menu;
 
   GtkWidget *image;
   GtkWidget *button;
+  GtkWidget *popover;
+  StatusNotifierItem *item;
+  GtkGesture *gesture;
+
+  gboolean active;
+  gboolean pending;
+
+  GSimpleActionGroup *actions;
 };
 
 enum {
@@ -86,6 +93,9 @@ static void g_barbar_tray_item_get_property(GObject *object, guint property_id,
   }
 }
 
+static void populate(BarBarTrayItem *self);
+static void set_icon(BarBarTrayItem *self);
+
 // static void g_barbar_tray_root(GtkWidget *widget);
 static void g_barbar_tray_item_constructed(GObject *object);
 static void g_barbar_tray_item_class_init(BarBarTrayItemClass *class) {
@@ -117,14 +127,44 @@ static void g_barbar_tray_item_class_init(BarBarTrayItemClass *class) {
   gtk_widget_class_set_css_name(widget_class, "river-tag");
 }
 
+// static void get_all_properties(GObject *object, GAsyncResult *res,
+//                                gpointer data) {
+//
+static void get_all_properties(BarBarTrayItem *self) {
+  GError *error = NULL;
+  // status_notifier_item_call_activate(self->item, 0, 0, NULL, NULL, NULL);
+  g_dbus_proxy_call_sync(G_DBUS_PROXY(self->item),
+                         "org.freedesktop.DBus.Properties.GetAll", NULL,
+                         G_DBUS_CALL_FLAGS_NONE, -1, NULL, &error);
+
+  if (error) {
+    g_printerr("prop error: %s\n", error->message);
+  }
+}
+
+static void update_property2(GDBusProxy *proxy, GVariant *changed_properties,
+                             GStrv invalidated_properties, gpointer user_data) {
+
+  printf("hello!\n");
+  // char *str = g_variant_print(changed_properties, TRUE);
+  // printf("props: %s\n", str);
+}
+
 static void update_property(GDBusProxy *self, gchar *sender_name,
                             gchar *signal_name, GVariant *parameters,
                             gpointer user_data) {
 
   BarBarTrayItem *item = BARBAR_TRAY_ITEM(user_data);
 
-  // It seems like we don't trust clint signal the update correctly,
-  // so on each update we update all
+  printf("nooo!\n");
+
+  if (!item->pending) {
+    item->pending = true;
+  }
+
+  // get_all_properties(item);
+  // populate(item);
+  // set_icon(item);
 }
 
 // returns the first at least the default size
@@ -169,7 +209,7 @@ static GtkWidget *load_icon(GtkIconTheme *icon_theme, const char *name,
   int size = select_size(icon_theme, name, height);
 
   GtkIconPaintable *paintable = gtk_icon_theme_lookup_icon(
-      icon_theme, name, NULL, size, scale, GTK_TEXT_DIR_LTR, 2);
+      icon_theme, name, NULL, size, scale, GTK_TEXT_DIR_LTR, 1);
   image = gtk_image_new_from_paintable(GDK_PAINTABLE(paintable));
   g_object_unref(paintable);
   return image;
@@ -218,7 +258,6 @@ static GtkWidget *select_icon(BarBarTrayItem *self) {
     return image;
   }
   image = load_icon_fallback(self, self->icon_name, height, scale);
-  printf("icon: %p\n", image);
 
   if (image) {
     return image;
@@ -274,29 +313,63 @@ static void apply_overlay(BarBarTrayItem *self, GtkWidget *icon) {
   }
 }
 
-static void set_icon(BarBarTrayItem *self) {
-  GtkWidget *icon = select_icon(self);
-  self->image = icon;
-  self->button = gtk_menu_button_new();
-  gtk_menu_button_set_child(GTK_MENU_BUTTON(self->button), self->image);
-  GtkWidget *popover =
-      gtk_popover_menu_new_from_model(G_MENU_MODEL(self->menu));
-  // printf("image: %p\n", self->image);
-  gtk_widget_set_parent(self->button, GTK_WIDGET(self));
-  gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->button), popover);
-  // gtk_widget_set_parent(popover, GTK_WIDGET(self));
-  // gtk_menu_button_set_popover(self->button, popover);
-  // apply_overlay(self, icon);
+static void click_pressed_cb(GtkGestureClick *gesture, guint n_press, double x,
+                             double y, gpointer data) {
+
+  BarBarTrayItem *self = BARBAR_TRAY_ITEM(data);
+  GtkGestureSingle *click = GTK_GESTURE_SINGLE(gesture);
+  gint i = gtk_gesture_single_get_current_button(click);
+
+  if (i == 1) {
+    status_notifier_item_call_activate(self->item, 0, 0, NULL, NULL, NULL);
+  } else if (i == 3) {
+    if (self->popover) {
+      if (!self->active) {
+        gtk_popover_popup(GTK_POPOVER(self->popover));
+        self->active = TRUE;
+      } else {
+        gtk_popover_popdown(GTK_POPOVER(self->popover));
+        self->active = FALSE;
+      }
+    }
+  }
 }
 
-// static void dump_item(BarBarTrayItem *self) {
-//   printf("Item {\n");
-//   printf("icon_name: %s\n", self->icon_name);
-//   printf("attention_name: %s\n", self->attention_name);
-//   printf("attention_movie: %s\n", self->attention_movie);
-//   printf("overlay_name: %s\n", self->overlay_name);
-//   printf("}\n");
-// }
+static gboolean menu_deactivate_cb(BarBarTrayItem *self) {
+  self->active = false;
+  return TRUE;
+}
+
+static void set_popup(BarBarTrayItem *self) {
+
+  if (self->popover) {
+    g_clear_pointer(&self->popover, gtk_widget_unparent);
+  }
+
+  self->popover =
+      gtk_popover_menu_new_from_model_full(G_MENU_MODEL(self->menu), 0);
+
+  gtk_popover_popdown(GTK_POPOVER(self->popover));
+  self->active = FALSE;
+
+  g_signal_connect_swapped(self->popover, "closed",
+                           G_CALLBACK(menu_deactivate_cb), self);
+}
+
+static void set_icon(BarBarTrayItem *self) {
+  GtkWidget *icon = select_icon(self);
+
+  if (self->image) {
+    g_clear_pointer(&self->image, gtk_widget_unparent);
+  }
+
+  self->image = icon;
+
+  set_popup(self);
+
+  gtk_widget_set_parent(self->popover, GTK_WIDGET(self));
+  gtk_widget_set_parent(self->image, GTK_WIDGET(self));
+}
 
 // get the first pixel buffer that is large enough
 // we assume they are sorted, for now.
@@ -324,6 +397,19 @@ static GVariant *find_buficon(GVariant *var, int height, int width) {
   }
   return best_tuple;
 }
+
+static void activate(GSimpleAction *action, GVariant *parameter,
+                     gpointer user_data) {
+  BarBarTrayItem *item = BARBAR_TRAY_ITEM(user_data);
+
+  if (item->menu) {
+    g_barbar_dbus_menu_event(item->menu, g_variant_get_int32(parameter));
+  }
+}
+
+static GActionEntry entries[] = {
+    {"activate", activate, "i", NULL, NULL},
+};
 
 static GdkPixbuf *into_pixbuf(GVariant *var, int height, int width) {
   GVariant *pixels = NULL;
@@ -364,74 +450,65 @@ static char *safe_strdup(const char *str) {
   return strdup(str);
 }
 
-static void populate(BarBarTrayItem *self, StatusNotifierItem *item) {
+static void populate(BarBarTrayItem *self) {
   int height = gtk_widget_get_height(GTK_WIDGET(self));
   int width = gtk_widget_get_width(GTK_WIDGET(self));
-  // TODO:
 
-  // if (self->icon_theme) {
-  // }
-  // g_object_unref(self->icon_theme);
   if (self->icon_theme) {
     g_clear_pointer(&self->icon_theme, g_object_unref);
   }
 
-  const char *icon_theme = status_notifier_item_get_icon_theme_path(item);
+  const char *icon_theme = status_notifier_item_get_icon_theme_path(self->item);
   if (icon_theme && strlen(icon_theme) > 0) {
     const char *const path[] = {icon_theme, NULL};
     self->icon_theme = gtk_icon_theme_new();
-    // gtk_icon_theme_add_search_path(self->icon_theme, icon_theme);
-    // printf("icon-theme: %s\n", icon_theme);
     gtk_icon_theme_set_resource_path(self->icon_theme, path);
   }
 
-  self->icon_name = safe_strdup(status_notifier_item_get_icon_name(item));
-  // printf("icon-name: %s\n", self->icon_name);
+  g_free(self->icon_name);
+  self->icon_name = safe_strdup(status_notifier_item_get_icon_name(self->item));
+  printf("icon-name: %s\n", self->icon_name);
 
   if (self->icon_pixmap) {
     g_object_unref(self->icon_pixmap);
   }
-  self->icon_pixmap =
-      into_pixbuf(status_notifier_item_get_icon_pixmap(item), height, width);
+
+  if (self->icon_pixmap) {
+    g_object_unref(self->icon_pixmap);
+  }
+
+  self->icon_pixmap = into_pixbuf(
+      status_notifier_item_get_icon_pixmap(self->item), height, width);
 
   g_free(self->attention_name);
   self->attention_name =
-      safe_strdup(status_notifier_item_get_attention_icon_name(item));
+      safe_strdup(status_notifier_item_get_attention_icon_name(self->item));
 
   if (self->attention_pixmap) {
     g_object_unref(self->attention_pixmap);
   }
-  self->attention_pixmap = into_pixbuf(
-      status_notifier_item_get_attention_icon_pixmap(item), height, width);
+  self->attention_pixmap =
+      into_pixbuf(status_notifier_item_get_attention_icon_pixmap(self->item),
+                  height, width);
 
   g_free(self->attention_movie);
   self->attention_movie =
-      safe_strdup(status_notifier_item_get_attention_movie_name(item));
+      safe_strdup(status_notifier_item_get_attention_movie_name(self->item));
 
   g_free(self->overlay_name);
   self->overlay_name =
-      safe_strdup(status_notifier_item_get_overlay_icon_name(item));
+      safe_strdup(status_notifier_item_get_overlay_icon_name(self->item));
 
   if (self->overlay_pixmap) {
     g_object_unref(self->overlay_pixmap);
   }
   self->overlay_pixmap = into_pixbuf(
-      status_notifier_item_get_overlay_icon_pixmap(item), height, width);
+      status_notifier_item_get_overlay_icon_pixmap(self->item), height, width);
 
-  const gchar *path = status_notifier_item_get_menu(item);
+  const gchar *path = status_notifier_item_get_menu(self->item);
 
   if (path) {
-    printf("path!\n");
-    GMenuItem *item;
     self->menu = g_barbar_dbus_menu_new(self->bus_name, path);
-    // self->menu = g_menu_new();
-    // g_menu_insert(self->menu, -1, "label1", "action");
-    // g_menu_insert(self->menu, -1, "label2", "action");
-    // g_menu_insert(self->menu, -1, "label3", "action");
-    // item = g_menu_item_new("label", "action");
-    // g_menu_item_set_attribute(item, "attribute", "b", TRUE);
-    // // g_menu_item_set_link(item, G_MENU_LINK_SUBMENU,
-    // G_MENU_MODEL(submenu)); g_menu_append_item(self->menu, item);
   }
 }
 
@@ -440,22 +517,25 @@ static void item_callback(GObject *object, GAsyncResult *res, gpointer data) {
 
   BarBarTrayItem *self = BARBAR_TRAY_ITEM(data);
 
-  StatusNotifierItem *item = status_notifier_item_proxy_new_finish(res, &error);
+  self->item = status_notifier_item_proxy_new_finish(res, &error);
 
   if (error) {
     g_printerr("tray item result: %s\n", error->message);
+    g_error_free(error);
+    return;
   }
 
-  populate(self, item);
+  populate(self);
   set_icon(self);
 
-  g_signal_connect(item, "g-signal", G_CALLBACK(update_property), self);
+  g_signal_connect(self->item, "g-signal", G_CALLBACK(update_property), self);
+  g_signal_connect(self->item, "g-properties-changed",
+                   G_CALLBACK(update_property2), self);
 }
 
 static void g_barbar_tray_item_constructed(GObject *object) {
   BarBarTrayItem *item = BARBAR_TRAY_ITEM(object);
 
-  // If no default theme is set, we set a
   if (!item->default_theme) {
     item->default_theme = gtk_icon_theme_get_for_display(
         gtk_widget_get_display(GTK_WIDGET(item)));
@@ -464,9 +544,32 @@ static void g_barbar_tray_item_constructed(GObject *object) {
   status_notifier_item_proxy_new_for_bus(
       G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, item->bus_name,
       item->object_path, NULL, item_callback, item);
+  // g_dbus_proxy_create_for_dbus();
 }
 
-static void g_barbar_tray_item_init(BarBarTrayItem *self) {}
+static void g_barbar_tray_item_init(BarBarTrayItem *self) {
+  self->gesture = gtk_gesture_click_new();
+
+  gtk_gesture_single_set_touch_only(GTK_GESTURE_SINGLE(self->gesture), FALSE);
+  gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(self->gesture), 0);
+
+  g_signal_connect(self->gesture, "pressed", G_CALLBACK(click_pressed_cb),
+                   self);
+
+  gtk_event_controller_set_propagation_phase(
+      GTK_EVENT_CONTROLLER(self->gesture), GTK_PHASE_CAPTURE);
+
+  self->actions = g_simple_action_group_new();
+
+  g_action_map_add_action_entries(G_ACTION_MAP(self->actions), entries,
+                                  G_N_ELEMENTS(entries), self);
+
+  gtk_widget_insert_action_group(GTK_WIDGET(self), "trayitem",
+                                 G_ACTION_GROUP(self->actions));
+
+  gtk_widget_add_controller(GTK_WIDGET(self),
+                            GTK_EVENT_CONTROLLER(self->gesture));
+}
 
 BarBarTrayItem *g_barbar_tray_item_new(const char *bus_name,
                                        const char *object_path) {

@@ -40,6 +40,9 @@ G_DECLARE_FINAL_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, BARBAR, DBUS_MENU,
 BarBarDBusMenu *g_barbar_dbus_menu_new(const gchar *bus_name,
                                        const gchar *path);
 
+gint g_handler(BarBarDBusMenu *menu);
+void g_barbar_dbus_menu_event(BarBarDBusMenu *menu, int id);
+
 G_END_DECLS
 
 #endif /* _BARBAR_DBUSMENU_H_ */

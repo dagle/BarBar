@@ -285,6 +285,7 @@ class TrayItem {
   }
 
   _itemProxyAcquired(proxy) {
+    console.log("proxy:", proxy);
     if (proxy.Menu) {
       try {
         log(proxy.IconName);

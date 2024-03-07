@@ -12,6 +12,8 @@ struct _BarBarDBusMenu {
   GMenu *internal;
   gint handler_id;
 
+  StatusNotifierComCanonicalDbusmenu *proxy;
+
   // GtkWidget *menu;
 };
 
@@ -30,6 +32,7 @@ static GParamSpec *dbus_menu_props[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, G_TYPE_MENU_MODEL)
 
+gint g_handler(BarBarDBusMenu *menu) { return menu->handler_id; }
 static void g_barbar_dbus_menu_set_property(GObject *object, guint property_id,
                                             const GValue *value,
                                             GParamSpec *pspec) {
@@ -81,6 +84,27 @@ static gboolean is_seperator(GVariant *entry) {
 
 static GMenuItem *parse_item(GVariant *entry);
 
+// create a sector if the current sector isn't
+// an empty one and adds the old one to the menu.
+static void new_sector(GMenu **menu, GMenu **sector) {
+  // we have an empty sector, just use that and don't create a new one
+  if (*sector && g_menu_model_get_n_items(G_MENU_MODEL(*sector)) <= 0) {
+    return;
+  }
+
+  // If we already have a sector, we need to commit it to
+  // the menu before create a new one
+  if (*sector) {
+    if (!menu) {
+      *menu = g_menu_new();
+    }
+    g_menu_append_section(*menu, NULL, G_MENU_MODEL(*sector));
+    g_object_unref(*sector);
+  }
+  *sector = g_menu_new();
+}
+
+// A bit ugly but works(tm)
 static GMenu *parse_menu(GVariant *submenu) {
   GVariant *child;
   GVariantIter children;
@@ -96,15 +120,7 @@ static GMenu *parse_menu(GVariant *submenu) {
       child = tmp;
     }
     if (is_seperator(child)) {
-      if (sector) {
-        // free
-        g_menu_append_section(menu, NULL, G_MENU_MODEL(sector));
-      }
-      sector = g_menu_new();
-
-      // g_menu_append_section(GMenu *menu, const gchar *label, GMenuModel
-      // *section)
-
+      new_sector(&menu, &sector);
     } else {
       item = parse_item(child);
       if (item) {
@@ -119,6 +135,9 @@ static GMenu *parse_menu(GVariant *submenu) {
       }
     }
   }
+  if (sector && menu) {
+    g_menu_append_section(menu, NULL, G_MENU_MODEL(sector));
+  }
   return menu;
 }
 
@@ -127,6 +146,7 @@ static GMenuItem *parse_item(GVariant *entry) {
   gchar *prop;
   GVariant *value;
   GVariant *child;
+  gboolean visible = TRUE;
 
   GVariant *idv = g_variant_get_child_value(entry, 0);
   gint id = g_variant_get_int32(idv);
@@ -150,12 +170,32 @@ static GMenuItem *parse_item(GVariant *entry) {
       }
     }
     if (strcmp("icon-name", prop) == 0) {
+      gsize length;
+      const gchar *icon = g_variant_get_string(value, &length);
+
+      GIcon *gicon = g_themed_icon_new(icon);
+      g_menu_item_set_icon(menu_item, gicon);
     }
 
     if (strcmp("enabled", prop) == 0) {
+      gboolean enabled = g_variant_get_boolean(value);
+
+      if (enabled) {
+        g_menu_item_set_action_and_target_value(menu_item, "trayitem.activate",
+                                                g_variant_new_int32(id));
+      }
     }
-    // if shortcut, add shortcut
-    // toggle-type / toggle-state
+
+    if (strcmp("visible", prop) == 0) {
+      visible = g_variant_get_boolean(value);
+    }
+
+    if (strcmp("shortcut", prop) == 0) {
+    }
+    if (strcmp("toggle-type", prop) == 0) {
+    }
+    if (strcmp("toggle-state", prop) == 0) {
+    }
   }
 
   GVariant *submenu = g_variant_get_child_value(entry, 2);
@@ -163,8 +203,20 @@ static GMenuItem *parse_item(GVariant *entry) {
   if (menu) {
     g_menu_item_set_submenu(menu_item, G_MENU_MODEL(menu));
   }
+  // status_notifier_com_canonical_dbusmenu_call_event
 
   return menu_item;
+}
+
+static void event_callback(GObject *object, GAsyncResult *res, gpointer data) {}
+
+void g_barbar_dbus_menu_event(BarBarDBusMenu *menu, int id) {
+  GVariant *variant = g_variant_new_int32(0);
+  GVariant *nested = g_variant_new_variant(variant);
+  guint time = GDK_CURRENT_TIME;
+
+  status_notifier_com_canonical_dbusmenu_call_event(
+      menu->proxy, id, "clicked", nested, time, NULL, event_callback, NULL);
 }
 
 static gboolean parse_root(BarBarDBusMenu *self, GVariant *layout) {
@@ -186,11 +238,10 @@ static void layout_callback(GObject *object, GAsyncResult *res, gpointer data) {
   gboolean success;
 
   BarBarDBusMenu *menu = BARBAR_DBUS_MENU(data);
-  StatusNotifierComCanonicalDbusmenu *proxy =
-      STATUS_NOTIFIER_COM_CANONICAL_DBUSMENU(object);
+  menu->proxy = STATUS_NOTIFIER_COM_CANONICAL_DBUSMENU(object);
 
   success = status_notifier_com_canonical_dbusmenu_call_get_layout_finish(
-      proxy, &revision, &layout, res, &error);
+      menu->proxy, &revision, &layout, res, &error);
 
   if (error) {
     g_printerr("Couldn't fetch layout: %s", error->message);
