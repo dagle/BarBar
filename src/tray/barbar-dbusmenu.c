@@ -32,7 +32,6 @@ static GParamSpec *dbus_menu_props[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarDBusMenu, g_barbar_dbus_menu, G_TYPE_MENU_MODEL)
 
-gint g_handler(BarBarDBusMenu *menu) { return menu->handler_id; }
 static void g_barbar_dbus_menu_set_property(GObject *object, guint property_id,
                                             const GValue *value,
                                             GParamSpec *pspec) {
@@ -65,6 +64,10 @@ static void g_barbar_dbus_menu_get_property(GObject *object, guint property_id,
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
+}
+
+const char *g_barbar_dbus_menu_path(BarBarDBusMenu *menu) {
+  return menu->object_path;
 }
 
 static gboolean is_seperator(GVariant *entry) {
