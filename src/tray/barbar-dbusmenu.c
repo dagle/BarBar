@@ -12,9 +12,9 @@ struct _BarBarDBusMenu {
   GMenu *internal;
   gint handler_id;
 
-  StatusNotifierComCanonicalDbusmenu *proxy;
+  gint revision;
 
-  // GtkWidget *menu;
+  StatusNotifierComCanonicalDbusmenu *proxy;
 };
 
 enum {
@@ -226,9 +226,18 @@ static gboolean parse_root(BarBarDBusMenu *self, GVariant *layout) {
   GVariant *submenu = g_variant_get_child_value(layout, 2);
   GMenu *menu = parse_menu(submenu);
   if (menu) {
-    self->internal = menu;
-    int added = g_menu_model_get_n_items(G_MENU_MODEL(self->internal));
-    g_menu_model_items_changed(G_MENU_MODEL(self), 0, 0, added);
+    if (self->internal) {
+      int removed = g_menu_model_get_n_items(G_MENU_MODEL(self->internal));
+      int added = g_menu_model_get_n_items(G_MENU_MODEL(menu));
+      g_object_unref(self->internal);
+
+      self->internal = menu;
+      g_menu_model_items_changed(G_MENU_MODEL(self), 0, removed, added);
+    } else {
+      self->internal = menu;
+      int added = g_menu_model_get_n_items(G_MENU_MODEL(self->internal));
+      g_menu_model_items_changed(G_MENU_MODEL(self), 0, 0, added);
+    }
     return TRUE;
   }
   return FALSE;
@@ -241,7 +250,6 @@ static void layout_callback(GObject *object, GAsyncResult *res, gpointer data) {
   gboolean success;
 
   BarBarDBusMenu *menu = BARBAR_DBUS_MENU(data);
-  menu->proxy = STATUS_NOTIFIER_COM_CANONICAL_DBUSMENU(object);
 
   success = status_notifier_com_canonical_dbusmenu_call_get_layout_finish(
       menu->proxy, &revision, &layout, res, &error);
@@ -251,16 +259,18 @@ static void layout_callback(GObject *object, GAsyncResult *res, gpointer data) {
     g_error_free(error);
   }
 
-  parse_root(menu, layout);
+  if (revision > menu->revision) {
+    menu->revision = revision;
+    parse_root(menu, layout);
+  }
 }
 
-static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
-  GError *error = NULL;
-  BarBarDBusMenu *menu = BARBAR_DBUS_MENU(data);
+static void update_menu(StatusNotifierComCanonicalDbusmenu *proxy,
+                        GVariant *add, GVariant *remove, gpointer data) {
+  printf("update menu!\n");
+}
 
-  StatusNotifierComCanonicalDbusmenu *dbus_menu =
-      status_notifier_com_canonical_dbusmenu_proxy_new_for_bus_finish(res,
-                                                                      &error);
+static void get_layout(BarBarDBusMenu *menu, int parent) {
   static const char *const arg_propertyNames[] = {"type",
                                                   "label",
                                                   "visible",
@@ -270,7 +280,33 @@ static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
                                                   NULL};
 
   status_notifier_com_canonical_dbusmenu_call_get_layout(
-      dbus_menu, 0, -1, arg_propertyNames, NULL, layout_callback, menu);
+      menu->proxy, 0, -1, arg_propertyNames, NULL, layout_callback, menu);
+}
+
+// layout_update (GDBusProxy * proxy, guint revision, gint parent,
+// DbusmenuClient * client)
+static void layout_update(StatusNotifierComCanonicalDbusmenu *proxy,
+                          int revision, int parent, gpointer data) {
+  BarBarDBusMenu *menu = BARBAR_DBUS_MENU(data);
+
+  if (revision > menu->revision) {
+    get_layout(menu, 0);
+  }
+}
+
+static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
+  GError *error = NULL;
+  BarBarDBusMenu *menu = BARBAR_DBUS_MENU(data);
+
+  menu->proxy = status_notifier_com_canonical_dbusmenu_proxy_new_for_bus_finish(
+      res, &error);
+
+  get_layout(menu, 0);
+
+  g_signal_connect(menu->proxy, "items-properties-updated",
+                   G_CALLBACK(update_menu), menu);
+  g_signal_connect(menu->proxy, "layout-updated", G_CALLBACK(layout_update),
+                   menu);
 }
 
 static void g_barbar_dbus_menu_constructed(GObject *object) {
@@ -314,13 +350,6 @@ static void g_barbar_dbus_menu_get_item_links(GMenuModel *model, gint position,
 
   G_MENU_MODEL_GET_CLASS(menu->internal)
       ->get_item_links(G_MENU_MODEL(menu->internal), position, table);
-}
-
-static void menu_changed(GMenuModel *model, gint position, gint removed,
-                         gint added, gpointer user_data) {
-
-  BarBarDBusMenu *menu = user_data;
-  g_menu_model_items_changed(G_MENU_MODEL(menu), position, removed, added);
 }
 
 static void g_barbar_dbus_menu_class_init(BarBarDBusMenuClass *class) {

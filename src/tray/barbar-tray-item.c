@@ -27,15 +27,13 @@ struct _BarBarTrayItem {
   BarBarDBusMenu *menu;
 
   GtkWidget *image;
-  GtkWidget *button;
   GtkWidget *popover;
 
   StatusNotifierItem *item;
-  GDBusProxy *proxy;
   GtkGesture *gesture;
 
   gboolean active;
-  gboolean pending;
+  guint pending;
 
   GSimpleActionGroup *actions;
 };
@@ -96,7 +94,6 @@ static void g_barbar_tray_item_get_property(GObject *object, guint property_id,
   }
 }
 
-static void populate(BarBarTrayItem *self);
 static void set_icon(BarBarTrayItem *self);
 
 // static void g_barbar_tray_root(GtkWidget *widget);
@@ -129,9 +126,6 @@ static void g_barbar_tray_item_class_init(BarBarTrayItemClass *class) {
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "river-tag");
 }
-
-// static void get_all_properties(GObject *object, GAsyncResult *res,
-//                                gpointer data) {
 
 void barbar_tray_item_set_icon_theme(BarBarTrayItem *item, const char *name) {
   if (item->icon_theme) {
@@ -176,8 +170,18 @@ void barbar_tray_item_set_overlay_icon_name(BarBarTrayItem *item,
 
   item->overlay_name = g_strdup(name);
 }
-void barbar_tray_item_set_overlay_pixmap(BarBarTrayItem *item,
-                                         const char *name) {}
+
+void barbar_tray_item_set_overlay_pixmap(BarBarTrayItem *item, GVariant *var) {
+  int height = gtk_widget_get_height(GTK_WIDGET(item));
+  int width = gtk_widget_get_width(GTK_WIDGET(item));
+
+  if (item->overlay_pixmap) {
+    g_object_unref(item->overlay_pixmap);
+  }
+
+  item->overlay_pixmap = into_pixbuf(var, height, width);
+}
+
 void barbar_tray_item_set_attention_icon_name(BarBarTrayItem *item,
                                               const char *name) {
   if (!g_strcmp0(item->attention_name, name)) {
@@ -188,8 +192,19 @@ void barbar_tray_item_set_attention_icon_name(BarBarTrayItem *item,
 
   item->attention_name = g_strdup(name);
 }
+
 void barbar_tray_item_set_attention_icon_pixmap(BarBarTrayItem *item,
-                                                const char *name) {}
+                                                GVariant *var) {
+  int height = gtk_widget_get_height(GTK_WIDGET(item));
+  int width = gtk_widget_get_width(GTK_WIDGET(item));
+
+  if (item->attention_pixmap) {
+    g_object_unref(item->attention_pixmap);
+  }
+
+  item->attention_pixmap = into_pixbuf(var, height, width);
+}
+
 void barbar_tray_item_set_attention_movie_name(BarBarTrayItem *item,
                                                const char *name) {
 
@@ -213,40 +228,41 @@ void barbar_tray_item_set_menu(BarBarTrayItem *item, const char *path) {
   }
   item->menu = g_barbar_dbus_menu_new(item->bus_name, path);
 }
-void barbar_tray_item_set_is_menu(BarBarTrayItem *item, const char *name) {}
+void barbar_tray_item_set_is_menu(BarBarTrayItem *item, gboolean b) {}
 
 static void set_properties(BarBarTrayItem *item, const char *prop,
                            GVariant *value) {
 
-  if (strcmp(prop, "IconThemePath")) {
+  if (!strcmp(prop, "IconThemePath")) {
     const char *name = g_variant_get_string(value, NULL);
     barbar_tray_item_set_icon_theme(item, name);
-  } else if (strcmp(prop, "IconName")) {
+  } else if (!strcmp(prop, "IconName")) {
     const char *name = g_variant_get_string(value, NULL);
     barbar_tray_item_set_icon_name(item, name);
-  } else if (strcmp(prop, "IconPixmap")) {
+  } else if (!strcmp(prop, "IconPixmap")) {
     barbar_tray_item_set_icon_pixmap(item, value);
-  } else if (strcmp(prop, "OverlayIconName")) {
+  } else if (!strcmp(prop, "OverlayIconName")) {
     const char *name = g_variant_get_string(value, NULL);
     barbar_tray_item_set_overlay_icon_name(item, name);
-  } else if (strcmp(prop, "OverlayIconPixmap")) {
-    // barbar_tray_item_set_overlay_pixmap(item);
-  } else if (strcmp(prop, "AttentionIconName")) {
+  } else if (!strcmp(prop, "OverlayIconPixmap")) {
+    barbar_tray_item_set_overlay_pixmap(item, value);
+  } else if (!strcmp(prop, "AttentionIconName")) {
     const char *name = g_variant_get_string(value, NULL);
     barbar_tray_item_set_attention_icon_name(item, name);
-  } else if (strcmp(prop, "AttentionIconPixmap")) {
-    // barbar_tray_item_set_attention_icon_pixmap(item);
-  } else if (strcmp(prop, "AttentionMovieName")) {
+  } else if (!strcmp(prop, "AttentionIconPixmap")) {
+    barbar_tray_item_set_attention_icon_pixmap(item, value);
+  } else if (!strcmp(prop, "AttentionMovieName")) {
     const char *name = g_variant_get_string(value, NULL);
     barbar_tray_item_set_attention_movie_name(item, name);
-  } else if (strcmp(prop, "ToolTip")) {
+  } else if (!strcmp(prop, "ToolTip")) {
     // barbar_tray_item_set_tooltip(item);
-  } else if (strcmp(prop, "Menu")) {
+  } else if (!strcmp(prop, "Menu")) {
     char *path;
     g_variant_get(value, "o", &path);
     barbar_tray_item_set_menu(item, path);
-  } else if (strcmp(prop, "ItemIsMenu")) {
-    // barbar_tray_item_set_is_menu(item);
+  } else if (!strcmp(prop, "ItemIsMenu")) {
+    gboolean b = g_variant_get_boolean(value);
+    barbar_tray_item_set_is_menu(item, b);
   }
 }
 
@@ -254,6 +270,7 @@ static void properties_result(GObject *object, GAsyncResult *res,
                               gpointer data) {
 
   GDBusConnection *connection = G_DBUS_CONNECTION(object);
+  BarBarTrayItem *self = BARBAR_TRAY_ITEM(data);
   GError *error = NULL;
   GVariantIter iter;
 
@@ -265,17 +282,16 @@ static void properties_result(GObject *object, GAsyncResult *res,
   char *prop;
 
   while (g_variant_iter_loop(&iter, "{sv}", &prop, &value)) {
-    printf("prop: %s\n", prop);
-    printf("value: %s\n", g_variant_print(value, TRUE));
+    set_properties(self, prop, value);
   }
 
-  // GVariant        *g_dbus_proxy_call_finish               (GDBusProxy *proxy,
-  //                                                          GAsyncResult *res,
-  //                                                          GError **error);
+  set_icon(self);
+
+  self->pending = 0;
 }
 
-static void get_all_properties(BarBarTrayItem *self) {
-  GError *error = NULL;
+static int get_all_properties(gpointer data) {
+  BarBarTrayItem *self = BARBAR_TRAY_ITEM(data);
 
   g_dbus_connection_call(
       g_dbus_proxy_get_connection(G_DBUS_PROXY(self->item)), self->bus_name,
@@ -283,28 +299,21 @@ static void get_all_properties(BarBarTrayItem *self) {
       g_variant_new("(s)",
                     g_dbus_proxy_get_interface_name(G_DBUS_PROXY(self->item))),
       g_variant_type_new("(a{sv})"), G_DBUS_CALL_FLAGS_NONE, -1, NULL,
-      properties_result, &error);
+      properties_result, self);
+  return G_SOURCE_REMOVE;
+}
 
-  if (error) {
-    g_printerr("prop error: %s\n", error->message);
+static void schedule_property(BarBarTrayItem *item) {
+  if (!item->pending) {
+    item->pending = g_timeout_add(100, get_all_properties, item);
   }
 }
 
 static void update_property(GDBusProxy *self, gchar *sender_name,
                             gchar *signal_name, GVariant *parameters,
                             gpointer user_data) {
-
   BarBarTrayItem *item = BARBAR_TRAY_ITEM(user_data);
-
-  printf("nooo!\n");
-
-  if (!item->pending) {
-    item->pending = true;
-  }
-
-  // get_all_properties(item);
-  // populate(item);
-  // set_icon(item);
+  schedule_property(item);
 }
 
 // returns the first at least the default size
@@ -566,8 +575,6 @@ static GdkPixbuf *into_pixbuf(GVariant *var, int height, int width) {
     gsize data_size;
     const guint8 *data =
         g_variant_get_fixed_array(pixels, &data_size, sizeof(guint8));
-    // GInputStream *image_stream =
-    // g_memory_input_stream_new_from_data(data, data_size, NULL);
     GBytes *image_bytes = g_bytes_new(data, data_size);
     GInputStream *image_stream =
         g_memory_input_stream_new_from_bytes(image_bytes);
@@ -583,104 +590,29 @@ static GdkPixbuf *into_pixbuf(GVariant *var, int height, int width) {
   return NULL;
 }
 
-static char *safe_strdup(const char *str) {
-  if (!str || strlen(str) == 0) {
-    return NULL;
-  }
-  return strdup(str);
-}
-
-static void populate(BarBarTrayItem *self) {
-  int height = gtk_widget_get_height(GTK_WIDGET(self));
-  int width = gtk_widget_get_width(GTK_WIDGET(self));
-
-  if (self->icon_theme) {
-    g_clear_pointer(&self->icon_theme, g_object_unref);
-  }
-
-  const char *icon_theme = status_notifier_item_get_icon_theme_path(self->item);
-  if (icon_theme && strlen(icon_theme) > 0) {
-    const char *const path[] = {icon_theme, NULL};
-    self->icon_theme = gtk_icon_theme_new();
-    gtk_icon_theme_set_resource_path(self->icon_theme, path);
-  }
-
-  g_free(self->icon_name);
-  self->icon_name = safe_strdup(status_notifier_item_get_icon_name(self->item));
-  printf("icon-name: %s\n", self->icon_name);
-
-  if (self->icon_pixmap) {
-    g_object_unref(self->icon_pixmap);
-  }
-
-  if (self->icon_pixmap) {
-    g_object_unref(self->icon_pixmap);
-  }
-
-  self->icon_pixmap = into_pixbuf(
-      status_notifier_item_get_icon_pixmap(self->item), height, width);
-
-  g_free(self->attention_name);
-  self->attention_name =
-      safe_strdup(status_notifier_item_get_attention_icon_name(self->item));
-
-  if (self->attention_pixmap) {
-    g_object_unref(self->attention_pixmap);
-  }
-  self->attention_pixmap =
-      into_pixbuf(status_notifier_item_get_attention_icon_pixmap(self->item),
-                  height, width);
-
-  g_free(self->attention_movie);
-  self->attention_movie =
-      safe_strdup(status_notifier_item_get_attention_movie_name(self->item));
-
-  g_free(self->overlay_name);
-  self->overlay_name =
-      safe_strdup(status_notifier_item_get_overlay_icon_name(self->item));
-
-  if (self->overlay_pixmap) {
-    g_object_unref(self->overlay_pixmap);
-  }
-  self->overlay_pixmap = into_pixbuf(
-      status_notifier_item_get_overlay_icon_pixmap(self->item), height, width);
-
-  const gchar *path = status_notifier_item_get_menu(self->item);
-
-  if (path) {
-    self->menu = g_barbar_dbus_menu_new(self->bus_name, path);
-  }
-}
-
 static void item_callback(GObject *object, GAsyncResult *res, gpointer data) {
   GError *error = NULL;
-  //
   BarBarTrayItem *self = BARBAR_TRAY_ITEM(data);
-  //
+
   self->item = status_notifier_item_proxy_new_finish(res, &error);
-  // self->proxy = g_dbus_proxy_new_for_bus_finish(res, &error);
   if (error) {
     g_printerr("tray item result: %s\n", error->message);
     g_error_free(error);
     return;
   }
 
-  populate(self);
-  set_icon(self);
-
   if (error) {
     g_printerr("call result: %s\n", error->message);
     g_error_free(error);
     return;
   }
-  get_all_properties(self);
+  schedule_property(self);
 
   g_signal_connect(self->item, "g-signal", G_CALLBACK(update_property), self);
-  // g_signal_connect(self->item, "g-properties-changed",
-  //                  G_CALLBACK(update_property2), self);
 }
 
 static void g_barbar_tray_item_constructed(GObject *object) {
+  G_OBJECT_CLASS(g_barbar_tray_item_parent_class)->constructed(object);
   BarBarTrayItem *item = BARBAR_TRAY_ITEM(object);
 
   if (!item->default_theme) {
@@ -691,10 +623,6 @@ static void g_barbar_tray_item_constructed(GObject *object) {
   status_notifier_item_proxy_new_for_bus(
       G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, item->bus_name,
       item->object_path, NULL, item_callback, item);
-  // g_dbus_proxy_new_for_bus(G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, NULL,
-  //                          item->bus_name, item->object_path,
-  //                          "org.kde.StatusNotifierItem", NULL, item_callback,
-  //                          item);
 }
 
 static void g_barbar_tray_item_init(BarBarTrayItem *self) {
