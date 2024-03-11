@@ -23,6 +23,7 @@ libbarbar_src = files(
   'sensors/barbar-wireplumber.c',
   'sensors/barbar-keyboard.c',
   'sensors/barbar-pomodoro.c',
+  'sensors/barbar-power-profiles.c',
 
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
@@ -71,6 +72,7 @@ libbarbar_headers = [
   'sensors/barbar-wireplumber.h',
   'sensors/barbar-keyboard.h',
   'sensors/barbar-pomodoro.h',
+  'sensors/barbar-power-profiles.h',
 
   'sensors/barbar-mpris.h',
 
@@ -112,7 +114,26 @@ foreach w : wayland_prots
   wayland_src += wl_mod.scan_xml(w)
 endforeach
 
-dbus_prots = [
+power_profile_names = {
+  'org.freedesktop.UPower.PowerProfiles': '/org/freedesktop/UPower/PowerProfiles',
+  # 'net.hadess.PowerProfiles': '/net/hadess/PowerProfiles',
+}
+
+foreach name, path: power_profile_names
+  config = {
+    'dbus_name': name,
+    'dbus_iface': name,
+    'dbus_path': path,
+  }
+
+  power_profile_xml = configure_file(
+    input: '../protocol/power-profiles-daemon.dbus.xml.in',
+    output: name + '.xml',
+    configuration: config,
+  )
+endforeach
+
+status_notifier_prots = [
   '../protocol/dbus-menu.xml',
   '../protocol/dbus-status-notifier-watcher.xml',
   '../protocol/dbus-status-notifier-item.xml',
@@ -120,12 +141,27 @@ dbus_prots = [
 
 gnome = import('gnome')
 
-gdbus_src = gnome.gdbus_codegen('status-notifier',
-  sources: dbus_prots,
+status_notifier_src = gnome.gdbus_codegen('status-notifier',
+  sources: status_notifier_prots,
   namespace : 'StatusNotifier',
 )
 
-libbarbar = library(barbar_package, libbarbar_src, wayland_src, gdbus_src,
+power_profiles_src = gnome.gdbus_codegen('power-profiles-daemon',
+  sources: power_profile_xml,
+  namespace: 'PowerProfiles',
+  interface_prefix: 'org.freedesktop.UPower',
+)
+
+# content_files += gnome.gdbus_codegen(
+#   meson.project_name(),
+#   sources: dbus_xml['org.freedesktop.UPower.PowerProfiles'],
+#   interface_prefix: 'org.freedesktop.UPower',
+#   namespace: 'PowerProfiles',
+#   docbook: 'docs',
+#   build_by_default: true,
+# )
+
+libbarbar = library(barbar_package, libbarbar_src, wayland_src, status_notifier_src, power_profiles_src,
   dependencies : deps, install: true)
 
 pkg = import('pkgconfig')
@@ -168,7 +204,7 @@ if get_option('vala')
 endif
 
 executable('barbar',
-  libbarbar_src + 'main.c', wayland_src, gdbus_src, 
+  libbarbar_src + 'main.c', wayland_src, status_notifier_src, power_profiles_src,
   dependencies: deps,
   link_args: ['-Wl,--export-dynamic'],
   install: true
