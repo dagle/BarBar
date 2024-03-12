@@ -45,8 +45,8 @@ enum {
 
 GType g_barbar_position_get_type(void) {
 
-  static gsize gtk_bar_role_type;
-  if (g_once_init_enter(&gtk_bar_role_type)) {
+  static gsize barbar_bar_role_type;
+  if (g_once_init_enter(&barbar_bar_role_type)) {
 
     static GEnumValue pattern_types[] = {
         {BARBAR_POS_TOP, "top", "top"},
@@ -58,9 +58,9 @@ GType g_barbar_position_get_type(void) {
 
     GType type = 0;
     type = g_enum_register_static("BarBarPosition", pattern_types);
-    g_once_init_leave(&gtk_bar_role_type, type);
+    g_once_init_leave(&barbar_bar_role_type, type);
   }
-  return gtk_bar_role_type;
+  return barbar_bar_role_type;
 }
 
 static GParamSpec *bar_props[NUM_PROPERTIES] = {

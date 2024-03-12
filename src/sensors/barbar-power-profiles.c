@@ -62,12 +62,6 @@ static void g_barbar_power_profile_set_property(GObject *object,
   case PROP_ACTIVE_PROFILE:
     g_barbar_power_profile_set_profile(profile, g_value_get_string(value));
     break;
-  // case PROP_FORMAT:
-  //   g_barbar_clock_set_format(clock, g_value_get_string(value));
-  //   break;
-  // case PROP_INTERVAL:
-  //   g_barbar_clock_set_interval(clock, g_value_get_uint(value));
-  //   break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -83,9 +77,6 @@ static void g_barbar_power_profile_get_property(GObject *object,
   case PROP_ACTIVE_PROFILE:
     g_value_set_string(value, profile->active);
     break;
-  // case PROP_TIME:
-  //   g_barbar_get_time(clock, value);
-  //   break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -99,6 +90,12 @@ static void g_barbar_power_profile_class_init(BarBarPowerProfileClass *class) {
 
   gobject_class->set_property = g_barbar_power_profile_set_property;
   gobject_class->get_property = g_barbar_power_profile_get_property;
+
+  power_props[PROP_ACTIVE_PROFILE] = g_param_spec_string(
+      "active-profile", NULL, NULL, NULL,
+      G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, power_props);
 }
 
 static void g_barbar_power_profile_init(BarBarPowerProfile *profile) {}
@@ -110,27 +107,27 @@ g_barbar_power_profile_starting_values(BarBarPowerProfile *profile) {
       profile,
       power_profiles_power_profiles_get_active_profile(profile->proxy));
 
-  power_profiles_power_profiles_get_performance_inhibited(profile->proxy);
-
-  power_profiles_power_profiles_get_performance_degraded(profile->proxy);
-
-  power_profiles_power_profiles_get_profiles(profile->proxy);
-
-  power_profiles_power_profiles_get_actions(profile->proxy);
+  // power_profiles_power_profiles_get_performance_inhibited(profile->proxy);
   //
-  // GVariant *power_profiles_power_profiles_get_active_profile_holds
-  // (PowerProfilesPowerProfiles *object); GVariant
-  // *power_profiles_power_profiles_dup_active_profile_holds
-  // (PowerProfilesPowerProfiles *object);
+  // power_profiles_power_profiles_get_performance_degraded(profile->proxy);
   //
-  // const gchar *power_profiles_power_profiles_get_version
-  // (PowerProfilesPowerProfiles *object); gchar
-  // *power_profiles_power_profiles_dup_version (PowerProfilesPowerProfiles
-  // *object);
+  // power_profiles_power_profiles_get_profiles(profile->proxy);
+  //
+  // power_profiles_power_profiles_get_actions(profile->proxy);
+  // power_profiles_power_profiles_get_active_profile_holds(profile->proxy);
+  //
+  // power_profiles_power_profiles_get_version(profile->proxy);
 }
 
 static void on_some_property_notify(GObject *proxy, GParamSpec *pspec,
-                                    gpointer user_data) {}
+                                    gpointer data) {
+
+  BarBarPowerProfile *profile = BARBAR_POWER_PROFILE(data);
+
+  g_barbar_power_profile_set_profile(
+      profile,
+      power_profiles_power_profiles_get_active_profile(profile->proxy));
+}
 
 static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
   BarBarPowerProfile *profile = BARBAR_POWER_PROFILE(data);
@@ -144,8 +141,10 @@ static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
     g_error_free(error);
   }
 
+  g_barbar_power_profile_starting_values(profile);
+
   g_signal_connect(profile->proxy, "notify::active-profile",
-                   G_CALLBACK(on_some_property_notify), NULL);
+                   G_CALLBACK(on_some_property_notify), profile);
 }
 
 static void g_barbar_power_profile_start(BarBarSensor *sensor) {

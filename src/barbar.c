@@ -16,6 +16,8 @@ void g_barbar_init(void) {
   g_barbar_keyboard_get_type();
   g_barbar_pomodoro_get_type();
   g_barbar_power_profile_get_type();
+  g_barbar_bus_type_get_type();
+  g_barbar_systemd_units_get_type();
 
   g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();

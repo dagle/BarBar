@@ -19,6 +19,7 @@
 #include "sensors/barbar-power-profiles.h"
 #include "sensors/barbar-sensor.h"
 #include "sensors/barbar-sensorcontext.h"
+#include "sensors/barbar-systemd-units.h"
 #include "sensors/barbar-temperature.h"
 #include "sensors/barbar-wireplumber.h"
 
