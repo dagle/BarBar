@@ -469,7 +469,6 @@ void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
   if (error != NULL) {
     g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
                error->message);
-    // TODO: Error stuff
     return;
   }
   // g_barbar_sway_ipc_subscribe(connection, payload);

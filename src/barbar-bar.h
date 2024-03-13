@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 /**
- * BarBarPosition:
+ * BarBarBarPosition:
  * @BARBAR_POS_TOP: Put the bar at top.
  * @BARBAR_POS_BOTTOM: Put the bar at bottom.
  * @BARBAR_POS_LEFT: Put the bar at left.
@@ -45,7 +45,7 @@ typedef enum {
   BARBAR_POS_BOTTOM,
   BARBAR_POS_LEFT,
   BARBAR_POS_RIGHT,
-} BarBarPosition;
+} BarBarBarPosition;
 
 GType g_barbar_position_get_type(void);
 

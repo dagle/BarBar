@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * BarBarPowerProfile:
+ *
+ * A sensor for tracking and changing setting of the
+ * PowerProfile daemon.
+ *
+ */
 struct _BarBarPowerProfile {
   BarBarSensor parent_instance;
 
@@ -91,6 +98,12 @@ static void g_barbar_power_profile_class_init(BarBarPowerProfileClass *class) {
   gobject_class->set_property = g_barbar_power_profile_set_property;
   gobject_class->get_property = g_barbar_power_profile_get_property;
 
+  /**
+   * BarBarPowerProfile:active-profile:
+   *
+   * What mode we are running in, either power-saver, balanced or performance.
+   *
+   */
   power_props[PROP_ACTIVE_PROFILE] = g_param_spec_string(
       "active-profile", NULL, NULL, NULL,
       G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);

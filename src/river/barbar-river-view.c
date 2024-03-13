@@ -9,6 +9,14 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+// TODO: in the future this should be a sensor
+
+/**
+ * BarBarRiverView:
+ *
+ * A widget to display the river the view, the current window.
+ *
+ */
 struct _BarBarRiverView {
   GtkWidget parent_instance;
 
@@ -24,7 +32,7 @@ struct _BarBarRiverView {
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  PROP_VIEW,
 
   NUM_PROPERTIES,
 };
@@ -56,8 +64,9 @@ static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
 
   widget_class->root = g_barbar_river_view_start;
 
-  river_view_props[PROP_DEVICE] =
-      g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+  river_view_props[PROP_VIEW] =
+      g_param_spec_string("view", NULL, NULL, NULL, G_PARAM_READABLE);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_view_props);
 

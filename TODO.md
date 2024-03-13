@@ -6,11 +6,27 @@ as a device? This would be great for batteries, mpris etc since we could just re
 - [ ] be able to listen to multiple players
 - [ ] send/create updates correctly
 
-
 # modules 
 - [ ] game-mode
-- [ ] power-profiles
-- [ ] systemd-units
+- [x] power-profiles
+- [x] systemd-units
+
+# keyboard
+- [ ] layout
+- [ ] name?
+- [ ] specify keyboard if multiple
+- [ ] update device dynamically
+
+# weather / location
+- [ ] get it to work
+- [ ] document how to do it.
+
+# Calendar
+-- Create sensors or something to fetch the data to the calendar
+- [ ] Neorg
+
+# Inhibitor
+- [ ] being able to specify a screen
 
 # widgets
 ## mediacontrol
@@ -24,10 +40,10 @@ as a device? This would be great for batteries, mpris etc since we could just re
 ## value bottom?
 
 # documentation
-- [ ] Generate documentation for the gi stuff
-- [ ] Document functions and properties
-- [ ] Create tutorials (with documentation) for different languages: gjs, lua and python
-- [ ] Create README.md
+- [x] Generate documentation for the gi stuff
+- [x] Document functions and properties
+- [-] Create tutorials (with documentation) for different languages: gjs, lua and python
+- [-] Create README.md
 - [ ] Create wiki?
 
 # other

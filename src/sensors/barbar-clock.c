@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * BarBarClock:
+ *
+ * A simple clock sensor that updates every interval
+ */
 struct _BarBarClock {
   BarBarSensor parent_instance;
 

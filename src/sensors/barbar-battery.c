@@ -3,6 +3,12 @@
 #include <libupower-glib/upower.h>
 #include <stdio.h>
 
+/**
+ * BarBarBattery:
+ *
+ * A sensor for reading the battery
+ *
+ */
 struct _BarBarBattery {
   BarBarSensor parent_instance;
 

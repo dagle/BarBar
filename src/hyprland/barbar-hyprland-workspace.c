@@ -13,6 +13,10 @@
 // TODO:  We need to match against names and not just numbers
 // because if the namespace is named, it isn't a number
 
+/**
+ * BarBarHyprlandWorkspace:
+ * A widget to display the hyprland workspaces as a list of buttons
+ */
 struct _BarBarHyprlandWorkspace {
   GtkWidget parent_instance;
 
@@ -137,6 +141,7 @@ g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
   gobject_class->get_property = g_barbar_hyprland_workspace_get_property;
   widget_class->root = g_barbar_hyprland_workspace_map;
 
+  // this shouldn't need to be here in the future
   hypr_workspace_props[PROP_OUTPUT] = g_param_spec_string(
       "output", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 

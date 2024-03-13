@@ -1,6 +1,12 @@
 #include "barbar-sensor.h"
 #include <stdio.h>
 
+/**
+ * BarBarSensor:
+ *
+ * An abstract class to create sensors
+ *
+ */
 G_DEFINE_ABSTRACT_TYPE(BarBarSensor, g_barbar_sensor, G_TYPE_OBJECT)
 
 static void g_barbar_sensor_class_init(BarBarSensorClass *class) {

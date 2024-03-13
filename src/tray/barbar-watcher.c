@@ -4,6 +4,12 @@
 #include <gio/gio.h>
 #include <stdio.h>
 
+/**
+ * BarBarStatusWatcher:
+ *
+ * A status tray widget
+ *
+ */
 struct _BarBarStatusWatcher {
   GtkWidget parent_instance;
 
@@ -34,7 +40,7 @@ static void g_barbar_watcher_get_property(GObject *object, guint property_id,
                                           GValue *value, GParamSpec *pspec) {}
 
 static void g_barbar_tray_root(GtkWidget *widget);
-static void g_barbar_watcher_constructed(GObject *object);
+
 static void
 g_barbar_status_watcher_class_init(BarBarStatusWatcherClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -47,8 +53,7 @@ g_barbar_status_watcher_class_init(BarBarStatusWatcherClass *class) {
   widget_class->root = g_barbar_tray_root;
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  // gtk_widget_class_set_css_name(widget_class, "tray");
-  gtk_widget_class_set_css_name(widget_class, "river-tag");
+  gtk_widget_class_set_css_name(widget_class, "tray");
 }
 
 static gboolean

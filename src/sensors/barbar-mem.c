@@ -5,6 +5,11 @@
 #include <math.h>
 #include <stdio.h>
 
+/**
+ * BarBarMem:
+ *
+ * A simple memory sensor
+ */
 struct _BarBarMem {
   BarBarSensor parent_instance;
 

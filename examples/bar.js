@@ -1,7 +1,5 @@
 import BarBar from 'gi://BarBar';
 import Gtk from 'gi://Gtk?version=4.0';
-import Vte from 'gi://Vte?version=3.91';
-import GLib from 'gi://GLib?version=2.0';
 
 let manager = [];
 

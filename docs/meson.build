@@ -4,12 +4,7 @@ gidocgen_common_args = [
 ]
 
 expand_content_md_files = [
-  'overview.md',
-  'tutorial.md',
-  'streams.md',
-  'filters.md',
-  'data-wrappers.md',
-  'changelog.md',
+  # 'overview.md',
 ]
 
 gidocgen_common_args = [

@@ -1,9 +1,17 @@
 #include "barbar-mpris.h"
-// #include "barbar-mpris2-formater.h"
 #include <playerctl/playerctl.h>
 #include <stdio.h>
 
 /* TODO: Be able to listen to multiple players and pick the last one used */
+
+/**
+ * BarBarMpris:
+ *
+ * A mpris sensor.
+ *
+ * It can be used to show the current playing medium or
+ * to controll it.
+ */
 struct _BarBarMpris {
   BarBarSensor parent_instance;
 

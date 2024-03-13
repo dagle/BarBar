@@ -19,7 +19,7 @@
 /**
  * BarBarLabel:
  *
- * This is a gtk label with some extras. The main function is the
+ * This is a gtk label with some extras. The main function is
  * the template functionallity to update the code.
  */
 

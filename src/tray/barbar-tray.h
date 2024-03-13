@@ -37,7 +37,6 @@ G_BEGIN_DECLS
 // one or more bars.
 #define BARBAR_TYPE_TRAY (g_barbar_tray_get_type())
 
-// TODO: This shouldn't have GObject as parent
 G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GtkWidget)
 
 /* void g_barbar_tray_update(BarBarTray *self); */

@@ -3,6 +3,13 @@
 #include "wp/log.h"
 #include <stdio.h>
 
+/**
+ * BarBarWireplumber:
+ *
+ * A wireplumber sensor to read and set volume
+ *
+ */
+
 struct _BarBarWireplumber {
   BarBarSensor parent_instance;
 

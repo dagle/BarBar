@@ -9,6 +9,14 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+// TODO: in the future this should be a sensor
+
+/**
+ * BarBarRiverMode:
+ *
+ * A widget to display the river mode we currently are in.
+ *
+ */
 struct _BarBarRiverMode {
   GtkWidget parent_instance;
 
@@ -24,7 +32,7 @@ struct _BarBarRiverMode {
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  // PROP_DEVICE,
 
   NUM_PROPERTIES,
 };
@@ -52,8 +60,10 @@ static void g_barbar_river_mode_class_init(BarBarRiverModeClass *class) {
   gobject_class->set_property = g_barbar_river_mode_set_property;
   gobject_class->get_property = g_barbar_river_mode_get_property;
   gobject_class->constructed = g_barbar_river_mode_constructed;
-  river_mode_props[PROP_DEVICE] =
-      g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+
+  // river_mode_props[PROP_DEVICE] =
+  //     g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_mode_props);
 

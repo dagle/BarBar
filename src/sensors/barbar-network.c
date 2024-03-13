@@ -15,6 +15,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/**
+ * BarBarNetwork:
+ *
+ * A sensor to display the amount of data transfered
+ * over an interface
+ *
+ */
 struct _BarBarNetwork {
   BarBarSensor parent_instance;
 

@@ -1,6 +1,12 @@
 #include "barbar-pomodoro.h"
 #include <gtk/gtk.h>
 
+/**
+ * BarBarPomodoro:
+ *
+ * A sensor for using the pomodoro focus techinque.
+ *
+ */
 struct _BarBarPomodoro {
   BarBarSensor parent_instance;
 

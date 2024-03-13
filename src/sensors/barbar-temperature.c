@@ -2,6 +2,12 @@
 #include <math.h>
 #include <stdio.h>
 
+/**
+ * BarBarTemperature:
+ *
+ * A temperature sensor
+ *
+ */
 struct _BarBarTemperature {
   BarBarSensor parent_instance;
 

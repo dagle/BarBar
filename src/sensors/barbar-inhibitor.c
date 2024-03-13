@@ -5,6 +5,13 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 
+// TODO: should be able specify screen
+
+/**
+ * BarBarInhibitor:
+ * A sensor to toggle the zwp_idle_inhibit of a screen.
+ */
+
 struct _BarBarInhibitor {
   GObject parent_instance;
 
@@ -137,6 +144,11 @@ static void g_barbar_inhibitor_class_init(BarBarInhibitorClass *class) {
   gobject_class->get_property = g_barbar_inhibitor_get_property;
   gobject_class->dispose = g_barbar_inhibitor_dispose;
 
+  /**
+   * BarBarInhibitor:enabled:
+   *
+   * The state of the inhibitor
+   */
   inhibitor_props[PROP_ENABLED] =
       g_param_spec_boolean("enabled", NULL, NULL, FALSE, G_PARAM_READWRITE);
 

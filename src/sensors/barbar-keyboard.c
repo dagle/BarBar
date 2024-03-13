@@ -1,6 +1,10 @@
 #include "barbar-keyboard.h"
 #include <gtk/gtk.h>
 
+/**
+ * BarBarKeyboard:
+ * A sensor to read state of the keyboard
+ */
 struct _BarBarKeyboard {
   BarBarSensor parent_instance;
 

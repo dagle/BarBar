@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * BarBarSystemdUnits:
+ *
+ * A sensor to display runtime info about systemd
+ *
+ */
 struct _BarBarSystemdUnits {
   BarBarSensor parent_instance;
 
@@ -36,8 +42,8 @@ static GParamSpec *systemd_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_systemd_units_set_profile(BarBarSystemdUnits *units,
-                                               guint failed) {
+static void g_barbar_systemd_units_set_failed(BarBarSystemdUnits *units,
+                                              guint failed) {
   g_return_if_fail(BARBAR_IS_SYSTEMD_UNITS(units));
 
   if (units->failed_unit == failed) {
@@ -112,34 +118,29 @@ static void g_barbar_systemd_units_class_init(BarBarSystemdUnitsClass *class) {
   gobject_class->set_property = g_barbar_systemd_units_set_property;
   gobject_class->get_property = g_barbar_systemd_units_get_property;
 
+  /**
+   * BarBarSystemdUnits:bus-type:
+   *
+   * [enum@BarBar.BusType] What bus-type to connect to
+   */
   systemd_props[PROP_BUS_TYPE] = g_param_spec_enum(
       "bus-type", NULL, NULL, BARBAR_TYPE_BUS_TYPE, G_BUS_TYPE_SYSTEM,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * BarBarSystemdUnits:failed-units:
+   *
+   * How many units have failed
+   */
   systemd_props[PROP_FAILED_UNITS] =
-      g_param_spec_uint("faild-units", NULL, NULL, 0, G_MAXUINT, 0,
+      g_param_spec_uint("failed-units", NULL, NULL, 0, G_MAXUINT, 0,
                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     systemd_props);
 }
 
-static void g_barbar_systemd_units_init(BarBarSystemdUnits *profile) {}
-
-static void
-g_barbar_systemd_units_starting_values(BarBarSystemdUnits *profile) {
-
-  // power_profiles_power_profiles_get_performance_inhibited(profile->proxy);
-  //
-  // power_profiles_power_profiles_get_performance_degraded(profile->proxy);
-  //
-  // power_profiles_power_profiles_get_profiles(profile->proxy);
-  //
-  // power_profiles_power_profiles_get_actions(profile->proxy);
-  // power_profiles_power_profiles_get_active_profile_holds(profile->proxy);
-  //
-  // power_profiles_power_profiles_get_version(profile->proxy);
-}
+static void g_barbar_systemd_units_init(BarBarSystemdUnits *units) {}
 
 static void update_failed(GObject *object, GAsyncResult *res, gpointer data) {
   GError *error = NULL;
@@ -162,7 +163,7 @@ static void update_failed(GObject *object, GAsyncResult *res, gpointer data) {
   if (g_variant_type_equal(type, G_VARIANT_TYPE_UINT32)) {
     g_variant_get(container, "u", &failed);
 
-    g_barbar_systemd_units_set_profile(units, failed);
+    g_barbar_systemd_units_set_failed(units, failed);
   }
   g_variant_unref(container);
   g_variant_unref(ret);
@@ -184,7 +185,7 @@ static void g_properties_changed(GDBusProxy *self, GVariant *changed_properties,
   BarBarSystemdUnits *units = BARBAR_SYSTEMD_UNITS(data);
 }
 
-static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
+static void units_cb(GObject *object, GAsyncResult *res, gpointer data) {
   BarBarSystemdUnits *units = BARBAR_SYSTEMD_UNITS(data);
   GError *error = NULL;
 
@@ -206,5 +207,5 @@ static void g_barbar_systemd_units_start(BarBarSensor *sensor) {
   g_dbus_proxy_new_for_bus(
       units->bus_type, G_DBUS_PROXY_FLAGS_NONE, NULL,
       "org.freedesktop.systemd1", "/org/freedesktop/systemd1",
-      "org.freedesktop.DBus.Properties", NULL, menu_callback, units);
+      "org.freedesktop.DBus.Properties", NULL, units_cb, units);
 }

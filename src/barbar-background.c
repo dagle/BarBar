@@ -22,8 +22,6 @@ struct _BarBarBackground {
   int height;
 };
 
-// TODO: set_size(width, height)
-
 G_DEFINE_TYPE(BarBarBackground, g_barbar_background, GTK_TYPE_WINDOW)
 
 enum {

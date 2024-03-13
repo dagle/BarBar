@@ -4,6 +4,12 @@
 #include <signal.h>
 #include <stdio.h>
 
+/**
+ * BarBarBacklight:
+ *
+ * A sensor for reading and setting the backlight of monitors
+ *
+ */
 struct _BarBarBacklight {
   BarBarSensor parent_instance;
 
@@ -125,7 +131,6 @@ static void g_barbar_backlight_class_init(BarBarBacklightClass *class) {
 
   gobject_class->set_property = g_barbar_backlight_set_property;
   gobject_class->get_property = g_barbar_backlight_get_property;
-  // gobject_class->constructed = g_barbar_backlight_constructed;
 
   /**
    * BarBarBacklight:device:
@@ -170,10 +175,6 @@ static const char *get_attr(const char *name) {
                                     : "actual_brightness";
   return brightness_attr;
 }
-
-// static gboolean match_name(const char *path, const char *name) {
-//   return g_str_has_suffix(path, name);
-// }
 
 static void g_barbar_backlight_internal(BarBarBacklight *backlight,
                                         struct udev_device *dev,

@@ -2,6 +2,11 @@
 #include <gio/gio.h>
 #include <stdio.h>
 
+/**
+ * BarBarCmd:
+ *
+ * Run a command every interval
+ */
 struct _BarBarCmd {
   BarBarSensor parent;
 
@@ -22,7 +27,6 @@ enum {
   CMD_NUM_PROPERTIES,
 };
 
-// update every 10 sec by default
 #define DEFAULT_INTERVAL 10000
 
 G_DEFINE_TYPE(BarBarCmd, g_barbar_cmd, BARBAR_TYPE_SENSOR)
@@ -102,17 +106,6 @@ static void g_barbar_cmd_get_property(GObject *object, guint property_id,
 
 static void g_barbar_cmd_start(BarBarSensor *sensor);
 
-// static void g_barbar_cmd_constructed(GObject *obj) {
-//   BarBarCmd *self = BARBAR_CMD(obj);
-//   G_OBJECT_CLASS(g_barbar_cmd_parent_class)->constructed(obj);
-//
-//   if (!self->interval) {
-//     self->interval = DEFAULT_INTERVAL;
-//   }
-//
-//   g_barbar_cmd_start(self, NULL);
-// }
-
 static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
@@ -124,11 +117,28 @@ static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
   // cmd_props[CMD_PROP_CMD] = g_param_spec_boxed(
   //     "command", "cmd", NULL, G_TYPE_STRV,
   //     G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * BarBarCmd:cmd:
+   *
+   * Command to be executed
+   */
   cmd_props[CMD_PROP_CMD] = g_param_spec_string(
       "command", "cmd", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
+  /**
+   * BarBarCmd:value:
+   *
+   * Return value from the command
+   */
   cmd_props[CMD_PROP_VALUE] =
       g_param_spec_string("value", NULL, NULL, NULL, G_PARAM_READABLE);
+
+  /**
+   * BarBarCmd:interval:
+   *
+   * How often the command should be executed, in ms.
+   */
   cmd_props[CMD_PROP_INTERVAL] = g_param_spec_uint(
       "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
       DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);

@@ -1,4 +1,5 @@
 #include "barbar-hyprland-ipc.h"
+#include "barbar-error.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -15,7 +16,8 @@ GSocketConnection *g_barbar_hyprland_ipc_controller(GError **error) {
   const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
   if (!his) {
-    // TODO: Error stuff
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_COMPOSITOR,
+                "HYPRLAND_INSTANCE_SIGNATURE not set");
     return NULL;
   }
 
@@ -139,10 +141,11 @@ g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
   const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
   if (!his) {
-    // TODO: Error stuff
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_COMPOSITOR,
+                "HYPRLAND_INSTANCE_SIGNATURE not set");
     return NULL;
   }
-  // /tmp/hypr/[HIS]/.socket2.sock
+
   char *socket_path = g_strdup_printf("/tmp/hypr/%s/.socket2.sock", his);
 
   socket_client = g_socket_client_new();

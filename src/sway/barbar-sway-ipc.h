@@ -33,8 +33,7 @@
 
 G_BEGIN_DECLS
 
-// TODO: Typedef this
-enum {
+typedef enum {
   SWAY_RUN_COMMAND,
   SWAY_GET_WORKSPACES,
   SWAY_SUBSCRIBE,
@@ -51,7 +50,7 @@ enum {
   SWAY_GET_BINDING_STATE,
   SWAY_GET_INPUTS = 100,
   SWAY_GET_SEATS = 101,
-};
+} BarBarSwayMessageType;
 
 typedef struct _BarBarSwayIpc BarBarSwayIpc;
 typedef struct _BarBarSwayIpcAsyncData BarBarSwayIpcAsyncData;

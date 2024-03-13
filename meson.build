@@ -7,6 +7,9 @@ project(
   # ],
 )
 
+barbar_prefix = get_option('prefix')
+barbar_datadir = join_paths(barbar_prefix, get_option('datadir'))
+
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
 
@@ -96,6 +99,7 @@ wayland_protos = dependency('wayland-protocols')
 
 # subdir('protocol')
 subdir('src')
+subdir('docs')
 
 summary({'Install Prefix': get_option('prefix'),
         'Compiler': cc.get_id(),

@@ -10,6 +10,12 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+/**
+ * BarBarRiverTag:
+ *
+ * A widget to display the river tags as a list of buttons
+ *
+ */
 struct _BarBarRiverTag {
   GtkWidget parent_instance;
 
@@ -59,8 +65,9 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
 
   widget_class->root = g_barbar_river_tag_root;
 
-  river_tags_props[PROP_TAGNUMS] =
-      g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+  river_tags_props[PROP_TAGNUMS] = g_param_spec_uint(
+      "tagnums", NULL, NULL, 0, 9, 9,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_tags_props);
 

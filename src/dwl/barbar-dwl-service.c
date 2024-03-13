@@ -1,4 +1,5 @@
 #include "dwl/barbar-dwl-service.h"
+#include "barbar-error.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
 #include <stdint.h>
@@ -41,7 +42,7 @@ typedef enum {
 } g_barbar_dwl_message_kind;
 
 // TODO: Add Error to this
-void parse_line(char *line, struct dwl_status *status) {
+void parse_line(char *line, struct dwl_status *status, GError **error) {
   g_barbar_dwl_message_kind kind;
   uint32_t num;
 
@@ -51,7 +52,7 @@ void parse_line(char *line, struct dwl_status *status) {
   while (string != NULL) {
 
     if (id == 0) {
-      status->output_name = strdup(string);
+      status->output_name = g_strdup(string);
     } else if (id == 1) {
       if (strcmp(string, "title") == 0) {
         kind = DWL_TITLE;
@@ -68,40 +69,33 @@ void parse_line(char *line, struct dwl_status *status) {
       } else if (strcmp(string, "layout") == 0) {
         kind = DWL_LAYOUT;
       } else {
-        // TODO: Error do error
-        // g_free(status->output_name);
-        // g_free(status);
+        g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_VALUE,
+                    "%s not a valid kind", string);
+        g_free(status->output_name);
+        g_free(status);
         return;
       }
     } else {
-      // TODO: these null check shouldn't be needed to be done?
       switch (kind) {
       case DWL_TITLE:
-        if (string) {
-          status->title = strdup(string);
-        }
+        status->title = g_strdup(string);
         break;
       case DWL_APPID:
-        if (string) {
-          status->appid = strdup(string);
-        }
+        status->appid = g_strdup(string);
         break;
       case DWL_FULLSCREEN:
-        status->fullscreen = strcmp(string, "0") != 0;
+        status->fullscreen = g_strcmp0(string, "0") != 0;
         break;
       case DWL_FLOATING:
-        status->fullscreen = strcmp(string, "0") != 0;
+        status->floating = g_strcmp0(string, "0") != 0;
         break;
       case DWL_SELMON:
-        status->fullscreen = strcmp(string, "0") != 0;
+        status->selmon = g_strcmp0(string, "0") != 0;
         break;
       case DWL_LAYOUT:
-        if (string) {
-          status->appid = strdup(string);
-        }
+        status->appid = g_strdup(string);
         break;
       case DWL_TAGS:
-        // Lets print this
         num = strtoul(string, NULL, 10);
         if (id == 2) {
           status->occupied = num;
@@ -197,7 +191,17 @@ static void g_barbar_dwl_service_reader(GObject *object, GAsyncResult *res,
 
   line = g_data_input_stream_read_line_finish(input, res, &length, &error);
 
-  parse_line(line, &service->status);
+  if (error) {
+    g_printerr("Failed to read input stream from dwl: %s", error->message);
+    return;
+  }
+
+  parse_line(line, &service->status, &error);
+
+  if (error) {
+    g_printerr("dwl parse input: %s", error->message);
+    return;
+  }
 
   service->counter++;
 
@@ -230,8 +234,6 @@ static void g_barbar_dwl_service_constructed(GObject *self) {
 static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
-  // gobject_class->set_property = g_barbar_dwl_tag_set_property;
-  // gobject_class->get_property = g_barbar_dwl_tag_get_property;
   gobject_class->constructor = g_barbar_dwl_service_constructor;
   gobject_class->constructed = g_barbar_dwl_service_constructed;
 

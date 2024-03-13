@@ -66,7 +66,7 @@ typedef enum {
   HYPRLAND_WINDOWTITLE,
   HYPRLAND_IGNOREGROUPLOCK,
   HYPRLAND_LOCKGROUPS
-} BarBarHyperlandEvent;
+} BarBarHyprlandEvent;
 
 struct BarBarHyprlandListner {
   /* GSocketConnection *connection; */

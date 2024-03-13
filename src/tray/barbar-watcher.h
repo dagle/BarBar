@@ -37,7 +37,8 @@ G_BEGIN_DECLS
 // one or more bars.
 #define BARBAR_TYPE_STATUS_WATCHER (g_barbar_status_watcher_get_type())
 
-// TODO: Watcher shouldn't be a widget in the future
+// TODO: Watcher shouldn't be a widget in the future but a sensor
+// and the tray should be a widget that connects to the sensor
 G_DECLARE_FINAL_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, BARBAR,
                      STATUS_WATCHER, GtkWidget)
 

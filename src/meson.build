@@ -3,6 +3,7 @@ libbarbar_src = files(
   'barbar-bar.c',
   'barbar-background.c',
   'barbar-util.c',
+  'barbar-error.c',
   # 'barbar-disk.c',
   # 'barbar-mpd.c',
 
@@ -54,6 +55,7 @@ libbarbar_headers = [
   'barbar-bar.h',
   'barbar-background.h',
   'barbar-util.h',
+  'barbar-error.h',
   # 'barbar-disk.h',
   # 'barbar-mpd.h',
   #
@@ -88,7 +90,7 @@ libbarbar_headers = [
   # 'sway/barbar-sway-ipc.h',
   # 'sway/barbar-sway-workspace.h',
   # 'sway/barbar-sway-window.h',
-  'hyprland/barbar-hyprland-ipc.h',
+  # 'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-workspace.h',
   # 'dwl/barbar-dwl-service.h',
   # 'dwl/barbar-dwl-tags.h',
@@ -96,8 +98,8 @@ libbarbar_headers = [
   # 'barbar-inhibitor.h',
 
   'tray/barbar-watcher.h',
-  'tray/barbar-tray-item.h',
-  'tray/barbar-dbusmenu.h',
+  # 'tray/barbar-tray-item.h',
+  # 'tray/barbar-dbusmenu.h',
 ]
 
 wl_mod = import('unstable-wayland')
@@ -181,7 +183,7 @@ if get_option('introspection')
     '--accept-unprefixed',
     ]
 
-  gmime_gir = gnome.generate_gir(
+  barbar_gir = gnome.generate_gir(
     libbarbar,
     sources: libbarbar_src + libbarbar_headers,
     export_packages: [barbar_package],
@@ -200,7 +202,7 @@ endif
 
 if get_option('vala')
   gnome.generate_vapi(barbar_package,
-    sources: gmime_gir[0],
+    sources: barbar_gir[0],
     packages: [ 'gio-2.0', 'gtk4'],
     install: true)
 endif

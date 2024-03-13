@@ -5,8 +5,8 @@
 /**
  * BarBarBar:
  *
- * BarBarBar is a statusbar widget for layered sell. It will create a window and
- * set the bar to the foreground.
+ * BarBarBar is a statusbar widget for layered shell. It will create a window
+ * and set the bar to the foreground.
  *
  */
 
@@ -21,7 +21,7 @@ struct _BarBarBar {
 
   int height;
 
-  BarBarPosition pos;
+  BarBarBarPosition pos;
 };
 
 G_DEFINE_TYPE(BarBarBar, g_barbar_bar, GTK_TYPE_WINDOW)
@@ -57,7 +57,7 @@ GType g_barbar_position_get_type(void) {
     };
 
     GType type = 0;
-    type = g_enum_register_static("BarBarPosition", pattern_types);
+    type = g_enum_register_static("BarBarBarPosition", pattern_types);
     g_once_init_leave(&barbar_bar_role_type, type);
   }
   return barbar_bar_role_type;
@@ -67,7 +67,8 @@ static GParamSpec *bar_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_bar_set_pos_internal(BarBarBar *bar, BarBarPosition pos) {
+static void g_barbar_bar_set_pos_internal(BarBarBar *bar,
+                                          BarBarBarPosition pos) {
   GtkWindow *gtk_window = GTK_WINDOW(bar);
 
   for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
@@ -90,7 +91,7 @@ static void g_barbar_bar_set_pos_internal(BarBarBar *bar, BarBarPosition pos) {
   }
 }
 
-static void g_barbar_bar_set_pos(BarBarBar *bar, BarBarPosition pos) {
+static void g_barbar_bar_set_pos(BarBarBar *bar, BarBarBarPosition pos) {
   g_return_if_fail(BARBAR_IS_BAR(bar));
 
   if (bar->pos == pos) {
@@ -238,8 +239,8 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
   /**
    * BarBarBar:bar-pos:
    *
-   * [enum@BarBar.Position] Where to display the bar on the screen. Default is
-   * top.
+   * [enum@BarBarBar.Position] Where to display the bar on the screen. Default
+   * is top.
    */
   bar_props[PROP_BAR_POS] = g_param_spec_enum(
       "bar-pos", "barposition", "the position of the bar", BARBAR_TYPE_POSITION,

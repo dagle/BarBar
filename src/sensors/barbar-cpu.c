@@ -4,6 +4,11 @@
 #include <math.h>
 #include <stdio.h>
 
+/**
+ * BarBarCpu:
+ *
+ * A simple cpu sensor
+ */
 struct _BarBarCpu {
   BarBarSensor parent_instance;
 
