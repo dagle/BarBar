@@ -4,7 +4,8 @@ gidocgen_common_args = [
 ]
 
 expand_content_md_files = [
-  # 'overview.md',
+  'glib.md',
+  'design.md',
 ]
 
 gidocgen_common_args = [

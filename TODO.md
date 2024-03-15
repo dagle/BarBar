@@ -37,7 +37,11 @@ as a device? This would be great for batteries, mpris etc since we could just re
 
 ## rotary
 
+## Select-value widget
+
 ## value bottom?
+
+## bar-widget
 
 # documentation
 - [x] Generate documentation for the gi stuff

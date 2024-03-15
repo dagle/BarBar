@@ -1,17 +1,22 @@
 Title: design
 Slug: design
 
-This is the general design of the barbar library and binary. The barbar binary
-should be easy to follow and the examples for different languages should implement
+This document describes the general design of the barbar library and binary. The barbar binary
+should be easy to follow and the examples for different languages should reimplement
 most (if not all) of what the binary does, but might be some what rudimentary in it's design.
+
+The barbar binary doesn't do much. All it does is loading the ui file, then add all windows,
+start all sensors and keep track of them (so they don't get freed to early). 
+
+The library is split into 2 parts, widgets and sensors.
 
 # Widgets
 There are in general 2 kinds of widgets in barbar. Raw widgets and sensor-less widgets.
 
 ## Raw widgets
-Raw widgets does nothing on it's own. Some examples of this buttons, a graph or a meter.
-To use these widgets you need to reference these. Either you bind a value from a sensor
-or reference the sensor.
+Raw widgets does nothing on it's own. Some examples of this are buttons, a graph or a meter.
+To use these widgets you need something that produces a value. Either you bind a value from a 
+sensor or reference the sensor.
 
 You can do this multiple ways, but what you would typically do:
 
@@ -19,8 +24,8 @@ You can do this multiple ways, but what you would typically do:
 
 // Here we define a bar to display how much we use of a sensor
 Gtk.LevelBar {
-  value: bind mem.percent; // we tell the bar where to get the data from
-  orientation: vertical; // this is property
+  value: bind mem.percent; // we tell the bar where to get the data from, we want the percentage
+  orientation: vertical; // this is another property
   inverted: true;
 }
 

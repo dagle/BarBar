@@ -1,11 +1,11 @@
 [library]
 version = "@version@"
-browse_url = "https://gitlab.gnome.org/GNOME/gtk/"
-repository_url = "https://gitlab.gnome.org/GNOME/gtk.git"
-website_url = "https://www.gtk.org"
+browse_url = "https://github.com/dagle/BarBar"
+repository_url = "https://github.com/dagle/BarBar"
+website_url = "https://github.com/dagle/BarBar"
 docs_url = "https://docs.gtk.org/gsk4/"
 authors = "Per Odlund"
-logo_url = "gtk-logo.svg"
+logo_url = "barbar-inverted.svg"
 license = "LGPL-2.1-or-later"
 description = "A layered gtk4 shell for wayland"
 devhelp = true
@@ -14,7 +14,7 @@ search_index = true
 dependencies = ["Gsk-4.0", "Gtk-4.0"]
 
   [dependencies."Gsk-4.0"]
-  name = "Graphene"
+  name = "Gsk"
   description = "A path API for gtk"
   docs_url = "https://docs.gtk.org/gsk4/"
 
@@ -31,12 +31,14 @@ show_class_hierarchy = true
 [source-location]
 base_url = "https://gitlab.gnome.org/GNOME/gtk/-/blob/main/"
 
-# [extra]
-# content_files = [
-#   "paths.md",
-# ]
-# content_images = [
-#   "gtk-logo.svg",
+[extra]
+content_files = [
+  'glib.md',
+  'design.md',
+]
+
+content_images = [
+  "barbar-inverted.svg",
 #   "images/arc-dark.png",
 #   "images/arc-light.png",
 #   "images/caps-dark.png",
@@ -61,5 +63,5 @@ base_url = "https://gitlab.gnome.org/GNOME/gtk/-/blob/main/"
 #   "images/quad-light.png",
 #   "images/stroke-miter.png",
 #   "images/stroke-round.png",
-# ]
+]
 # urlmap_file = "urlmap.js"

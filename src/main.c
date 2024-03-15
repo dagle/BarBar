@@ -73,6 +73,7 @@ static void activate(GtkApplication *app, void *data) {
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
       gtk_window_present(window);
     } else if (BARBAR_IS_SENSOR(object)) {
+      // TODO: We shouldn't leak the sensors.
       g_object_ref(object);
       BarBarSensor *sensor = BARBAR_SENSOR(object);
       g_barbar_sensor_start(sensor);
