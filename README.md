@@ -1,3 +1,10 @@
+<div align="center">
+
+<img src="docs/barbar-inverted.svg" width=315>
+
+<a href="/LICENSE"> ![License](https://img.shields.io/badge/license-GPL%20v2-brightgreen?style=flat-square) </a>
+<a href="#wip"> ![Status](https://img.shields.io/badge/status-WIP-informational?style=flat-square) </a>
+
 # BarBar the layered gtk4 shell.
 
 Barbar is a gtk4 shell for wayland compositors using the layered-shell protocol. Actually

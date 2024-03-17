@@ -43,7 +43,7 @@ not part of the spec. (but we do a hack to make it work)
 ## blueprint
 Since xml isn't the most pleasant to read, I recommend using
 [blueprint](https://jwestman.pages.gitlab.gnome.org/blueprint-compiler/). Blueprint is a
-format that lets you configure barbar (or any other gtk project) but with a nicer syntax, lsp support,
+format that lets you build barbar ui (or any other gtk project) but with a nicer syntax, lsp support,
 type checking and better highlighting (if the this is installed in your editor).
 First install the blueprint compiler. Then write a config.blp, look in examples for a starting point.
 When you are done with your config, you can compile it to a xml.
