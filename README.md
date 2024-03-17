@@ -1,5 +1,10 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/barbar-inverted.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/barbar.svg">
+</picture>
+
 <img src="docs/barbar-inverted.svg" width=315>
 
 <a href="/LICENSE"> ![License](https://img.shields.io/badge/license-GPL%20v2-brightgreen?style=flat-square) </a>
