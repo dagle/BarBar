@@ -1,48 +1,69 @@
 <div align="center">
 
+<!-- <picture> -->
+<!--   <source media="(prefers-color-scheme: light)" srcset="docs/barbar.svg"> -->
+<!--   <source media="(prefers-color-scheme: dark)" srcset="docs/barbar-inverted.svg"> -->
+<!-- </picture> -->
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/barbar-inverted.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/barbar.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dagle/BarBar/main/docs/barbar-inverted.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/dagle/BarBar/main/docs/barbar.svg">
+  <img alt="BarBar logo" src="https://raw.githubusercontent.com/dagle/BarBar/main/docs/barbar.svg">
 </picture>
-
-<img src="docs/barbar-inverted.svg" width=315>
 
 <a href="/LICENSE"> ![License](https://img.shields.io/badge/license-GPL%20v2-brightgreen?style=flat-square) </a>
 <a href="#wip"> ![Status](https://img.shields.io/badge/status-WIP-informational?style=flat-square) </a>
 
-# BarBar the layered gtk4 shell.
+# BarBar the layered gtk4 shell
 
-Barbar is a gtk4 shell for wayland compositors using the layered-shell protocol. Actually
-barbar isn't even that, it's more like a lib for writing a shell.
-
+Barbar is a gtk4 shell for wayland compositors using the layered-shell protocol.
+Actually barbar isn't even that, it's more like a lib for writing a shell.
 
 # Why is named barbar?
-Barbar started off as a statusbar, partially inspired by things like waybar and later on ags.
-But with the idea to keep things closer to glib/gtk and not to invent new things. Now
-that it isn't a bar anymore, the name might change.
+
+Barbar started off as a statusbar, partially inspired by things like waybar and
+later on ags. But with the idea to keep things closer to glib/gtk and not to
+invent new things. Now that it isn't a bar anymore, the name might change.
 
 # How to configure barbar?
+
 There are 2 main ways to configure barbar.
+
 1. Write a program using barbar as lib.
 2. Construct a ui file and place it in config directory.
 
-The easiest is to do number 2. Barbar comes with an example program called (I bet you guessed it),
-barbar. barbar looks for a config.ui and a style.css in the $XDG_CONFIG_HOME (defaulting to ~/.config/barbar/) directory and uses that to build an ui. barbar is actually around 100 lines of code and is very easy to replicate.
+The easiest is to do number 2. Barbar comes with an example program called
+(I bet you guessed it), barbar. barbar looks for a config.ui and a style.css
+in the $XDG_CONFIG_HOME (defaulting to ~/.config/barbar/) directory and uses
+that to build an ui. barbar is actually around 100 lines of code and is very
+easy to replicate.
 
-In the style.css you define your style. Look in example for a good starting point on how to get started.
-The config.ui should be defined as 2 part xml file. One part where you setup sensors and one part where you construct widgets (and connect to the sensors). Then when a sensor updates a value, all widgets connected to that sensor will be updated.
+In the style.css you define your style. Look in example for a good starting
+point on how to get started. The config.ui should be defined as 2 part xml
+file. One part where you setup sensors and one part where you construct widgets
+(and connect to the sensors). Then when a sensor updates a value, all widgets
+connected to that sensor will be updated.
 
 ## Blueprint
-Since xml isn't the easiest to read, I recommend using [blueprint](https://jwestman.pages.gitlab.gnome.org/blueprint-compiler/). Blueprint is a format that lets you configure barbar (or any other gtk project) but with a nicer syntax, lsp support, type checking and better highlighting (if the this is installed in your editor). First install the blueprint compiler. Then write a config.blp, look in examples for a starting point. When you are done with your config, you can compile it to a xml.
+
+Since xml isn't the easiest to read, I recommend using
+[blueprint](https://jwestman.pages.gitlab.gnome.org/blueprint-compiler/).
+Blueprint is a format that lets you configure barbar (or any other gtk project)
+but with a nicer syntax, lsp support, type checking and better highlighting
+(if the this is installed in your editor). First install the blueprint
+compiler. Then write a config.blp, look in examples for a starting point.
+When you are done with your config, you can compile it to a xml.
 
 ``` bash
 blueprint-compiler compile config.blp > ~/.config/barbar/config.ui
 ```
 
-# Using barbar as a lib.
-Barbar uses glib/gobjects and generates a introspectable api, with a typelib and a gir. This means
-multiple languages can use barbar. For more info read [this](https://gi.readthedocs.io/en/latest/) and 
-[supported languages](https://gi.readthedocs.io/en/latest/users.html) (there are more, rust is supported)
+# Using barbar as a lib
+
+Barbar uses glib/gobjects and generates a introspectable api, with a typelib
+and a gir. This means multiple languages can use barbar. For more info read
+[this](https://gi.readthedocs.io/en/latest/) and
+[supported languages](https://gi.readthedocs.io/en/latest/users.html)
+(there are more, rust is supported)
 
 Note: lua needs the git version of lgi to work properly.
 
