@@ -29,6 +29,7 @@
 #include "hyprland/barbar-hyprland-workspace.h"
 
 #include "widgets/barbar-label.h"
+#include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
 
 #include "tray/barbar-dbusmenu.h"

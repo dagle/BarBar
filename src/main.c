@@ -55,11 +55,18 @@ static void activate(GtkApplication *app, void *data) {
   GtkBuilder *builder;
 
   scope = gtk_builder_cscope_new();
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), label_update);
+  // gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), label_update);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   barbar_strdup_printf);
 
   barbar_default_style_provider("barbar/style.css");
+
+  // GtkWidget *background = g_barbar_background_new();
+  //
+  // gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(background));
+  // gtk_window_present(GTK_WINDOW(background));
+  // GtkWidget *widget = g_barbar_rotary_new();
+  // gtk_window_set_child(GTK_WINDOW(background), widget);
 
   builder = barbar_default_builder("barbar/config.ui", NULL);
 

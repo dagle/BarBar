@@ -28,6 +28,10 @@ as a device? This would be great for batteries, mpris etc since we could just re
 # Inhibitor
 - [ ] being able to specify a screen
 
+# Transition Layout Manager
+
+- [] Investigate this
+
 # widgets
 ## mediacontrol
 - [ ] An initial widget

@@ -75,12 +75,14 @@ BarBar.Bar {
     // loops, if's and much more.
     [end]
     BarBar.Label network_label {
+      sensor: network;
       templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
     }
 
     [end]
     BarBar.Label temp {
-      //templ: "{{BarBarTemperature.temperature}}";
+      sensor: temperature;
+      // Here we don't care about floats, so we cast it to a i32.
       templ: "{{i32(BarBarTemperature.temperature)}} ";
     }
 
@@ -102,6 +104,14 @@ BarBar.Bar {
     }
 
     [end]
+    Gtk.ToggleButton btn {
+      [child]
+      Gtk.Label {
+        label: "bajs";
+      }
+    }
+
+    [end]
     Gtk.ScaleButton backbutton {
       adjustment: Adjustment {
         lower: 0.0;
@@ -112,16 +122,6 @@ BarBar.Bar {
       };
     }
 
-    // [end]
-    // Gtk.ScaleButton {
-    //    adjustment: Adjustment {
-    //      lower: 0.0;
-    //      upper: 1.0;
-    //      page-increment: 0.1;
-    //      step-increment: 0.1;
-    //      value: bind plumb.value bidirectional;
-    //    };
-    // }
     [end]
     Gtk.Label {
       label: bind pomodoro.current;
@@ -134,12 +134,13 @@ BarBar.Bar {
 // We can do even more! Lets draw some widgets on
 // the background!
 BarBar.Background background {
-  top-margin: 45;
-  bottom-margin: 30;
+  top-margin: 50;
+  bottom-margin: 50;
   right-margin: 200;
   left-margin: 200;
-  //Vte.Terminal {
-  //}
+  BarBar.Rotary {
+    value: bind mem.percent;
+  }
 }
 
 // Here we define some sensors.
@@ -157,9 +158,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  // interface: "enp13s0";
   interface: "wlan0";
-  tick => $label_update(network_label);
 }
 
 BarBar.Backlight backlight {
@@ -175,7 +174,6 @@ BarBar.Keyboard key {
 }
 
 BarBar.Temperature temperature {
-  tick => $label_update(temp);
 }
 
 BarBar.Pomodoro pomodoro {

@@ -36,6 +36,7 @@ wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
 
 gtk = dependency('gtk4')
+# gtk = dependency('gtk4', version : '>=4.14.0')
 
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         required: true,
@@ -99,7 +100,7 @@ wayland_protos = dependency('wayland-protocols')
 
 # subdir('protocol')
 subdir('src')
-subdir('docs')
+# subdir('docs')
 
 summary({'Install Prefix': get_option('prefix'),
         'Compiler': cc.get_id(),

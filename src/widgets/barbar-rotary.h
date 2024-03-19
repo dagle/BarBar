@@ -33,9 +33,10 @@ G_BEGIN_DECLS
 
 #define BARBAR_TYPE_ROTARY (g_barbar_rotary_get_type())
 
+/* G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GObject)
+ */
 G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
 
-/* void g_barbar_disk_start(BarBarRotary *disk); */
 GtkWidget *g_barbar_rotary_new(void);
 
 G_END_DECLS
