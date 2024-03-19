@@ -1,9 +1,5 @@
 <div align="center">
 
-<!-- <picture> -->
-<!--   <source media="(prefers-color-scheme: light)" srcset="docs/barbar.svg"> -->
-<!--   <source media="(prefers-color-scheme: dark)" srcset="docs/barbar-inverted.svg"> -->
-<!-- </picture> -->
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dagle/BarBar/main/docs/barbar-inverted.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/dagle/BarBar/main/docs/barbar.svg">
@@ -12,6 +8,7 @@
 
 <a href="/LICENSE"> ![License](https://img.shields.io/badge/license-GPL%20v2-brightgreen?style=flat-square) </a>
 <a href="#wip"> ![Status](https://img.shields.io/badge/status-WIP-informational?style=flat-square) </a>
+</div>
 
 # BarBar the layered gtk4 shell
 
