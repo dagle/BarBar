@@ -24,6 +24,7 @@
  */
 
 #include "barbar-label.h"
+#include "sensors/barbar-sensor.h"
 #include <tmpl-glib.h>
 struct _BarBarLabel {
   GtkWidget parent_instance;
@@ -31,6 +32,9 @@ struct _BarBarLabel {
   GtkWidget *child;
   char *templ;
   TmplTemplate *tmpl;
+  TmplSymbol *symbol;
+
+  BarBarSensor *sensor;
 };
 
 G_DEFINE_TYPE(BarBarLabel, g_barbar_label, GTK_TYPE_WIDGET)
@@ -40,6 +44,7 @@ enum {
   PROP_TEMPL,
   PROP_LABEL,
   PROP_CHILD,
+  PROP_SENSOR,
 
   NUM_PROPERTIES,
 };
@@ -52,6 +57,10 @@ static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   g_return_if_fail(BARBAR_IS_LABEL(label));
   GError *error = NULL;
 
+  if (g_strcmp0(label->templ, templ)) {
+    return;
+  }
+
   g_free(label->templ);
   if (!templ) {
     label->templ = NULL;
@@ -60,6 +69,10 @@ static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   }
 
   label->templ = g_strdup(templ);
+
+  if (label->tmpl) {
+    g_object_unref(label->tmpl);
+  }
 
   label->tmpl = tmpl_template_new(NULL);
 
@@ -91,9 +104,47 @@ G_MODULE_EXPORT void label_update(GtkWidget *object, GObject *sensor) {
   g_free(str);
 }
 
-static void g_barbar_label_set_label(BarBarLabel *label, const char *text) {
+static void update(BarBarLabel *label) {
+  // TODO: optimize
+  const gchar *className = g_type_name(G_TYPE_FROM_INSTANCE(label->tmpl));
+  GError *error = NULL;
+
+  TmplSymbol *symbol = NULL;
+  g_autoptr(TmplScope) scope = NULL;
+  scope = tmpl_scope_new();
+
+  symbol = tmpl_scope_get(scope, className);
+
+  char *str;
+  if (!(str = tmpl_template_expand_string(label->tmpl, scope, &error))) {
+    g_printerr("Label: Error expanding the template: %s\n", error->message);
+    return;
+  }
+
+  gtk_label_set_text(GTK_LABEL(label->child), str);
+  g_free(str);
+}
+
+// static void g_barbar_label_set_label(BarBarLabel *label, const char *text) {
+//   g_return_if_fail(BARBAR_IS_LABEL(label));
+//   return;
+//
+//   g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_LABEL]);
+// }
+
+static void g_barbar_label_set_sensor(BarBarLabel *label, gpointer data) {
   g_return_if_fail(BARBAR_IS_LABEL(label));
-  return;
+  g_return_if_fail(BARBAR_IS_SENSOR(data));
+
+  if (data == label->symbol) {
+    return;
+  }
+
+  if (label->symbol) {
+    g_object_unref(label->symbol);
+  }
+
+  label->symbol = g_object_ref(data);
 
   g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_LABEL]);
 }
@@ -107,8 +158,11 @@ static void g_barbar_label_set_property(GObject *object, guint property_id,
   case PROP_TEMPL:
     g_barbar_label_set_templ(label, g_value_get_string(value));
     break;
-  case PROP_LABEL:
-    g_barbar_label_set_label(label, g_value_get_string(value));
+  // case PROP_LABEL:
+  //   g_barbar_label_set_label(label, g_value_get_string(value));
+  //   break;
+  case PROP_SENSOR:
+    g_barbar_label_set_sensor(label, g_value_get_object(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -166,6 +220,16 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
    */
   label_props[PROP_CHILD] = g_param_spec_object(
       "child", "Child", "Child label", GTK_TYPE_LABEL, G_PARAM_READABLE);
+
+  /**
+   * BarBarLabel:child:
+   *
+   * A reference to a sensor producing data
+   */
+  label_props[PROP_CHILD] = g_param_spec_object(
+      "sensor", "Sensor", "Sensor producing data", GTK_TYPE_LABEL,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, label_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
