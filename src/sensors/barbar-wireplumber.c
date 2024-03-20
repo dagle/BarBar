@@ -132,24 +132,22 @@ static void g_barbar_wireplumber_class_init(BarBarWireplumberClass *class) {
 
 static void g_barbar_wireplumber_init(BarBarWireplumber *self) {}
 
-// static void on_plugin_loaded(WpCore *core, GAsyncResult *res, gpointer *data)
-// {
-//   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(data);
-//   WpPlugin *plugin;
-//   GError *error;
-//
-//   if (!wp_core_load_component_finish(core, res, &error)) {
-//     g_printerr("Wireplumber: failed to load compenent: %s\n",
-//     error->message); wp->exit_code = 1; return;
-//   }
-//
-//   if (--wp->pending_plugins == 0) {
-//     g_autoptr(WpPlugin) mixer_api = wp_plugin_find(core, "mixer-api");
-//     g_object_set(mixer_api, "scale", 1 /* cubic */, NULL);
-//     wp_core_install_object_manager(wp->core, wp->om);
-//   }
-// }
-//
+static void on_plugin_loaded(WpCore *core, GAsyncResult *res, gpointer *data) {
+  BarBarWireplumber *wp = BARBAR_WIREPLUMBER(data);
+  GError *error = NULL;
+
+  if (!wp_core_load_component_finish(core, res, &error)) {
+    g_printerr("Wireplumber: failed to load compenent: %s\n", error->message);
+    wp->exit_code = 1;
+    return;
+  }
+
+  if (--wp->pending_plugins == 0) {
+    g_autoptr(WpPlugin) mixer_api = wp_plugin_find(core, "mixer-api");
+    g_object_set(mixer_api, "scale", 1 /* cubic */, NULL);
+    wp_core_install_object_manager(wp->core, wp->om);
+  }
+}
 
 static void get_volume_internal(BarBarWireplumber *self,
                                 WpPipewireObject *proxy) {
@@ -246,9 +244,8 @@ static void on_plugin_activated(WpObject *p, GAsyncResult *res,
 
 void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(sensor);
-  GError *error = NULL;
   wp_init(WP_INIT_PIPEWIRE);
-  wp->core = wp_core_new(NULL, NULL);
+  wp->core = wp_core_new(NULL, NULL, NULL);
   wp->om = wp_object_manager_new();
 
   wp->apis = g_ptr_array_new_with_free_func(g_object_unref);
@@ -256,44 +253,16 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   wp_object_manager_add_interest(wp->om, WP_TYPE_NODE,
                                  WP_CONSTRAINT_TYPE_PW_PROPERTY, "media.class",
                                  "=s", "Audio/Sink", NULL);
-  // maybe do this in the future
-  // wp_object_manager_add_interest (wp->om, WP_TYPE_CLIENT, NULL);
-  // wp_object_manager_request_object_features (self->om, WP_TYPE_GLOBAL_PROXY,
-  //     WP_PIPEWIRE_OBJECT_FEATURES_MINIMAL);
 
-  if (!wp_core_load_component(wp->core,
-                              "libwireplumber-module-default-nodes-api",
-                              "module", NULL, &error)) {
-    g_printerr("Wireplumber: %s\n", error->message);
-    g_error_free(error);
-    return;
-  }
+  wp->pending_plugins++;
+  wp_core_load_component(wp->core, "libwireplumber-module-default-nodes-api",
+                         "module", NULL, NULL, NULL,
+                         (GAsyncReadyCallback)on_plugin_loaded, wp);
 
-  if (!wp_core_load_component(wp->core, "libwireplumber-module-mixer-api",
-                              "module", NULL, &error)) {
-    g_printerr("Wireplumber: %s\n", error->message);
-    g_error_free(error);
-    return;
-  }
-
-  g_ptr_array_add(wp->apis, wp_plugin_find(wp->core, "default-nodes-api"));
-  g_ptr_array_add(wp->apis, ({
-                    WpPlugin *p = wp_plugin_find(wp->core, "mixer-api");
-                    g_object_set(G_OBJECT(p), "scale", 1 /* cubic */, NULL);
-                    p;
-                  }));
-
-  // future version will use this api
-  // wp->pending_plugins++;
-  // wp_core_load_component(wp->core,
-  // "libwireplumber-module-default-nodes-api",
-  //                        "module", NULL, NULL, NULL, on_plugin_loaded,
-  //                        &wp);
-  //
-  // wp->pending_plugins++;
-  // wp_core_load_component(wp->core, "libwireplumber-module-mixer-api",
-  // "module",
-  //                        NULL, NULL, NULL, on_plugin_loaded, &wp);
+  wp->pending_plugins++;
+  wp_core_load_component(wp->core, "libwireplumber-module-mixer-api", "module",
+                         NULL, NULL, NULL,
+                         (GAsyncReadyCallback)on_plugin_loaded, wp);
 
   /* connect */
   if (!wp_core_connect(wp->core)) {
@@ -304,10 +273,6 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   g_signal_connect_swapped(wp->om, "installed", G_CALLBACK(manager_installed),
                            wp);
 
-  for (guint i = 0; i < wp->apis->len; i++) {
-    WpPlugin *plugin = g_ptr_array_index(wp->apis, i);
-    wp->pending_plugins++;
-    wp_object_activate(WP_OBJECT(plugin), WP_PLUGIN_FEATURE_ENABLED, NULL,
-                       (GAsyncReadyCallback)on_plugin_activated, wp);
-  }
+  // g_signal_connect_swapped(wp->core, "disconnected",
+  //                          (GCallback)g_main_loop_quit, ctl.loop);
 }
