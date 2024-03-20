@@ -139,7 +139,7 @@ BarBar.Background background {
   right-margin: 200;
   left-margin: 200;
   BarBar.Rotary {
-    value: bind mem.percent;
+    value: bind cpu.percent;
   }
 }
 
@@ -155,6 +155,7 @@ BarBar.Mem mem {
 }
 
 BarBar.Cpu cpu {
+  interval: 1000;
 }
 
 BarBar.Network network {

@@ -8,6 +8,8 @@ struct _BarBarRotary {
   double max_value;
   double cur_value;
 
+  float procentage;
+
   int width;
   int height;
   // int baseline;
@@ -24,6 +26,8 @@ struct _BarBarRotary {
 enum {
   PROP_0,
 
+  PROP_BACKGROUND,
+  PROP_WIDTH_PROCENT,
   PROP_VALUE,
   PROP_MIN_VALUE,
   PROP_MAX_VALUE,
@@ -61,6 +65,8 @@ static void update_rotary(BarBarRotary *self) {
   builder = gsk_path_builder_new();
   gsk_path_builder_add_segment(builder, self->circle, &start, &end);
   self->path = gsk_path_builder_free_to_path(builder);
+
+  gtk_widget_queue_draw(GTK_WIDGET(self));
 }
 
 static void g_barbar_rotary_set_value_internal(BarBarRotary *self,
@@ -83,6 +89,29 @@ static void g_barbar_rotary_set_value(BarBarRotary *self, double value) {
   g_barbar_rotary_set_value_internal(self, value);
 }
 
+static void g_barbar_rotary_set_background(BarBarRotary *self,
+                                           const char *background) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
+
+  gdk_rgba_parse(&self->circle_color, background);
+}
+
+static void update_stroke(BarBarRotary *self) {
+  if (self->stroke) {
+    gsk_stroke_free(self->stroke);
+  }
+
+  self->stroke = gsk_stroke_new(self->procentage);
+}
+
+static void g_barbar_rotary_set_procentage(BarBarRotary *self, float procent) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
+
+  self->procentage = procent;
+
+  update_stroke(self);
+}
+
 static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
@@ -92,8 +121,7 @@ static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
   self->max_value = value;
 
   if (self->max_value < self->cur_value) {
-    printf("Max value: %f\n", self->max_value);
-    // g_barbar_rotary_set_value_internal(self, self->max_value);
+    g_barbar_rotary_set_value_internal(self, self->max_value);
   }
 
   // update_block_nodes(self);
@@ -140,6 +168,12 @@ static void g_barbar_rotary_set_property(GObject *object, guint property_id,
   case PROP_VALUE:
     g_barbar_rotary_set_value(rotary, g_value_get_double(value));
     break;
+  case PROP_BACKGROUND:
+    g_barbar_rotary_set_background(rotary, g_value_get_string(value));
+    break;
+  case PROP_WIDTH_PROCENT:
+    g_barbar_rotary_set_procentage(rotary, g_value_get_float(value));
+    break;
   case PROP_MIN_VALUE:
     g_barbar_rotary_set_min_value(rotary, g_value_get_double(value));
     break;
@@ -180,13 +214,21 @@ void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
                              int for_size, int *minimum, int *natural,
                              int *minimum_baseline, int *natural_baseline) {
 
+  // printf("measure!\n");
+
+  printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
+         "minimum_baseline: %d, natural_baseline: %d\n",
+         orientation, for_size, *minimum, *natural, *minimum_baseline,
+         *natural_baseline);
   BarBarRotary *self = BARBAR_ROTARY(widget);
   int size = MAX(self->height, self->width);
+  printf("measure size: %d\n", size);
 
   *minimum = *natural = size;
 }
 
 void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
+  printf("snapshot!\n");
 
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
@@ -197,11 +239,23 @@ void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
 void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
                                    int baseline) {
+  printf("allocate!\n");
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
   self->width = width;
   self->height = height;
+  printf("allocate size: %d - %d\n", width, height);
   // self->baseline = baseline;
+
+  update_stroke(self);
+}
+
+static void update_circle(BarBarRotary *self) {
+  GskPathBuilder *builder;
+
+  builder = gsk_path_builder_new();
+  gsk_path_builder_add_circle(builder, &GRAPHENE_POINT_INIT(50, 50), 40);
+  self->circle = gsk_path_builder_free_to_path(builder);
 }
 
 static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
@@ -215,6 +269,24 @@ static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
   // widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
   widget_class->measure = g_barbar_rotary_measure;
   widget_class->snapshot = g_barbar_rotary_snapshot;
+
+  /**
+   * BarBarRotary:background:
+   *
+   * The background color to use
+   */
+  properties[PROP_BACKGROUND] = g_param_spec_string(
+      "background", NULL, NULL, "lightgray",
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarRotary:width-procent:
+   *
+   * How much of the widget should be filled
+   */
+  properties[PROP_WIDTH_PROCENT] = g_param_spec_float(
+      "width-procent", NULL, NULL, 0.0, 100.0, 50.0,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
 
   /**
    * BarBarRotary:value:
@@ -271,15 +343,15 @@ static void g_barbar_rotary_init(BarBarRotary *self) {
   self->max_value = 1.0;
 
   self->inverted = FALSE;
-
-  self->stroke = gsk_stroke_new(5);
+  self->width = 50;
+  self->height = 50;
 
   builder = gsk_path_builder_new();
   gsk_path_builder_add_circle(builder, &GRAPHENE_POINT_INIT(50, 50), 40);
   self->circle = gsk_path_builder_free_to_path(builder);
 
-  gdk_rgba_parse(&self->color, "green");
-  gdk_rgba_parse(&self->circle_color, "lightgray");
+  gtk_widget_get_color(GTK_WIDGET(self), &self->color);
+
   update_rotary(self);
 }
 
