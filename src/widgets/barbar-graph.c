@@ -116,8 +116,8 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_rotary_get_property(GObject *object, guint property_id,
-                                         GValue *value, GParamSpec *pspec) {
+static void g_barbar_graph_get_property(GObject *object, guint property_id,
+                                        GValue *value, GParamSpec *pspec) {
   BarBarGraph *graph = BARBAR_GRAPH(object);
 
   switch (property_id) {

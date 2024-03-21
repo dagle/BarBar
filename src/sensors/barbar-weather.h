@@ -25,6 +25,7 @@
 #ifndef _BARBAR_WEATHER_H_
 #define _BARBAR_WEATHER_H_
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -34,9 +35,7 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_WEATHER (g_barbar_weather_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarWeather, g_barbar_weather, BARBAR, WEATHER,
-                     GtkWidget)
-
-void g_barbar_weather_start(BarBarWeather *weather);
+                     BarBarSensor)
 
 G_END_DECLS
 

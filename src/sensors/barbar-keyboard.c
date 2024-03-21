@@ -29,6 +29,9 @@ static GParamSpec *keyboard_props[NUM_PROPERTIES] = {
 
 static void g_barbar_keyboard_start(BarBarSensor *sensor);
 
+static void g_barbar_keyboard_set_property(GObject *object, guint property_id,
+                                           const GValue *value,
+                                           GParamSpec *pspec) {}
 static void g_barbar_keyboard_get_property(GObject *object, guint property_id,
                                            GValue *value, GParamSpec *pspec) {
   BarBarKeyboard *keyboard = BARBAR_KEYBOARD(object);
@@ -59,7 +62,7 @@ static void g_barbar_keyboard_class_init(BarBarKeyboardClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor = BARBAR_SENSOR_CLASS(class);
 
-  // gobject_class->set_property = g_barbar_mpris_set_property;
+  gobject_class->set_property = g_barbar_keyboard_set_property;
   gobject_class->get_property = g_barbar_keyboard_get_property;
   sensor->start = g_barbar_keyboard_start;
 
