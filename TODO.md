@@ -7,7 +7,7 @@ as a device? This would be great for batteries, mpris etc since we could just re
 - [ ] send/create updates correctly
 
 # modules 
-- [ ] game-mode
+- [x] game-mode
 - [x] power-profiles
 - [x] systemd-units
 
