@@ -9,6 +9,7 @@ struct _BarBarGraph {
 
   GskPath *path;
   GskStroke *stroke;
+  float stroke_size;
   GdkRGBA color;
 
   // Values to plot
@@ -44,6 +45,53 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 };
 
 G_DEFINE_TYPE(BarBarGraph, g_barbar_graph, GTK_TYPE_WIDGET)
+
+static void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->stroke_size == stroke) {
+    return;
+  }
+
+  self->stroke_size = stroke;
+  self->stroke = gsk_stroke_new(stroke);
+}
+
+static void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->min_value == min) {
+    return;
+  }
+
+  self->min_value = min;
+}
+
+static void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->max_value == max) {
+    return;
+  }
+
+  self->max_value = max;
+}
+
+static void g_barbar_graph_set_value(BarBarGraph *self, double value) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->current == value) {
+    return;
+  }
+
+  if (value > self->max_value) {
+    g_barbar_graph_set_max_value(self, value);
+  }
+  if (value < self->min_value) {
+    g_barbar_graph_set_min_value(self, value);
+  }
+  self->current = value;
+}
 
 static void g_barbar_graph_set_property(GObject *object, guint property_id,
                                         const GValue *value,
