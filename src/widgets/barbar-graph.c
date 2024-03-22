@@ -7,6 +7,11 @@ struct _BarBarGraph {
   double max_value;
   double current;
 
+  double width;
+  double height;
+
+  gboolean fill;
+
   GskPath *path;
   GskStroke *stroke;
   float stroke_size;
@@ -19,6 +24,7 @@ struct _BarBarGraph {
   gboolean full;
 
   guint tick_cb;
+  guint interval;
   // guint64 start_time;
 
   double period;
@@ -31,7 +37,10 @@ enum {
   PROP_VALUE,
   PROP_MIN_VALUE,
   PROP_MAX_VALUE,
+  PROP_HISTORY_LENGTH,
   PROP_STROKE_WIDTH,
+  PROP_FILL,
+  PROP_INTERVAL,
 
   NUM_PROPERTIES,
 };
@@ -46,6 +55,8 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarGraph, g_barbar_graph, GTK_TYPE_WIDGET)
 
+static void g_barbar_graph_start(GtkWidget *widget);
+
 static void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
@@ -55,6 +66,35 @@ static void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
 
   self->stroke_size = stroke;
   self->stroke = gsk_stroke_new(stroke);
+}
+
+static void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->fill == fill) {
+    return;
+  }
+
+  self->fill = fill;
+  // we need to update here? Just wait for the next tick for now
+}
+
+static void g_barbar_graph_history_length(BarBarGraph *self, guint length) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->capasity == length) {
+    return;
+  }
+
+  if (self->capasity > length && self->items > length) {
+    // drop values and call it full
+    self->full = TRUE;
+  } else {
+    // if we increase the size, it can't be full anymore
+    self->full = FALSE;
+  }
+
+  self->capasity = length;
 }
 
 static void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
@@ -105,11 +145,19 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
   case PROP_STROKE_WIDTH:
     g_barbar_graph_set_stroke_width(graph, g_value_get_float(value));
     break;
+  case PROP_FILL:
+    g_barbar_graph_set_fill(graph, g_value_get_boolean(value));
+    break;
+  case PROP_HISTORY_LENGTH:
+    g_barbar_graph_history_length(graph, g_value_get_uint(value));
+    break;
   case PROP_MIN_VALUE:
     g_barbar_graph_set_min_value(graph, g_value_get_double(value));
     break;
   case PROP_MAX_VALUE:
     g_barbar_graph_set_max_value(graph, g_value_get_double(value));
+    break;
+  case PROP_INTERVAL:
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -135,22 +183,52 @@ static void g_barbar_graph_get_property(GObject *object, guint property_id,
   }
 }
 
+static inline double get_y(double height, GList *link) {
+  double *v = link->data;
+  return height - height * *v;
+}
+
 static void update_path(BarBarGraph *self) {
   GskPathBuilder *builder;
   builder = gsk_path_builder_new();
   GList *link = self->queue->head;
 
+  if (!link) {
+    return;
+  }
+
   double x = 0;
 
-  gsk_path_builder_move_to(builder, x, 0);
-  while (link) {
-    double *v = link->data;
+  double y = get_y(self->height, link);
+  double delta = self->width / self->capasity;
 
+  gsk_path_builder_move_to(builder, 0, y);
+  // int i = 0;
+  while (link) {
+    double y;
+    // i++;
+    // double *v = link->data;
+
+    // printf("Link nr %d: d:%f x:%f y:%f\n", i, delta, x, *v);
     // maybe this should be a softer curve
     // but this should work for now.
-    gsk_path_builder_line_to(builder, x, *v);
+    y = get_y(self->height, link);
+    gsk_path_builder_line_to(builder, x, y);
     link = link->next;
+    if (link) {
+      x += delta;
+    }
   }
+
+  if (self->fill) {
+    gsk_path_builder_line_to(builder, x, self->height);
+    gsk_path_builder_line_to(builder, 0, self->height);
+
+    gsk_path_builder_line_to(builder, 0, y);
+  }
+
+  // g_clear_pointer(&self->path, gsk_path_unref);
+  // gsk_path_builder_free_to_path(builder);
   self->path = gsk_path_builder_free_to_path(builder);
 }
 
@@ -179,16 +257,16 @@ static void push_update(BarBarGraph *self, double value) {
   update_path(self);
 }
 
-static gboolean tick_cb(GtkWidget *widget, GdkFrameClock *frame_clock,
-                        gpointer user_data) {
-  BarBarGraph *self = BARBAR_GRAPH(widget);
-
-  push_update(self, self->current);
-
-  gtk_widget_queue_draw(widget);
-
-  return G_SOURCE_CONTINUE;
-}
+// static gboolean tick_cb(GtkWidget *widget, GdkFrameClock *frame_clock,
+//                         gpointer user_data) {
+//   BarBarGraph *self = BARBAR_GRAPH(widget);
+//
+//   push_update(self, self->current);
+//
+//   gtk_widget_queue_draw(widget);
+//
+//   return G_SOURCE_CONTINUE;
+// }
 
 static void g_barbar_graph_dispose(GObject *object) {
   BarBarGraph *self = BARBAR_GRAPH(object);
@@ -202,7 +280,13 @@ static void g_barbar_graph_dispose(GObject *object) {
 static void g_barbar_graph_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
 
-  gtk_snapshot_append_stroke(snapshot, self->path, self->stroke, &self->color);
+  if (self->fill) {
+    gtk_snapshot_append_fill(snapshot, self->path, GSK_FILL_RULE_WINDING,
+                             &self->color);
+  } else {
+    gtk_snapshot_append_stroke(snapshot, self->path, self->stroke,
+                               &self->color);
+  }
 }
 
 static void g_barbar_graph_measure(GtkWidget *widget,
@@ -210,14 +294,25 @@ static void g_barbar_graph_measure(GtkWidget *widget,
                                    int *minimum, int *natural,
                                    int *minimum_baseline,
                                    int *natural_baseline) {
+  BarBarGraph *self = BARBAR_GRAPH(widget);
+
+  // printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
+  //        "minimum_baseline: %d, natural_baseline: %d\n",
+  //        orientation, for_size, *minimum, *natural, *minimum_baseline,
+  //        *natural_baseline);
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
-    *minimum = *natural = 200;
+    *minimum = *natural = self->width;
   else
-    *minimum = *natural = 100;
+    *minimum = *natural = self->height;
 }
 
 void g_barbar_graph_size_allocate(GtkWidget *widget, int width, int height,
-                                  int baseline) {}
+                                  int baseline) {
+  BarBarGraph *self = BARBAR_GRAPH(widget);
+
+  self->width = width;
+  self->height = height;
+}
 
 static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -231,6 +326,8 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   widget_class->snapshot = g_barbar_graph_snapshot;
   widget_class->measure = g_barbar_graph_measure;
   widget_class->size_allocate = g_barbar_graph_size_allocate;
+
+  widget_class->root = g_barbar_graph_start;
 
   /**
    * BarBarGraph:stroke-width:
@@ -267,11 +364,49 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
    * value is produced, the value is adjusted.
    */
   properties[PROP_MAX_VALUE] = g_param_spec_double(
-      "max-value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 5.0,
+      "max-value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 1.0,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarGraph:history-length:
+   *
+   * How many points of history we should save.
+   */
+  properties[PROP_HISTORY_LENGTH] = g_param_spec_uint(
+      "history-length", NULL, NULL, 0, G_MAXUINT, 100,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarGraph:fill:
+   *
+   * If the graph should be filled
+   */
+  properties[PROP_FILL] = g_param_spec_boolean(
+      "fill", NULL, NULL, TRUE,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarGraph:interval:
+   *
+   * How often the graph should update
+   */
+  properties[PROP_INTERVAL] = g_param_spec_uint(
+      "interval", NULL, NULL, 0, G_MAXUINT, 1000,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
   gtk_widget_class_set_css_name(widget_class, "graph");
+}
+
+static gboolean g_barbar_graph_update(gpointer data) {
+
+  BarBarGraph *self = BARBAR_GRAPH(data);
+
+  push_update(self, self->current);
+
+  gtk_widget_queue_draw(GTK_WIDGET(self));
+
+  return G_SOURCE_CONTINUE;
 }
 
 static void g_barbar_graph_init(BarBarGraph *self) {
@@ -282,12 +417,18 @@ static void g_barbar_graph_init(BarBarGraph *self) {
   self->current = 0.0;
   self->min_value = 0.0;
   self->max_value = 1.0;
+  self->interval = 1000;
 
   push_update(self, self->current);
+}
 
-  // do we really need to render this often?
+static void g_barbar_graph_start(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(g_barbar_graph_parent_class)->root(widget);
+
+  BarBarGraph *self = BARBAR_GRAPH(widget);
+
   self->tick_cb =
-      gtk_widget_add_tick_callback(GTK_WIDGET(self), tick_cb, NULL, NULL);
+      g_timeout_add_full(0, self->interval, g_barbar_graph_update, self, NULL);
 }
 
 GtkWidget *g_barbar_graph_new(void) {

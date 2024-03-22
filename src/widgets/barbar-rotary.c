@@ -217,23 +217,34 @@ void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
                              int for_size, int *minimum, int *natural,
                              int *minimum_baseline, int *natural_baseline) {
 
-  // printf("measure!\n");
-
-  // printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
-  //        "minimum_baseline: %d, natural_baseline: %d\n",
-  //        orientation, for_size, *minimum, *natural, *minimum_baseline,
-  //        *natural_baseline);
   BarBarRotary *self = BARBAR_ROTARY(widget);
+  GtkWidget *parent = gtk_widget_get_parent(widget);
+  // int width = gtk_widget_get_width(parent);
+  // int height = gtk_widget_get_height(parent);
+  // printf("measure: height:%d width:%d\n", width, height);
 
-  // TODO: Nope
-  int size = MAX(self->height, self->width);
-  // printf("measure size: %d\n", size);
+  // int new_minimum, new_natural, new_minimum_baseline, new_natural_baseline;
+  // gtk_widget_measure(parent, orientation, for_size, &new_minimum,
+  // &new_natural,
+  //                    &new_minimum_baseline, &new_natural_baseline);
+  //
+  // printf(
+  //     "new measure: orientation: %d, for_size: %d, minimum: %d, natural: %d,
+  //     " "minimum_baseline: %d, natural_baseline: %d\n", orientation,
+  //     for_size, new_minimum, new_natural, new_minimum_baseline,
+  //     new_natural_baseline);
+
+  // TODO: do we have a minimal/natural size?
+  printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
+         "minimum_baseline: %d, natural_baseline: %d\n",
+         orientation, for_size, *minimum, *natural, *minimum_baseline,
+         *natural_baseline);
+  int size = MIN(self->height, self->width);
 
   *minimum = *natural = size;
 }
 
 void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
-  // printf("snapshot!\n");
 
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
@@ -265,6 +276,8 @@ static void update_circle(BarBarRotary *self) {
 void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
                                    int baseline) {
   BarBarRotary *self = BARBAR_ROTARY(widget);
+
+  printf("allocate: width: %d, height: %d\n", width, height);
 
   self->width = width;
   self->height = height;
@@ -356,8 +369,8 @@ static void g_barbar_rotary_init(BarBarRotary *self) {
   self->max_value = 1.0;
 
   self->inverted = FALSE;
-  self->width = 50;
-  self->height = 50;
+  self->width = 23;
+  self->height = 23;
 
   update_circle(self);
 

@@ -151,7 +151,7 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-void g_barbar_river_view_start(GtkWidget *widget) {
+static void g_barbar_river_view_start(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
