@@ -228,19 +228,19 @@ static void manager_installed(BarBarWireplumber *self) {
                            G_CALLBACK(default_node_changed), self);
 }
 
-static void on_plugin_activated(WpObject *p, GAsyncResult *res,
-                                BarBarWireplumber *wp) {
-  g_autoptr(GError) error = NULL;
-
-  if (!wp_object_activate_finish(p, res, &error)) {
-    fprintf(stderr, "%s", error->message);
-    return;
-  }
-
-  if (--wp->pending_plugins == 0) {
-    wp_core_install_object_manager(wp->core, wp->om);
-  }
-}
+// static void on_plugin_activated(WpObject *p, GAsyncResult *res,
+//                                 BarBarWireplumber *wp) {
+//   g_autoptr(GError) error = NULL;
+//
+//   if (!wp_object_activate_finish(p, res, &error)) {
+//     fprintf(stderr, "%s", error->message);
+//     return;
+//   }
+//
+//   if (--wp->pending_plugins == 0) {
+//     wp_core_install_object_manager(wp->core, wp->om);
+//   }
+// }
 
 void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   BarBarWireplumber *wp = BARBAR_WIREPLUMBER(sensor);

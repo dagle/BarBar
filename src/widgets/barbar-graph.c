@@ -246,9 +246,9 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
    *
    * Determines the currently filled value of the rotary.
    */
-  properties[PROP_VALUE] = g_param_spec_double(
-      "value", NULL, NULL, 0.0, G_MAXDOUBLE, 0.0,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+  properties[PROP_VALUE] =
+      g_param_spec_double("value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0.0,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * BarBarGraph:min-value:
@@ -257,7 +257,7 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
    * is produced, the value is adjusted.
    */
   properties[PROP_MIN_VALUE] = g_param_spec_double(
-      "min-value", NULL, NULL, 0.0, G_MAXDOUBLE, 0.0,
+      "min-value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0.0,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   /**
@@ -267,12 +267,17 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
    * value is produced, the value is adjusted.
    */
   properties[PROP_MAX_VALUE] = g_param_spec_double(
-      "max-value", NULL, NULL, 0.0, G_MAXDOUBLE, 5.0,
+      "max-value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 5.0,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
+  gtk_widget_class_set_css_name(widget_class, "graph");
 }
 
 static void g_barbar_graph_init(BarBarGraph *self) {
   gtk_widget_get_color(GTK_WIDGET(self), &self->color);
+  self->queue = g_queue_new();
+  g_queue_init(self->queue);
 
   self->current = 0.0;
   self->min_value = 0.0;
@@ -280,9 +285,6 @@ static void g_barbar_graph_init(BarBarGraph *self) {
 
   push_update(self, self->current);
 
-  // self->start_time = 0;
-
-  g_queue_init(self->queue);
   // do we really need to render this often?
   self->tick_cb =
       gtk_widget_add_tick_callback(GTK_WIDGET(self), tick_cb, NULL, NULL);
