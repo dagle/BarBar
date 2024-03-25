@@ -21,9 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-#ifndef _BARBAR_ROTARY_H_
-#define _BARBAR_ROTARY_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -40,5 +38,3 @@ G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
 GtkWidget *g_barbar_rotary_new(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_ROTARY_H_ */

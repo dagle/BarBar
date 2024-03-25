@@ -3,9 +3,8 @@ as a device? This would be great for batteries, mpris etc since we could just re
 
 # Desktop file
 
-- [ ] Create an icon
-- [ ] Generate a desktop file (or parts of it)
-- [ ] Add installing the desktop file to meson
+- [x] Create an icon
+- [x] Add installing the desktop file to meson
 
 # Default css
 
@@ -39,7 +38,7 @@ as a device? This would be great for batteries, mpris etc since we could just re
 
 # Transition Layout Manager
 
-- [] Investigate this
+- [ ] Investigate this
 
 # widgets
 ## mediacontrol

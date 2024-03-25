@@ -44,8 +44,7 @@ libbarbar_src = files(
   'hyprland/barbar-hyprland-workspace.c',
   # 'dwl/barbar-dwl-service.c',
   # 'dwl/barbar-dwl-tags.c',
-  # 'barbar-temperature.c',
-  # 'barbar-weather.c',
+  'sensors/barbar-weather.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
@@ -98,7 +97,7 @@ libbarbar_headers = [
   'hyprland/barbar-hyprland-workspace.h',
   # 'dwl/barbar-dwl-service.h',
   # 'dwl/barbar-dwl-tags.h',
-  # 'barbar-weather.h',
+  'sensors/barbar-weather.h',
   # 'barbar-inhibitor.h',
 
   'tray/barbar-watcher.h',

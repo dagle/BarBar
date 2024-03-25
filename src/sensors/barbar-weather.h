@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_WEATHER_H_
-#define _BARBAR_WEATHER_H_
+#pragma once
 
 #include "barbar-sensor.h"
 #include <glib-object.h>
@@ -38,5 +37,3 @@ G_DECLARE_FINAL_TYPE(BarBarWeather, g_barbar_weather, BARBAR, WEATHER,
                      BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_WEATHER_H_ */

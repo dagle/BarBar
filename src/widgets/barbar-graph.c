@@ -11,6 +11,7 @@ struct _BarBarGraph {
   double height;
 
   gboolean fill;
+  gboolean discrete;
 
   GskPath *path;
   GskStroke *stroke;
@@ -34,6 +35,8 @@ struct _BarBarGraph {
 enum {
   PROP_0,
 
+  PROP_MIN_HEIGHT,
+  PROP_MIN_WIDTH,
   PROP_VALUE,
   PROP_MIN_VALUE,
   PROP_MAX_VALUE,
@@ -41,6 +44,7 @@ enum {
   PROP_STROKE_WIDTH,
   PROP_FILL,
   PROP_INTERVAL,
+  PROP_DISCRETE,
 
   NUM_PROPERTIES,
 };
@@ -133,6 +137,43 @@ static void g_barbar_graph_set_value(BarBarGraph *self, double value) {
   self->current = value;
 }
 
+static void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->height == height) {
+    return;
+  }
+
+  self->height = height;
+}
+
+static void g_barbar_graph_set_min_width(BarBarGraph *self, guint width) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->width == width) {
+    return;
+  }
+  self->width = width;
+}
+
+static void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->interval == interval) {
+    return;
+  }
+  self->interval = interval;
+}
+
+static void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  if (self->discrete == discrete) {
+    return;
+  }
+  self->discrete = discrete;
+}
+
 static void g_barbar_graph_set_property(GObject *object, guint property_id,
                                         const GValue *value,
                                         GParamSpec *pspec) {
@@ -141,6 +182,12 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_VALUE:
     g_barbar_graph_set_value(graph, g_value_get_double(value));
+    break;
+  case PROP_MIN_WIDTH:
+    g_barbar_graph_set_min_width(graph, g_value_get_uint(value));
+    break;
+  case PROP_MIN_HEIGHT:
+    g_barbar_graph_set_min_height(graph, g_value_get_uint(value));
     break;
   case PROP_STROKE_WIDTH:
     g_barbar_graph_set_stroke_width(graph, g_value_get_float(value));
@@ -158,6 +205,10 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
     g_barbar_graph_set_max_value(graph, g_value_get_double(value));
     break;
   case PROP_INTERVAL:
+    g_barbar_graph_set_interval(graph, g_value_get_uint(value));
+    break;
+  case PROP_DISCRETE:
+    g_barbar_graph_set_discrete(graph, g_value_get_boolean(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -203,15 +254,9 @@ static void update_path(BarBarGraph *self) {
   double delta = self->width / self->capasity;
 
   gsk_path_builder_move_to(builder, 0, y);
-  // int i = 0;
   while (link) {
     double y;
-    // i++;
-    // double *v = link->data;
 
-    // printf("Link nr %d: d:%f x:%f y:%f\n", i, delta, x, *v);
-    // maybe this should be a softer curve
-    // but this should work for now.
     y = get_y(self->height, link);
     gsk_path_builder_line_to(builder, x, y);
     link = link->next;
@@ -227,8 +272,7 @@ static void update_path(BarBarGraph *self) {
     gsk_path_builder_line_to(builder, 0, y);
   }
 
-  // g_clear_pointer(&self->path, gsk_path_unref);
-  // gsk_path_builder_free_to_path(builder);
+  g_clear_pointer(&self->path, gsk_path_unref);
   self->path = gsk_path_builder_free_to_path(builder);
 }
 
@@ -256,17 +300,6 @@ static void push_update(BarBarGraph *self, double value) {
   }
   update_path(self);
 }
-
-// static gboolean tick_cb(GtkWidget *widget, GdkFrameClock *frame_clock,
-//                         gpointer user_data) {
-//   BarBarGraph *self = BARBAR_GRAPH(widget);
-//
-//   push_update(self, self->current);
-//
-//   gtk_widget_queue_draw(widget);
-//
-//   return G_SOURCE_CONTINUE;
-// }
 
 static void g_barbar_graph_dispose(GObject *object) {
   BarBarGraph *self = BARBAR_GRAPH(object);
@@ -318,13 +351,30 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   gobject_class->get_property = g_barbar_graph_get_property;
 
   gobject_class->dispose = g_barbar_graph_dispose;
-  widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
 
   widget_class->snapshot = g_barbar_graph_snapshot;
   widget_class->measure = g_barbar_graph_measure;
   widget_class->size_allocate = g_barbar_graph_size_allocate;
 
   widget_class->root = g_barbar_graph_start;
+
+  /**
+   * BarBarRotary:min-width:
+   *
+   * Minimum width of this widget
+   */
+  properties[PROP_MIN_WIDTH] = g_param_spec_uint(
+      "min-width", NULL, NULL, 0, G_MAXUINT, 30,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarRotary:min-height:
+   *
+   * Minimum height of this widget
+   */
+  properties[PROP_MIN_HEIGHT] = g_param_spec_uint(
+      "min-height", NULL, NULL, 0, G_MAXUINT, 20,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * BarBarGraph:stroke-width:
@@ -389,6 +439,15 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
    */
   properties[PROP_INTERVAL] = g_param_spec_uint(
       "interval", NULL, NULL, 0, G_MAXUINT, 1000,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarGraph:discrete:
+   *
+   * If a discrete graph should be drawn, produces a bar like graph.
+   */
+  properties[PROP_DISCRETE] = g_param_spec_boolean(
+      "discrete", NULL, NULL, FALSE,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);

@@ -9,6 +9,8 @@ project(
 
 barbar_prefix = get_option('prefix')
 barbar_datadir = join_paths(barbar_prefix, get_option('datadir'))
+barbar_applicationsdir = join_paths(barbar_datadir, 'applications')
+barbar_icondir = join_paths(barbar_datadir, 'icons/hicolor/scalable/apps/')
 
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
@@ -27,8 +29,8 @@ module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 
-# libgweather = dependency('gweather4')
-# libgeoclue = dependency('libgeoclue-2.0')
+libgweather = dependency('gweather4')
+libgeoclue = dependency('libgeoclue-2.0')
 
 libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
@@ -59,8 +61,8 @@ deps = [
   libwireplumber,
   playerctl,
   template_glib,
-  # libgweather,
-  # libgeoclue,
+  libgweather,
+  libgeoclue,
   m_dep,
   module,
 ]
@@ -101,6 +103,14 @@ wayland_protos = dependency('wayland-protocols')
 # subdir('protocol')
 subdir('src')
 # subdir('docs')
+#
+
+
+
+install_data('barbar.desktop', install_dir: barbar_applicationsdir)
+
+install_data('barbar.svg', install_dir: barbar_icondir)
+
 
 summary({'Install Prefix': get_option('prefix'),
         'Compiler': cc.get_id(),

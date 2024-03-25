@@ -32,6 +32,7 @@ static void g_barbar_keyboard_start(BarBarSensor *sensor);
 static void g_barbar_keyboard_set_property(GObject *object, guint property_id,
                                            const GValue *value,
                                            GParamSpec *pspec) {}
+
 static void g_barbar_keyboard_get_property(GObject *object, guint property_id,
                                            GValue *value, GParamSpec *pspec) {
   BarBarKeyboard *keyboard = BARBAR_KEYBOARD(object);

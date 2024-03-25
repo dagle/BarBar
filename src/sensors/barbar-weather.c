@@ -1,6 +1,6 @@
 #include "barbar-weather.h"
 #include "glibconfig.h"
-#include <geoclue.h>
+#include <libgeoclue-2.0/geoclue.h>
 #include <libgweather/gweather.h>
 #include <math.h>
 #include <stdio.h>
@@ -186,13 +186,13 @@ static gboolean g_barbar_weather_update(gpointer data) {
 }
 
 void geo_callback(GObject *source_object, GAsyncResult *res, gpointer data) {
-  GError *error = NULL;
-  printf("apa!\n");
-  GClueSimple *clue = gclue_simple_new_finish(res, &error);
+  // GError *error = NULL;
+  // printf("apa!\n");
+  // GClueSimple *clue = gclue_simple_new_finish(res, &error);
 
-  GClueLocation *location = gclue_simple_get_location(clue);
-  double lat = gclue_location_get_latitude(location);
-  printf("latitude: %f\n", lat);
+  // GClueLocation *location = gclue_simple_get_location(clue);
+  // double lat = gclue_location_get_latitude(location);
+  // printf("latitude: %f\n", lat);
 }
 
 void updated(GWeatherInfo *self, gpointer user_data) {
@@ -202,14 +202,14 @@ void updated(GWeatherInfo *self, gpointer user_data) {
 
 // 57.716667 11.966667
 void g_barbar_weather_start(BarBarWeather *weather) {
-  GClueSimple *clue =
-      gclue_simple_new_sync("barbar", GCLUE_ACCURACY_LEVEL_CITY, NULL, NULL);
+  // GClueSimple *clue =
+  //     gclue_simple_new_sync("barbar", GCLUE_ACCURACY_LEVEL_CITY, NULL, NULL);
 
-  printf("%p\n", clue);
-
-  GClueLocation *location = gclue_simple_get_location(clue);
-  double lat = gclue_location_get_latitude(location);
-  printf("latitude: %f\n", lat);
+  // printf("%p\n", clue);
+  //
+  // GClueLocation *location = gclue_simple_get_location(clue);
+  // double lat = gclue_location_get_latitude(location);
+  // printf("latitude: %f\n", lat);
 
   // GWeatherLocation *location =
   //     gweather_location_new_detached("Göteborg", NULL, 57.716667, 11.966667);

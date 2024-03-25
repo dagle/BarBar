@@ -76,12 +76,8 @@ static const struct wl_registry_listener wl_registry_listener = {
 static void g_barbar_inhibitor_dispose(GObject *object) {
   BarBarInhibitor *inhibitor = BARBAR_INHIBITOR(object);
 
-  if (inhibitor->inhibitor) {
-    g_clear_pointer(&inhibitor->inhibitor, zwp_idle_inhibitor_v1_destroy);
-  }
-  if (inhibitor->manager) {
-    g_clear_pointer(&inhibitor->manager, zwp_idle_inhibit_manager_v1_destroy);
-  }
+  g_clear_pointer(&inhibitor->inhibitor, zwp_idle_inhibitor_v1_destroy);
+  g_clear_pointer(&inhibitor->manager, zwp_idle_inhibit_manager_v1_destroy);
 }
 
 static void g_barbar_inhibitor_toggle(BarBarInhibitor *inhibitor) {
@@ -93,9 +89,7 @@ static void g_barbar_inhibitor_toggle(BarBarInhibitor *inhibitor) {
           inhibitor->manager, inhibitor->wl_surface);
     }
   } else {
-    if (!inhibitor->inhibitor) {
-      g_clear_pointer(&inhibitor->inhibitor, zwp_idle_inhibitor_v1_destroy);
-    }
+    g_clear_pointer(&inhibitor->inhibitor, zwp_idle_inhibitor_v1_destroy);
   }
 
   g_object_notify_by_pspec(G_OBJECT(inhibitor), inhibitor_props[PROP_ENABLED]);

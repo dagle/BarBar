@@ -136,9 +136,7 @@ char *safe_strdup(const char *str) {
 }
 
 void barbar_tray_item_set_icon_theme(BarBarTrayItem *item, const char *name) {
-  if (item->icon_theme) {
-    g_clear_pointer(&item->icon_theme, g_object_unref);
-  }
+  g_clear_pointer(&item->icon_theme, g_object_unref);
 
   if (name && strlen(name) > 0) {
     const char *const path[] = {name, NULL};
@@ -499,9 +497,7 @@ static gboolean menu_deactivate_cb(BarBarTrayItem *self) {
 
 static void set_popup(BarBarTrayItem *self) {
 
-  if (self->popover) {
-    g_clear_pointer(&self->popover, gtk_widget_unparent);
-  }
+  g_clear_pointer(&self->popover, gtk_widget_unparent);
 
   self->popover =
       gtk_popover_menu_new_from_model_full(G_MENU_MODEL(self->menu), 0);
@@ -524,9 +520,7 @@ static void set_icon(BarBarTrayItem *self) {
 
   dump(self);
 
-  if (self->image) {
-    g_clear_pointer(&self->image, gtk_widget_unparent);
-  }
+  g_clear_pointer(&self->image, gtk_widget_unparent);
 
   self->image = icon;
 

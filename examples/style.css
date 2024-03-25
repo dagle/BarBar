@@ -17,10 +17,27 @@ button {
   min-height: 21px;
   min-width: 14px;
   padding: 0 5px;
+  color: #444444;
+}
+
+.scale button#backbutton {
   background: black;
 }
 
+rotary {
+  color: green;
+}
+
+graph {
+  color: green;
+  border: 1px solid;
+  border-color: white;
+}
+
 river-tag button {
+  min-height: 21px;
+  min-width: 14px;
+  padding: 0 5px;
   background: black;
   border: none;
   color: #444444;
