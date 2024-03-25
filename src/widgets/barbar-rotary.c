@@ -12,6 +12,9 @@ struct _BarBarRotary {
 
   int width;
   int height;
+
+  GtkSizeRequestMode mode;
+
   // int baseline;
 
   gboolean inverted;
@@ -26,6 +29,7 @@ struct _BarBarRotary {
 enum {
   PROP_0,
 
+  PROP_REQUESTMODE,
   PROP_BACKGROUND,
   PROP_WIDTH_PROCENT,
   PROP_VALUE,
@@ -47,6 +51,10 @@ static void update_rotary(BarBarRotary *self) {
   GskPathPoint start, end;
   graphene_point_t p0, p1;
   float start_angle, end_angle;
+  if (!self->circle) {
+    return;
+  }
+
   int width = self->width / 2;
   int height = self->height / 2;
   int size = MIN(self->height, self->width) / 2 - self->procentage;
@@ -127,9 +135,6 @@ static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
     g_barbar_rotary_set_value_internal(self, self->max_value);
   }
 
-  // update_block_nodes(self);
-  // update_level_style_classes(self);
-
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MAX_VALUE]);
 }
 
@@ -145,9 +150,6 @@ static void g_barbar_rotary_set_min_value(BarBarRotary *self, double value) {
     g_barbar_rotary_set_value_internal(self, self->min_value);
   }
 
-  // update_block_nodes(self);
-  // update_level_style_classes(self);
-
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MIN_VALUE]);
 }
 
@@ -158,6 +160,15 @@ static void g_barbar_rotary_set_inverted(BarBarRotary *rotary, gboolean value) {
     return;
   }
   rotary->inverted = value;
+}
+
+static void g_barbar_rotary_set_mode(BarBarRotary *rotary, guint mode) {
+  g_return_if_fail(BARBAR_IS_ROTARY(rotary));
+
+  if (rotary->mode == mode) {
+    return;
+  }
+  rotary->mode = mode;
 
   g_object_notify_by_pspec(G_OBJECT(rotary), properties[PROP_INVERTED]);
 }
@@ -170,6 +181,9 @@ static void g_barbar_rotary_set_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_VALUE:
     g_barbar_rotary_set_value(rotary, g_value_get_double(value));
+    break;
+  case PROP_REQUESTMODE:
+    g_barbar_rotary_set_mode(rotary, g_value_get_uint(value));
     break;
   case PROP_BACKGROUND:
     g_barbar_rotary_set_background(rotary, g_value_get_string(value));
@@ -213,35 +227,31 @@ static void g_barbar_rotary_get_property(GObject *object, guint property_id,
   }
 }
 
+static inline gboolean match_orientation(GtkSizeRequestMode mode,
+                                         GtkOrientation orientation) {
+  if (mode == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH &&
+      orientation == GTK_ORIENTATION_VERTICAL) {
+    return TRUE;
+  } else if (mode == GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT &&
+             orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
                              int for_size, int *minimum, int *natural,
                              int *minimum_baseline, int *natural_baseline) {
 
   BarBarRotary *self = BARBAR_ROTARY(widget);
-  GtkWidget *parent = gtk_widget_get_parent(widget);
-  // int width = gtk_widget_get_width(parent);
-  // int height = gtk_widget_get_height(parent);
-  // printf("measure: height:%d width:%d\n", width, height);
 
-  // int new_minimum, new_natural, new_minimum_baseline, new_natural_baseline;
-  // gtk_widget_measure(parent, orientation, for_size, &new_minimum,
-  // &new_natural,
-  //                    &new_minimum_baseline, &new_natural_baseline);
-  //
-  // printf(
-  //     "new measure: orientation: %d, for_size: %d, minimum: %d, natural: %d,
-  //     " "minimum_baseline: %d, natural_baseline: %d\n", orientation,
-  //     for_size, new_minimum, new_natural, new_minimum_baseline,
-  //     new_natural_baseline);
-
-  // TODO: do we have a minimal/natural size?
-  printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
-         "minimum_baseline: %d, natural_baseline: %d\n",
-         orientation, for_size, *minimum, *natural, *minimum_baseline,
-         *natural_baseline);
   int size = MIN(self->height, self->width);
-
-  *minimum = *natural = size;
+  if (for_size != -1 && match_orientation(self->mode, orientation)) {
+    *minimum = *natural = for_size;
+  } else {
+    *minimum = *natural = size;
+  }
 }
 
 void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
@@ -277,11 +287,16 @@ void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
                                    int baseline) {
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
-  printf("allocate: width: %d, height: %d\n", width, height);
-
   self->width = width;
   self->height = height;
   update_circle(self);
+  update_rotary(self);
+}
+
+GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget) {
+  BarBarRotary *self = BARBAR_ROTARY(widget);
+
+  return self->mode;
 }
 
 static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
@@ -292,10 +307,18 @@ static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
   gobject_class->get_property = g_barbar_rotary_get_property;
 
   widget_class->size_allocate = g_barbar_rotary_size_allocate;
-  // widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
+  widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
   widget_class->measure = g_barbar_rotary_measure;
   widget_class->snapshot = g_barbar_rotary_snapshot;
 
+  /**
+   * BarBarRotary:request-mode:
+   *
+   * If we should be clamped by width or height.
+   */
+  properties[PROP_REQUESTMODE] = g_param_spec_uint(
+      "request-mode", NULL, NULL, 0, 2, 1,
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
   /**
    * BarBarRotary:background:
    *
@@ -362,21 +385,15 @@ static void g_barbar_rotary_class_init(BarBarRotaryClass *class) {
 }
 
 static void g_barbar_rotary_init(BarBarRotary *self) {
-  GskPathBuilder *builder;
-
   self->cur_value = 0.5;
   self->min_value = 0.0;
   self->max_value = 1.0;
 
   self->inverted = FALSE;
-  self->width = 23;
-  self->height = 23;
-
-  update_circle(self);
+  self->width = 10;
+  self->height = 10;
 
   gtk_widget_get_color(GTK_WIDGET(self), &self->color);
-
-  update_rotary(self);
 }
 
 GtkWidget *g_barbar_rotary_new(void) {

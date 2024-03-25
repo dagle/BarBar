@@ -121,10 +121,15 @@ BarBar.Bar {
         value: bind backlight.percent bidirectional;
       };
     }
+
     [end]
-    BarBar.Rotary {
+    BarBar.Graph {
       value: bind cpu.percent;
     }
+    // [end]
+    // BarBar.Rotary {
+    //   value: bind cpu.percent;
+    // }
 
     [end]
     Gtk.Label {
@@ -151,9 +156,9 @@ BarBar.Background background {
   // BarBar.Rotary {
   //   value: bind cpu.percent;
   // }
-  // BarBar.Graph {
-  //   value: bind cpu.percent;
-  // }
+  BarBar.Graph {
+    value: bind cpu.percent;
+  }
 }
 
 // Here we define some sensors.
@@ -172,7 +177,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "wlan0";
+  interface: "enp13s0";
 }
 
 BarBar.Backlight backlight {

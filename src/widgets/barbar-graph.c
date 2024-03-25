@@ -296,10 +296,6 @@ static void g_barbar_graph_measure(GtkWidget *widget,
                                    int *natural_baseline) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
 
-  // printf("measure: orientation: %d, for_size: %d, minimum: %d, natural: %d, "
-  //        "minimum_baseline: %d, natural_baseline: %d\n",
-  //        orientation, for_size, *minimum, *natural, *minimum_baseline,
-  //        *natural_baseline);
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
     *minimum = *natural = self->width;
   else
@@ -322,6 +318,7 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   gobject_class->get_property = g_barbar_graph_get_property;
 
   gobject_class->dispose = g_barbar_graph_dispose;
+  widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
 
   widget_class->snapshot = g_barbar_graph_snapshot;
   widget_class->measure = g_barbar_graph_measure;
