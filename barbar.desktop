@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=BarBar
+GenericName=A Wayland layered Shell in GTK4.
+Comment=An application to write bars and conky like stuff
+Keywords=Shell;Bar;Widgets
+Exec=barbar
+Icon=barbar
+Type=Application
+X-Geoclue-Reason=To show the current location and weather.
