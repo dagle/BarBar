@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_RIVER_LAYOUT_H_
-#define _BARBAR_RIVER_LAYOUT_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -36,8 +35,4 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarRiverLayout, g_barbar_river_layout, BARBAR,
                      RIVER_LAYOUT, GtkWidget)
 
-void g_barbar_river_layout_start(BarBarRiverLayout *layout);
-
 G_END_DECLS
-
-#endif /* _BARBAR_RIVER_LAYOUT_H_ */

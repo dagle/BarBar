@@ -9,6 +9,8 @@ as a device? This would be great for batteries, mpris etc since we could just re
 # Default css
 
 
+# A generic interface to a list in sensors?
+
 # mpris
 - [x] create a format function
 - [ ] be able to listen to multiple players
@@ -26,8 +28,9 @@ as a device? This would be great for batteries, mpris etc since we could just re
 - [ ] update device dynamically
 
 # weather / location
-- [ ] get it to work
-- [ ] document how to do it.
+- [-] get it to work
+- [-] document how to do it.
+-- Use an agent
 
 # Calendar
 -- Create sensors or something to fetch the data to the calendar

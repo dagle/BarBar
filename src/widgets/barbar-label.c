@@ -233,7 +233,6 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
   gtk_widget_class_set_css_name(widget_class, "barbar-label");
 }
 static void g_barbar_label_init(BarBarLabel *label) {
-  GError *error = NULL;
   label->child = gtk_label_new("");
 
   gtk_widget_set_parent(label->child, GTK_WIDGET(label));

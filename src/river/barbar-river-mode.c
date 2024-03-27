@@ -9,8 +9,6 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-// TODO: in the future this should be a sensor
-
 /**
  * BarBarRiverMode:
  *
@@ -32,7 +30,7 @@ struct _BarBarRiverMode {
 enum {
   PROP_0,
 
-  // PROP_DEVICE,
+  PROP_MODE,
 
   NUM_PROPERTIES,
 };
@@ -43,14 +41,35 @@ static GParamSpec *river_mode_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_river_mode_constructed(GObject *object);
+static void g_barbar_river_mode_start(GtkWidget *widget);
+// static void g_barbar_river_mode_constructed(GObject *object);
 
 static void g_barbar_river_mode_set_property(GObject *object, guint property_id,
                                              const GValue *value,
-                                             GParamSpec *pspec) {}
+                                             GParamSpec *pspec) {
+
+  BarBarRiverMode *rm = BARBAR_RIVER_MODE(object);
+
+  switch (property_id) {
+  // case PROP_LAYOUT:
+  //   g_barbar_river_layout_set_layout(rl, g_value_get_string(value));
+  //   break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_river_mode_get_property(GObject *object, guint property_id,
                                              GValue *value, GParamSpec *pspec) {
+  BarBarRiverMode *rm = BARBAR_RIVER_MODE(object);
+
+  switch (property_id) {
+  case PROP_VIEW:
+    g_value_set_string(value, "hello");
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
 }
 
 static void g_barbar_river_mode_class_init(BarBarRiverModeClass *class) {
@@ -59,7 +78,8 @@ static void g_barbar_river_mode_class_init(BarBarRiverModeClass *class) {
 
   gobject_class->set_property = g_barbar_river_mode_set_property;
   gobject_class->get_property = g_barbar_river_mode_get_property;
-  gobject_class->constructed = g_barbar_river_mode_constructed;
+
+  widget_class->root = g_barbar_river_mode_start;
 
   // river_mode_props[PROP_DEVICE] =
   //     g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
@@ -132,12 +152,10 @@ static const struct zriver_seat_status_v1_listener seat_status_listener = {
     .mode = listen_mode,
 };
 
-static void g_barbar_river_mode_init(BarBarRiverMode *self) {}
-static void g_barbar_river_mode_constructed(GObject *object) {
-  BarBarRiverMode *river = BARBAR_RIVER_MODE(object);
-  river->label = gtk_label_new("");
-  gtk_widget_set_parent(river->label, GTK_WIDGET(river));
-  river->focused = FALSE;
+static void g_barbar_river_mode_init(BarBarRiverMode *self) {
+  self->label = gtk_label_new("");
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+  self->focused = FALSE;
 }
 
 static const struct wl_registry_listener wl_registry_listener = {
@@ -145,13 +163,15 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_handle_global_remove,
 };
 
-void g_barbar_river_mode_start(BarBarRiverMode *river) {
+static void g_barbar_river_mode_start(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
-  // struct wl_output *output;
   struct wl_display *wl_display;
-  // struct zriver_output_status_v1 *output_status;
+
+  GTK_WIDGET_CLASS(g_barbar_river_mode_parent_class)->root(widget);
+
+  BarBarRiverMode *river = BARBAR_RIVER_MODE(widget);
 
   gdk_display = gdk_display_get_default();
 

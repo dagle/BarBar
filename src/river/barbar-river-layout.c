@@ -17,13 +17,13 @@ struct _BarBarRiverLayout {
   struct zriver_output_status_v1 *output_status;
   struct wl_seat *seat;
 
-  GtkWidget *label;
+  GtkWidget *layout;
 };
 
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  PROP_LAYOUT,
 
   NUM_PROPERTIES,
 };
@@ -34,20 +34,56 @@ static GParamSpec *river_layout_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_river_layout_constructed(GObject *object);
-void default_clicked_handler(BarBarRiverLayout *river, guint tag,
-                             gpointer user_data);
+static void g_barbar_river_layout_start(GtkWidget *widget);
+
+void g_barbar_river_layout_set_layout_internal(BarBarRiverLayout *self,
+                                               const char *layout) {
+  if (!g_strcmp0(gtk_label_get_text(GTK_LABEL(self->layout)), layout)) {
+    return;
+  }
+
+  gtk_label_set_text(GTK_LABEL(self->layout), layout);
+  g_object_notify_by_pspec(G_OBJECT(self), river_layout_props[PROP_LAYOUT]);
+}
+
+void g_barbar_river_layout_set_layout(BarBarRiverLayout *self,
+                                      const char *layout) {
+  g_return_if_fail(BARBAR_IS_RIVER_LAYOUT(self));
+
+  // g_barbar_river_layout_set_layout_internal();
+  g_object_notify_by_pspec(G_OBJECT(self), river_layout_props[PROP_LAYOUT]);
+}
 
 static void g_barbar_river_layout_set_property(GObject *object,
                                                guint property_id,
                                                const GValue *value,
-                                               GParamSpec *pspec) {}
+                                               GParamSpec *pspec) {
+
+  BarBarRiverLayout *rl = BARBAR_RIVER_LAYOUT(object);
+
+  switch (property_id) {
+  case PROP_LAYOUT:
+    g_barbar_river_layout_set_layout(rl, g_value_get_string(value));
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_river_layout_get_property(GObject *object,
                                                guint property_id, GValue *value,
-                                               GParamSpec *pspec) {}
+                                               GParamSpec *pspec) {
 
-// static guint click_signal;
+  BarBarRiverLayout *rl = BARBAR_RIVER_LAYOUT(object);
+
+  switch (property_id) {
+  case PROP_LAYOUT:
+    g_value_set_string(value, "hello");
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_river_layout_class_init(BarBarRiverLayoutClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -55,20 +91,26 @@ static void g_barbar_river_layout_class_init(BarBarRiverLayoutClass *class) {
 
   gobject_class->set_property = g_barbar_river_layout_set_property;
   gobject_class->get_property = g_barbar_river_layout_get_property;
-  gobject_class->constructed = g_barbar_river_layout_constructed;
-  river_layout_props[PROP_DEVICE] =
-      g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+  widget_class->root = g_barbar_river_layout_start;
+
+  /**
+   * BarBarRiverLayout:layout:
+   *
+   * Our current layout, should be writeable in the future
+   */
+  river_layout_props[PROP_LAYOUT] =
+      g_param_spec_string("layout", NULL, NULL, NULL, G_PARAM_READABLE);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_layout_props);
 
-  // click_signal = g_signal_new_class_handler(
-  //     "clicked", G_TYPE_FROM_CLASS(class),
-  //     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-  //     G_CALLBACK(default_clicked_handler), NULL, NULL, NULL, G_TYPE_NONE, 1,
-  //     G_TYPE_UINT);
-
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "river-layout");
+}
+
+static void g_barbar_river_layout_init(BarBarRiverLayout *self) {
+  self->layout = gtk_label_new("");
+  gtk_widget_set_parent(self->layout, GTK_WIDGET(self));
 }
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
@@ -123,7 +165,7 @@ static void layout_name(void *data,
                         struct zriver_output_status_v1 *zriver_output_status_v1,
                         const char *name) {
   BarBarRiverLayout *layout = BARBAR_RIVER_LAYOUT(data);
-  gtk_label_set_text(GTK_LABEL(layout->label), name);
+  g_barbar_river_layout_set_layout_internal(layout, name);
 }
 
 static void
@@ -131,7 +173,6 @@ layout_name_clear(void *data,
                   struct zriver_output_status_v1 *zriver_output_status_v1) {
 
   BarBarRiverLayout *layout = BARBAR_RIVER_LAYOUT(data);
-  gtk_label_set_text(GTK_LABEL(layout->label), "");
 }
 
 static const struct zriver_output_status_v1_listener output_status_listener = {
@@ -142,19 +183,16 @@ static const struct zriver_output_status_v1_listener output_status_listener = {
     .layout_name_clear = layout_name_clear,
 };
 
-static void g_barbar_river_layout_init(BarBarRiverLayout *self) {}
-static void g_barbar_river_layout_constructed(GObject *object) {
-  BarBarRiverLayout *layout = BARBAR_RIVER_LAYOUT(object);
-  layout->label = gtk_label_new("");
-  gtk_widget_set_parent(layout->label, GTK_WIDGET(layout));
-}
-
-void g_barbar_river_layout_start(BarBarRiverLayout *river) {
+static void g_barbar_river_layout_start(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
   struct wl_output *output;
   struct wl_display *wl_display;
+
+  GTK_WIDGET_CLASS(g_barbar_river_layout_parent_class)->root(widget);
+
+  BarBarRiverLayout *river = BARBAR_RIVER_LAYOUT(widget);
 
   gdk_display = gdk_display_get_default();
 
@@ -162,11 +200,16 @@ void g_barbar_river_layout_start(BarBarRiverLayout *river) {
   g_return_if_fail(gdk_display);
   g_return_if_fail(GDK_IS_WAYLAND_DISPLAY(gdk_display));
 
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    printf("Parent window not found!\n");
+    return;
+  }
+
   // We try to find the main screen for this widget, this should only
   // be done if no screen is specified
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(river));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
+  monitor = gtk_layer_get_monitor(window);
   output = gdk_wayland_monitor_get_wl_output(monitor);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);

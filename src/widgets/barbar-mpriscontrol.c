@@ -23,7 +23,7 @@
 /**
  * BarBarMprisControls:
  *
- * `BarBarMprisControls` is a widget to interact with mpris
+ * `BarBarMprisControls` is a widget to interact with an mpris sensor
  *
  */
 

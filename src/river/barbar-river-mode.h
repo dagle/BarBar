@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_RIVER_MODE_H_
-#define _BARBAR_RIVER_MODE_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -36,8 +35,4 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarRiverMode, g_barbar_river_mode, BARBAR, RIVER_MODE,
                      GtkWidget)
 
-void g_barbar_river_mode_start(BarBarRiverMode *mode);
-
 G_END_DECLS
-
-#endif /* _BARBAR_RIVER_MODE_H_ */

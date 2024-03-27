@@ -27,6 +27,7 @@ libbarbar_src = files(
   'sensors/barbar-power-profiles.c',
   'sensors/barbar-systemd-units.c',
 
+  'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
 
@@ -35,7 +36,6 @@ libbarbar_src = files(
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
 
-  # 'river/barbar-river-layout.c',
   # 'river/barbar-river-mode.c',
   # 'sway/barbar-sway-ipc.c',
   # 'sway/barbar-sway-workspace.c',
@@ -81,6 +81,7 @@ libbarbar_headers = [
 
   'sensors/barbar-mpris.h',
 
+  'river/barbar-river-layout.h',
   'river/barbar-river-tags.h',
   'river/barbar-river-view.h',
 
@@ -88,7 +89,6 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
-  # 'river/barbar-river-layout.h',
   # 'river/barbar-river-mode.h',
   # 'sway/barbar-sway-ipc.h',
   # 'sway/barbar-sway-workspace.h',

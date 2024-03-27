@@ -20,6 +20,7 @@ void g_barbar_init(void) {
   g_barbar_systemd_units_get_type();
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();
+  g_barbar_weather_get_type();
 
   g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();
@@ -29,6 +30,7 @@ void g_barbar_init(void) {
   g_barbar_network_get_type();
   g_barbar_river_tag_get_type();
   g_barbar_river_view_get_type();
+  g_barbar_river_layout_get_type();
   g_barbar_cmd_get_type();
   g_barbar_hyprland_workspace_get_type();
 

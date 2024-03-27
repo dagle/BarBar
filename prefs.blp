@@ -13,8 +13,13 @@ BarBar.Bar {
     [start]
     BarBar.RiverTag {
     }
+
     [start]
     BarBar.StatusWatcher {
+    }
+
+    [start]
+    BarBar.RiverLayout {
     }
 
     [center]
@@ -31,6 +36,9 @@ BarBar.Bar {
         value: bind plumb.percent bidirectional;
       };
     }
+    //[end]
+    //BarBar.RiverLayout {
+    //}
 
     // A simple clock containing a clock, it's binds to the signal
     // and that is it.
@@ -205,4 +213,7 @@ BarBar.PowerProfile profile {
 
 BarBar.SystemdUnits units {
   bus-type: session;
+}
+
+BarBar.Weather weater {
 }

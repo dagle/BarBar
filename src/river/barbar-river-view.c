@@ -48,10 +48,31 @@ static void g_barbar_river_view_start(GtkWidget *widget);
 
 static void g_barbar_river_view_set_property(GObject *object, guint property_id,
                                              const GValue *value,
-                                             GParamSpec *pspec) {}
+                                             GParamSpec *pspec) {
+
+  BarBarRiverView *rv = BARBAR_RIVER_VIEW(object);
+
+  switch (property_id) {
+  // case PROP_LAYOUT:
+  //   g_barbar_river_layout_set_layout(rl, g_value_get_string(value));
+  //   break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_river_view_get_property(GObject *object, guint property_id,
                                              GValue *value, GParamSpec *pspec) {
+
+  BarBarRiverView *rv = BARBAR_RIVER_VIEW(object);
+
+  switch (property_id) {
+  case PROP_VIEW:
+    g_value_set_string(value, "hello");
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
 }
 
 static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {

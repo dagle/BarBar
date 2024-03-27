@@ -21,8 +21,10 @@
 #include "sensors/barbar-sensorcontext.h"
 #include "sensors/barbar-systemd-units.h"
 #include "sensors/barbar-temperature.h"
+#include "sensors/barbar-weather.h"
 #include "sensors/barbar-wireplumber.h"
 
+#include "river/barbar-river-layout.h"
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
 

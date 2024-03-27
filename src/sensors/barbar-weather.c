@@ -1,5 +1,4 @@
 #include "barbar-weather.h"
-#include "glibconfig.h"
 #include <libgeoclue-2.0/geoclue.h>
 #include <libgweather/gweather.h>
 #include <math.h>
@@ -13,11 +12,13 @@
  */
 
 struct _BarBarWeather {
-  GtkWidget parent;
+  BarBarSensor parent_instance;
 
+  GClueSimple *clue;
   GWeatherLocation *location;
-  GtkWidget *label;
-  char *desktop_id;
+  GWeatherInfo *info;
+  gboolean metar;
+  char *contact_info;
 
   double temperature;
 
@@ -28,42 +29,43 @@ struct _BarBarWeather {
 enum {
   PROP_0,
 
-  PROP_DESKTOP_ID,
   PROP_LOCATION,
+  PROP_METAR,
+  PROP_CONTACT_INFO,
   PROP_TEMPERATURE,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarWeather, g_barbar_weather, GTK_TYPE_WIDGET)
-// G_IMPLEMENT_INTERFACE
+G_DEFINE_TYPE(BarBarWeather, g_barbar_weather, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *weather_props[NUM_PROPERTIES] = {
     NULL,
 };
 
 static void g_barbar_weather_constructed(GObject *self);
+static void g_barbar_weather_start(BarBarSensor *sensor);
 
-void g_barbar_weather_set_path(BarBarWeather *weather, const char *path) {
-  g_return_if_fail(BARBAR_IS_WEATHER(weather));
+static void g_barbar_weather_set_metar(BarBarWeather *self, gboolean metar) {
+  g_return_if_fail(BARBAR_IS_WEATHER(self));
 
-  // g_free(temperature->path);
-  // temperature->path = g_strdup(path);
-  //
-  // g_object_notify_by_pspec(G_OBJECT(temperature),
-  //                          temperature_props[PROP_DEVICE]);
-}
-
-void g_barbar_weather_set_desktop_id(BarBarWeather *weather, const char *id) {
-  g_return_if_fail(BARBAR_IS_WEATHER(weather));
-
-  if (!id) {
+  if (self->metar == metar) {
     return;
   }
 
-  g_free(weather->desktop_id);
+  self->metar = metar;
+}
 
-  weather->desktop_id = strdup(id);
+static void g_barbar_weather_set_contact_info(BarBarWeather *self,
+                                              const gchar *contact_info) {
+  g_return_if_fail(BARBAR_IS_WEATHER(self));
+
+  if (!g_strcmp0(self->contact_info, contact_info)) {
+    return;
+  }
+
+  g_free(self->contact_info);
+  self->contact_info = g_strdup(contact_info);
 }
 
 static void g_barbar_weather_set_property(GObject *object, guint property_id,
@@ -72,11 +74,11 @@ static void g_barbar_weather_set_property(GObject *object, guint property_id,
   BarBarWeather *weather = BARBAR_WEATHER(object);
 
   switch (property_id) {
-  case PROP_LOCATION:
-    g_barbar_weather_set_path(weather, g_value_get_string(value));
+  case PROP_METAR:
+    g_barbar_weather_set_metar(weather, g_value_get_boolean(value));
     break;
-  case PROP_DESKTOP_ID:
-    g_barbar_weather_set_desktop_id(weather, g_value_get_string(value));
+  case PROP_CONTACT_INFO:
+    g_barbar_weather_set_contact_info(weather, g_value_get_string(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -89,10 +91,9 @@ static void g_barbar_weather_get_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_LOCATION:
-    g_value_set_string(value, weather->location);
+    g_value_set_string(value, "here");
     break;
   case PROP_TEMPERATURE:
-    // g_barbar_weather_set_path(weather, g_value_get_string(value));
     g_value_set_double(value, weather->temperature);
     break;
   default:
@@ -102,21 +103,32 @@ static void g_barbar_weather_get_property(GObject *object, guint property_id,
 
 static void g_barbar_weather_class_init(BarBarWeatherClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_weather_set_property;
   gobject_class->get_property = g_barbar_weather_get_property;
-  // gobject_class->constructed = g_barbar_weather_constructed;
+  sensor_class->start = g_barbar_weather_start;
 
   /**
-   * BarBarWeather:desktop-id:
+   * BarBarWeather:contact-info:
    *
-   * Id of the desktop application using this service
+   * Your contact info, this is required for most providers, to inform
+   * missbehaving clients.
    *
    */
-  weather_props[PROP_DESKTOP_ID] =
-      g_param_spec_string("desktop-id", NULL, NULL, "",
-                          G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  weather_props[PROP_CONTACT_INFO] = g_param_spec_string(
+      "contact-info", NULL, NULL, "per.odlund@gmail.com",
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * BarBarWeather:metar:
+   *
+   * Should we try to find the nearest airport for our location
+   *
+   */
+  weather_props[PROP_METAR] = g_param_spec_boolean(
+      "metar", NULL, NULL, FALSE,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * BarBarWeather:location:
@@ -125,8 +137,7 @@ static void g_barbar_weather_class_init(BarBarWeatherClass *class) {
    *
    */
   weather_props[PROP_LOCATION] = g_param_spec_string(
-      "location", NULL, NULL, "",
-      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+      "location", NULL, NULL, NULL, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * BarBarWeather:temperature:
@@ -135,26 +146,19 @@ static void g_barbar_weather_class_init(BarBarWeatherClass *class) {
    *
    */
   weather_props[PROP_TEMPERATURE] =
-      g_param_spec_double("temperature", NULL, NULL, G_MINDOUBLE, G_MAXDOUBLE,
+      g_param_spec_double("temperature", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE,
                           0.0, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     weather_props);
-
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
-  gtk_widget_class_set_css_name(widget_class, "weather");
 }
 
-static void g_barbar_weather_init(BarBarWeather *weather) {
+static void g_barbar_weather_init(BarBarWeather *weather) {}
 
-  weather->label = gtk_label_new("");
-  gtk_widget_set_parent(weather->label, GTK_WIDGET(weather));
-  // weather->location =
-  // detect_nearest_city_finish
-}
+static void g_barbar_weather_constructed(GObject *object) {
+  BarBarWeather *self = BARBAR_WEATHER(object);
 
-static void g_barbar_weather_constructed(GObject *self) {
-  BarBarWeather *weather = BARBAR_WEATHER(self);
+  G_OBJECT_CLASS(g_barbar_weather_parent_class)->constructed(object);
 }
 
 // TODO: Farenheit etc
@@ -162,71 +166,81 @@ static double read_temp(const char *str) {
   return strtol(str, NULL, 10) / 1000.0;
 }
 
-static gboolean g_barbar_weather_update(gpointer data) {
-  BarBarWeather *weather = BARBAR_WEATHER(data);
-  GError *error = NULL;
-  gboolean result;
-  char *buf;
-  gsize length;
+static void print_info(GWeatherInfo *info, gpointer data) {
+  GWeatherSky sky;
+  gboolean r = gweather_info_get_value_sky(info, &sky);
   double temp;
-  static char output[128];
 
-  // if (temperature->path) {
-  //   result = g_file_get_contents(temperature->path, &buf, &length, &error);
-  //   if (!result || error != NULL) {
-  //     // TODO: HANDLE errors
-  //     return FALSE;
-  //   }
-  //   temp = read_temp(buf);
-  //   snprintf(output, sizeof(output), "%.0f", temp);
-  //   gtk_label_set_text(GTK_LABEL(temperature->label), output);
-  //   free(buf);
-  // }
-  return TRUE;
+  gweather_info_get_value_temp(info, GWEATHER_TEMP_UNIT_CENTIGRADE, &temp);
+  const gchar *s = gweather_sky_to_string(sky);
+  char *temp2 = gweather_info_get_temp(info);
+
+  printf("sky: %d, %s\n", r, s);
+  printf("temp: %f\n", temp);
+  printf("temp2: %s\n", temp2);
+}
+
+GWeatherLocation *find_station(GWeatherLocation *location) {
+  GWeatherLocation *child = NULL;
+  while ((child = gweather_location_next_child(location, child)) != NULL) {
+    if (gweather_location_get_level(child) ==
+        GWEATHER_LOCATION_WEATHER_STATION) {
+      return child;
+    }
+    g_object_unref(child);
+  }
+
+  return NULL;
+}
+
+static void update_location(gpointer data) {
+  BarBarWeather *self = BARBAR_WEATHER(data);
+
+  GClueLocation *location = gclue_simple_get_location(self->clue);
+
+  double latitude = gclue_location_get_latitude(location);
+  double longitude = gclue_location_get_longitude(location);
+
+  GWeatherLocation *world = gweather_location_get_world();
+
+  g_clear_pointer(&self->location, g_object_unref);
+  self->location =
+      gweather_location_find_nearest_city(world, latitude, longitude);
+
+  g_object_unref(world);
+
+  g_clear_pointer(&self->info, g_object_unref);
+  self->info = gweather_info_new(self->location);
+  gweather_info_set_contact_info(self->info, self->contact_info);
+
+  g_signal_connect(self->info, "updated", G_CALLBACK(print_info), self);
+  gweather_info_update(self->info);
 }
 
 void geo_callback(GObject *source_object, GAsyncResult *res, gpointer data) {
-  // GError *error = NULL;
-  // printf("apa!\n");
-  // GClueSimple *clue = gclue_simple_new_finish(res, &error);
+  GError *error = NULL;
+  BarBarWeather *self = BARBAR_WEATHER(data);
+  self->clue = gclue_simple_new_finish(res, &error);
 
-  // GClueLocation *location = gclue_simple_get_location(clue);
-  // double lat = gclue_location_get_latitude(location);
-  // printf("latitude: %f\n", lat);
+  if (error) {
+    g_printerr("Couldn't find location: %s\n", error->message);
+    return;
+  }
+
+  update_location(self);
+
+  g_signal_connect_swapped(self->clue, "notify::location",
+                           G_CALLBACK(update_location), self);
 }
 
-void updated(GWeatherInfo *self, gpointer user_data) {
-  char *str = gweather_info_get_temp(self);
-  printf("location: %s\n", str);
-}
+static void g_barbar_weather_start(BarBarSensor *sensor) {
+  BarBarWeather *weather = BARBAR_WEATHER(sensor);
 
-// 57.716667 11.966667
-void g_barbar_weather_start(BarBarWeather *weather) {
-  // GClueSimple *clue =
-  //     gclue_simple_new_sync("barbar", GCLUE_ACCURACY_LEVEL_CITY, NULL, NULL);
+  GApplication *app = g_application_get_default();
 
-  // printf("%p\n", clue);
-  //
-  // GClueLocation *location = gclue_simple_get_location(clue);
-  // double lat = gclue_location_get_latitude(location);
-  // printf("latitude: %f\n", lat);
+  if (app != NULL) {
 
-  // GWeatherLocation *location =
-  //     gweather_location_new_detached("Göteborg", NULL, 57.716667, 11.966667);
-
-  // GWeatherInfo *info = gweather_info_new(location);
-  // gclue_simple_new("barbar", GCLUE_ACCURACY_LEVEL_CITY, NULL, geo_callback,
-  //                  NULL);
-
-  // gweather_info_set_contact_info(info, "com.github.barbar");
-  // g_signal_connect(G_OBJECT(info), "updated", G_CALLBACK(updated), NULL);
-  // gweather_info_update(info);
-
-  // char *str = gweather_location_get_city_name(location);
-  // if (weather->source_id > 0) {
-  //   g_source_remove(weather->source_id);
-  // }
-  // g_barbar_weather_update(weather);
-  // weather->source_id = g_timeout_add_full(
-  //     0, weather->interval, g_barbar_weather_update, weather, NULL);
+    gclue_simple_new(g_application_get_application_id(app),
+                     GCLUE_ACCURACY_LEVEL_CITY, NULL, geo_callback, weather);
+  }
 }
