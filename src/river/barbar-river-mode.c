@@ -51,7 +51,7 @@ static void g_barbar_river_mode_set_property(GObject *object, guint property_id,
   BarBarRiverMode *rm = BARBAR_RIVER_MODE(object);
 
   switch (property_id) {
-  // case PROP_LAYOUT:
+  // case PROP_MODE:
   //   g_barbar_river_layout_set_layout(rl, g_value_get_string(value));
   //   break;
   default:
@@ -64,7 +64,7 @@ static void g_barbar_river_mode_get_property(GObject *object, guint property_id,
   BarBarRiverMode *rm = BARBAR_RIVER_MODE(object);
 
   switch (property_id) {
-  case PROP_VIEW:
+  case PROP_MODE:
     g_value_set_string(value, "hello");
     break;
   default:
@@ -81,8 +81,8 @@ static void g_barbar_river_mode_class_init(BarBarRiverModeClass *class) {
 
   widget_class->root = g_barbar_river_mode_start;
 
-  // river_mode_props[PROP_DEVICE] =
-  //     g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+  river_mode_props[PROP_MODE] =
+      g_param_spec_uint("mode", NULL, NULL, 0, 9, 9, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_mode_props);

@@ -30,6 +30,7 @@ libbarbar_src = files(
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
+  'river/barbar-river-mode.c',
 
   'widgets/barbar-label.c',
   'widgets/barbar-sensorwidget.c',
@@ -84,6 +85,7 @@ libbarbar_headers = [
   'river/barbar-river-layout.h',
   'river/barbar-river-tags.h',
   'river/barbar-river-view.h',
+  'river/barbar-river-mode.h',
 
   'widgets/barbar-label.h',
   'widgets/barbar-sensorwidget.h',

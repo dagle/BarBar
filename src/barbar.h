@@ -25,6 +25,7 @@
 #include "sensors/barbar-wireplumber.h"
 
 #include "river/barbar-river-layout.h"
+#include "river/barbar-river-mode.h"
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
 
