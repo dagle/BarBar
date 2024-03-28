@@ -91,21 +91,27 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
       g_data_input_stream_read_line_finish(data_stream, res, &length, &error);
 
   EVENT_TYPE(ld, line, workspace, HYPRLAND_WORKSPACE);
+  EVENT_TYPE(ld, line, workspacev2, HYPRLAND_WORKSPACEV2);
   EVENT_TYPE(ld, line, focusedmon, HYPRLAND_FOCUSEDMON)
   EVENT_TYPE(ld, line, activewindow, HYPRLAND_ACTIVEWINDOW)
   EVENT_TYPE(ld, line, activewindowv2, HYPRLAND_ACTIVEWINDOWV2)
   EVENT_TYPE(ld, line, fullscreen, HYPRLAND_FULLSCREEN)
   EVENT_TYPE(ld, line, monitorremoved, HYPRLAND_MONITORREMOVED)
   EVENT_TYPE(ld, line, monitoradded, HYPRLAND_MONITORADDED)
+  EVENT_TYPE(ld, line, monitoraddedv2, HYPRLAND_MONITORADDEDV2)
   EVENT_TYPE(ld, line, createworkspace, HYPRLAND_CREATEWORKSPACE)
+  EVENT_TYPE(ld, line, createworkspacev2, HYPRLAND_CREATEWORKSPACEV2)
   EVENT_TYPE(ld, line, destroyworkspace, HYPRLAND_DESTROYWORKSPACE)
+  EVENT_TYPE(ld, line, destroyworkspacev2, HYPRLAND_DESTROYWORKSPACEV2)
   EVENT_TYPE(ld, line, moveworkspace, HYPRLAND_MOVEWORKSPACE)
+  EVENT_TYPE(ld, line, moveworkspacev2, HYPRLAND_MOVEWORKSPACEV2)
   EVENT_TYPE(ld, line, renameworkspace, HYPRLAND_RENAMEWORKSPACE)
   EVENT_TYPE(ld, line, activespecial, HYPRLAND_ACTIVESPECIAL)
   EVENT_TYPE(ld, line, activelayout, HYPRLAND_ACTIVELAYOUT)
   EVENT_TYPE(ld, line, openwindow, HYPRLAND_OPENWINDOW)
   EVENT_TYPE(ld, line, closewindow, HYPRLAND_CLOSEWINDOW)
   EVENT_TYPE(ld, line, movewindow, HYPRLAND_MOVEWINDOW)
+  EVENT_TYPE(ld, line, movewindowv2, HYPRLAND_MOVEWINDOWV2)
   EVENT_TYPE(ld, line, openlayer, HYPRLAND_OPENLAYER)
   EVENT_TYPE(ld, line, closelayer, HYPRLAND_CLOSELAYER)
   EVENT_TYPE(ld, line, submap, HYPRLAND_SUBMAP)

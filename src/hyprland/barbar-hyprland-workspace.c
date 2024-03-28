@@ -1,5 +1,6 @@
 #include "barbar-hyprland-workspace.h"
 #include "barbar-hyprland-ipc.h"
+#include "gtk4-layer-shell.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -21,32 +22,33 @@ struct _BarBarHyprlandWorkspace {
   GtkWidget parent_instance;
 
   char *output_name;
-
-  struct wl_output *output;
-
-  // struct zriver_status_manager_v1 *status_manager;
-  // struct wl_seat *seat;
-  // struct wl_output *output;
-  // struct zriver_seat_status_v1 *seat_listener;
-  // gboolean focused;
-
-  // This should be configureable, this isn't hardcoded
-  // GtkWidget *buttons[10];
-  GList *workspaces; // A list of workspaces;
-  // GArray clients;
-};
-
-struct workspace {
-  int id;
-  int num;
-
-  gboolean visible;
-  gboolean urgent;
   gboolean focused;
+  int active_workspace;
 
-  char *name;
-  char *output;
+  GSocketConnection *listener;
+
+  // struct wl_output *output;
+
+  GList *workspaces; // A list of workspaces;
 };
+
+struct MonitorEntry {
+  int id;
+  GtkWidget *button;
+};
+
+// struct workspace {
+//   int id;
+//   int num;
+//
+//   gboolean focused;
+//
+//   gboolean visible;
+//   gboolean urgent;
+//
+//   char *name;
+//   char *output;
+// };
 
 struct entry {
   int id;
@@ -79,7 +81,8 @@ static void g_barbar_hyprland_remove_workspace(BarBarHyprlandWorkspace *hypr,
                                                int id);
 
 static void g_barbar_hyprland_move_workspace(BarBarHyprlandWorkspace *hypr,
-                                             int id, int new_id);
+                                             int id, const char *workspacename,
+                                             const char *monitor_name);
 
 static void g_barbar_hyprland_rename_workspace(BarBarHyprlandWorkspace *hypr,
                                                int id, const char *name);
@@ -143,7 +146,7 @@ g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
 
   // this shouldn't need to be here in the future
   hypr_workspace_props[PROP_OUTPUT] = g_param_spec_string(
-      "output", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+      "output", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   click_signal = g_signal_new_class_handler(
       "clicked", G_TYPE_FROM_CLASS(class),
@@ -165,41 +168,85 @@ static void default_clicked_handler(BarBarHyprlandWorkspace *sway, guint tag,
   // send a clicky clock
 }
 
+static struct MonitorEntry *get_button(BarBarHyprlandWorkspace *hypr, int id) {
+  GList *list;
+  if (id <= 0) {
+    return NULL;
+  }
+
+  for (list = hypr->workspaces; list; list = list->next) {
+    struct MonitorEntry *e = list->data;
+    if (e->id == id) {
+      return e;
+    }
+  }
+  return NULL;
+}
+
 static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
                                                  gpointer data) {
   BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(data);
 
   switch (type) {
-  case HYPRLAND_WORKSPACE:
+  case HYPRLAND_WORKSPACEV2: {
+    struct MonitorEntry *entry;
+    gchar **tokens = g_strsplit(args, ",", -1);
+    int id = atoi(tokens[0]);
+
+    entry = get_button(hypr, hypr->active_workspace);
+    if (entry) {
+      printf("unfocused\n");
+      gtk_widget_add_css_class(entry->button, "unfocused");
+    }
+
+    hypr->active_workspace = id;
+
+    entry = get_button(hypr, hypr->active_workspace);
+
+    if (entry) {
+      printf("focused\n");
+      gtk_widget_add_css_class(entry->button, "focused");
+    }
+    g_strfreev(tokens);
     break;
+  }
   case HYPRLAND_FOCUSEDMON:
+    printf("focused mon: %s\n", args);
     break;
-  case HYPRLAND_CREATEWORKSPACE: {
-    int id = atoi(args);
-    g_barbar_hyprland_add_workspace(hypr, id, args);
+  case HYPRLAND_CREATEWORKSPACEV2: {
+    gchar **tokens = g_strsplit(args, ",", -1);
+
+    int id = atoi(tokens[0]);
+    g_barbar_hyprland_add_workspace(hypr, id, tokens[1]);
+    g_strfreev(tokens);
     break;
   }
-  case HYPRLAND_DESTROYWORKSPACE: {
-    int id = atoi(args);
+  case HYPRLAND_DESTROYWORKSPACEV2: {
+    gchar **tokens = g_strsplit(args, ",", -1);
+
+    int id = atoi(tokens[0]);
     g_barbar_hyprland_remove_workspace(hypr, id);
+
+    g_strfreev(tokens);
     break;
   }
-  case HYPRLAND_MOVEWORKSPACE: {
-    printf("move: %s\n", args);
-    // g_barbar_hyprland_move_workspace(hypr, id);
+  case HYPRLAND_MOVEWORKSPACEV2: {
+    gchar **tokens = g_strsplit(args, ",", -1);
+
+    int id = atoi(tokens[0]);
+    g_barbar_hyprland_move_workspace(hypr, id, tokens[1], tokens[2]);
+    g_strfreev(tokens);
     break;
   }
   case HYPRLAND_RENAMEWORKSPACE: {
-    printf("rename: %s\n", args);
-    // g_barbar_hyprland_move_workspace(hypr, id);
+    gchar **tokens = g_strsplit(args, ",", -1);
+    int id = atoi(tokens[0]);
+    g_barbar_hyprland_rename_workspace(hypr, id, tokens[1]);
+    g_strfreev(tokens);
     break;
   }
   }
 }
-struct MonitorEntry {
-  int id;
-  GtkWidget *button;
-};
 
 struct MonitorEntry *new_entry(int id, const char *name) {
 
@@ -211,7 +258,7 @@ struct MonitorEntry *new_entry(int id, const char *name) {
 }
 
 void free_entry(struct MonitorEntry *entry) {
-  g_object_unref(entry->button);
+  g_clear_pointer(&entry->button, g_object_unref);
   g_free(entry);
 }
 
@@ -259,16 +306,38 @@ static void parse_initional_workspaces(BarBarHyprlandWorkspace *hypr,
       json_reader_end_member(reader);
       json_reader_end_element(reader);
 
-      if (!strcmp(monitor, "DVI-D-1")) {
-        g_barbar_hyprland_add_workspace(hypr, id, name);
-      }
+      printf("monitor: %s\n", monitor);
+
+      // if (!g_strcmp0(monitor, "DVI-D-1")) {
+      g_barbar_hyprland_add_workspace(hypr, id, name);
+      // }
+      // printf("json: id: %d, name: %s, monitor: %s, monitor_id: %d\n", id,
+      // name,
+      //        monitor, monitor_id);
     }
-    g_object_unref(reader);
-    g_object_unref(parser);
   }
+  g_object_unref(reader);
+  g_object_unref(parser);
+}
+
+static void clicked(GtkButton *self, gpointer user_data) {
+  struct MonitorEntry *entry = user_data;
+  GError *error = NULL;
+
+  GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
+  if (error) {
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+               error->message);
+    return;
+  }
+
+  char *str = g_strdup_printf("dispatch workspace %d", entry->id);
+  g_barbar_hyprland_ipc_send_command(ipc, str, &error);
+  g_free(str);
 }
 
 static void g_barbar_hyprland_add_workspace(BarBarHyprlandWorkspace *hypr,
+
                                             int id, const char *name) {
   struct MonitorEntry *entry = new_entry(id, name);
   hypr->workspaces =
@@ -283,6 +352,7 @@ static void g_barbar_hyprland_add_workspace(BarBarHyprlandWorkspace *hypr,
     }
   }
   gtk_widget_set_parent(entry->button, GTK_WIDGET(hypr));
+  g_signal_connect(entry->button, "clicked", G_CALLBACK(clicked), entry);
   if (list->prev) {
     struct entry *prev = list->prev->data;
     gtk_widget_insert_after(entry->button, GTK_WIDGET(hypr), prev->button);
@@ -302,14 +372,28 @@ static void g_barbar_hyprland_remove_workspace(BarBarHyprlandWorkspace *hypr,
   if (list) {
     struct MonitorEntry *entry = list->data;
     gtk_widget_unparent(entry->button);
-    free_entry(entry);
+    g_free(entry);
 
     hypr->workspaces = g_list_remove_link(hypr->workspaces, list);
   }
 }
 
 static void g_barbar_hyprland_move_workspace(BarBarHyprlandWorkspace *hypr,
-                                             int id, int new_id) {}
+                                             int id, const char *workspacename,
+                                             const char *monitor_name) {
+  GList *list;
+  // for (list = hypr->workspaces; list; list = list->next) {
+  //   struct MonitorEntry *entry = list->data;
+  //   if (entry->id == id) {
+  //     break;
+  //   }
+  // }
+  //
+  // if (list) {
+  //   struct MonitorEntry *entry = list->data;
+  //   gtk_button_set_label(GTK_BUTTON(entry->button), name);
+  // }
+}
 
 static void g_barbar_hyprland_rename_workspace(BarBarHyprlandWorkspace *hypr,
                                                int id, const char *name) {
@@ -328,20 +412,24 @@ static void g_barbar_hyprland_rename_workspace(BarBarHyprlandWorkspace *hypr,
   }
 }
 
-static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
-  GdkDisplay *gdk_display;
-  GdkMonitor *monitor;
+// TODO: when we can listen for the output version 4
+//
+// static void noop() {}
+//
+// static const struct wl_output_listener wl_output_listener = {
+//     .name = wl_output_handle_name,
+//     .geometry = noop,
+//     .mode = noop,
+//     .scale = noop,
+//     .description = noop,
+//     .done = noop,
+// };
 
+static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   GError *error = NULL;
 
   BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(widget);
 
-  gdk_display = gdk_display_get_default();
-
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(hypr));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
-  hypr->output = gdk_wayland_monitor_get_wl_output(monitor);
   GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
 
   if (error) {
@@ -357,14 +445,13 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
         error->message);
     return;
   }
+
   parse_initional_workspaces(hypr, ipc);
 
-  GSocketConnection *con = g_barbar_hyprland_ipc_listner(
+  hypr->listener = g_barbar_hyprland_ipc_listner(
       g_barbar_hyprland_workspace_callback, hypr, NULL, &error);
 
-  // TODO: We need to get the output->name, we can't really do that atm
-  // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // support this. This will change in future. For now the user needs to
-  // specify
-  // the output. This will be fixed in the future.
+  if (error) {
+    g_printerr("error setting up listner: %s\n", error->message);
+  }
 }

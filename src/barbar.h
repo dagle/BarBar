@@ -29,6 +29,7 @@
 #include "river/barbar-river-tags.h"
 #include "river/barbar-river-view.h"
 
+#include "hyprland/barbar-hyprland-window.h"
 #include "hyprland/barbar-hyprland-workspace.h"
 
 #include "widgets/barbar-graph.h"

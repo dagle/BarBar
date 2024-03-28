@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_HYPRLAND_WORKSPACE_H_
-#define _BARBAR_HYPRLAND_WORKSPACE_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -37,5 +36,3 @@ G_DECLARE_FINAL_TYPE(BarBarHyprlandWorkspace, g_barbar_hyprland_workspace,
                      BARBAR, HYPRLAND_WORKSPACE, GtkWidget)
 
 G_END_DECLS
-
-#endif /* _BARBAR_HYPRLAND_WORKSPACE_H_ */
