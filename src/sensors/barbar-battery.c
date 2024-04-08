@@ -31,7 +31,14 @@ enum {
   NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  NUM_SIGNALS,
+};
+
 #define DEFAULT_INTERVAL 1000
+
+static guint battery_signals[NUM_SIGNALS];
 
 #define LOGIN_PATH "/org/freedesktop/login1"
 #define LOGIN_INTERFACE "org.freedesktop.login1.Manager"
@@ -68,6 +75,7 @@ void g_barbar_battery_set_percent(BarBarBattery *battery, double percent) {
   battery->percent = percent;
 
   g_object_notify_by_pspec(G_OBJECT(battery), battery_props[PROP_PERCENT]);
+  g_signal_emit(G_OBJECT(battery), battery_signals[TICK], 0);
 }
 
 static void g_barbar_battery_set_property(GObject *object, guint property_id,
@@ -129,6 +137,24 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
       "percent", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READWRITE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     battery_props);
+
+  /**
+   * BarBarBattery::tick:
+   * @sensor: This sensor
+   *
+   * Emit that battery has updated
+   */
+  battery_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_BATTERY,                    /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
 }
 
 static void g_barbar_battery_init(BarBarBattery *self) {

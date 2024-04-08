@@ -22,10 +22,9 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_VALUE_BUTTON (g_barbar_label_get_type())
+#define BARBAR_TYPE_VALUE_ICON (g_barbar_value_icon_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarLabel, g_barbar_label, BARBAR, LABEL, GtkWidget)
-
-void label_update(GtkWidget *object, GObject *sensor);
+G_DECLARE_FINAL_TYPE(BarBarValueIcon, g_barbar_value_icon, BARBAR, VALUE_ICON,
+                     GtkWidget)
 
 G_END_DECLS

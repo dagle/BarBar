@@ -37,8 +37,15 @@ enum {
   MEM_NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  NUM_SIGNALS,
+};
+
 // update every 10 sec
 #define DEFAULT_INTERVAL 10000
+
+static guint mem_signals[NUM_SIGNALS];
 
 // G_DEFINE_TYPE(BarBarMem, g_barbar_mem, GTK_TYPE_WIDGET)
 G_DEFINE_TYPE(BarBarMem, g_barbar_mem, BARBAR_TYPE_SENSOR)
@@ -86,7 +93,7 @@ static void g_barbar_mem_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_mem_constructed(GObject *obj);
+// static void g_barbar_mem_constructed(GObject *obj);
 
 static void g_barbar_mem_class_init(BarBarMemClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -96,7 +103,7 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
 
   gobject_class->set_property = g_barbar_mem_set_property;
   gobject_class->get_property = g_barbar_mem_get_property;
-  gobject_class->constructed = g_barbar_mem_constructed;
+  // gobject_class->constructed = g_barbar_mem_constructed;
 
   /**
    * BarBarMem:interval:
@@ -116,16 +123,33 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
       g_param_spec_double("percent", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
   g_object_class_install_properties(gobject_class, MEM_NUM_PROPERTIES,
                                     mem_props);
+  /**
+   * BarBarMem::tick:
+   * @sensor: This sensor
+   *
+   * Emit that mem has updated
+   */
+  mem_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_MEM,                        /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
 }
 
 static void g_barbar_mem_init(BarBarMem *self) {
   self->interval = DEFAULT_INTERVAL;
 }
 
-static void g_barbar_mem_constructed(GObject *obj) {
-  BarBarMem *self = BARBAR_MEM(obj);
-  G_OBJECT_CLASS(g_barbar_mem_parent_class)->constructed(obj);
-}
+// static void g_barbar_mem_constructed(GObject *obj) {
+//   BarBarMem *self = BARBAR_MEM(obj);
+//   G_OBJECT_CLASS(g_barbar_mem_parent_class)->constructed(obj);
+// }
 
 gboolean g_barbar_mem_update(gpointer data) {
   BarBarMem *self = BARBAR_MEM(data);
@@ -138,6 +162,7 @@ gboolean g_barbar_mem_update(gpointer data) {
       (1.0 - ((double)(mem.total - mem.user)) / ((double)mem.total));
 
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[MEM_PROP_PERCENT]);
+  g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
 

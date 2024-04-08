@@ -39,8 +39,15 @@ enum {
   CPU_NUM_PROPERTIES,
 };
 
+enum {
+  TICK,
+  NUM_SIGNALS,
+};
+
 // update every 10 sec
 #define DEFAULT_INTERVAL 10000
+
+static guint cpu_signals[NUM_SIGNALS];
 
 static GParamSpec *cpu_props[CPU_NUM_PROPERTIES] = {
     NULL,
@@ -119,6 +126,24 @@ static void g_barbar_cpu_class_init(BarBarCpuClass *class) {
 
   g_object_class_install_properties(gobject_class, CPU_NUM_PROPERTIES,
                                     cpu_props);
+
+  /**
+   * BarBarCpu::tick:
+   * @sensor: This sensor
+   *
+   * Emit that cpu has updated
+   */
+  cpu_signals[TICK] =
+      g_signal_new("tick",                                 /* signal_name */
+                   BARBAR_TYPE_CPU,                        /* itype */
+                   G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED, /* signal_flags */
+                   0,                                      /* class_offset */
+                   NULL,                                   /* accumulator */
+                   NULL,                                   /* accu_data */
+                   NULL,                                   /* c_marshaller */
+                   G_TYPE_NONE,                            /* return_type */
+                   0                                       /* n_params */
+      );
 }
 
 static void g_barbar_cpu_init(BarBarCpu *self) {
@@ -150,6 +175,7 @@ static gboolean g_barbar_cpu_update(gpointer data) {
   self->prev_total = total;
 
   g_object_notify_by_pspec(G_OBJECT(self), cpu_props[CPU_PROP_PERCENT]);
+  g_signal_emit(G_OBJECT(self), cpu_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
 

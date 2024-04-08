@@ -38,6 +38,7 @@
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
+#include "widgets/barbar-valueicon.h"
 
 #include "tray/barbar-dbusmenu.h"
 #include "tray/barbar-tray-item.h"

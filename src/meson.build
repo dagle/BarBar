@@ -46,6 +46,7 @@ libbarbar_src = files(
   'widgets/barbar-sensorwidget.c',
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
+  'widgets/barbar-valueicon.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
@@ -90,6 +91,8 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
+
+  'widgets/barbar-valueicon.h',
 
   # 'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-workspace.h',
