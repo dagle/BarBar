@@ -100,7 +100,7 @@ g_barbar_hyprland_workspace_set_output(BarBarHyprlandWorkspace *hypr,
   g_free(hypr->output_name);
 
   if (output) {
-    hypr->output_name = strdup(output);
+    hypr->output_name = g_strdup(output);
   }
   g_object_notify_by_pspec(G_OBJECT(hypr), hypr_workspace_props[PROP_OUTPUT]);
 }
@@ -195,8 +195,7 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
 
     entry = get_button(hypr, hypr->active_workspace);
     if (entry) {
-      printf("unfocused\n");
-      gtk_widget_add_css_class(entry->button, "unfocused");
+      gtk_widget_remove_css_class(entry->button, "focused");
     }
 
     hypr->active_workspace = id;
@@ -204,10 +203,13 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
     entry = get_button(hypr, hypr->active_workspace);
 
     if (entry) {
-      printf("focused\n");
       gtk_widget_add_css_class(entry->button, "focused");
     }
     g_strfreev(tokens);
+    break;
+  }
+  case HYPRLAND_URGENT: {
+    printf("urgent: %s\n", args);
     break;
   }
   case HYPRLAND_FOCUSEDMON:
@@ -424,6 +426,35 @@ static void g_barbar_hyprland_rename_workspace(BarBarHyprlandWorkspace *hypr,
 //     .description = noop,
 //     .done = noop,
 // };
+//
+static void parse_active_workspace(BarBarHyprlandWorkspace *hypr,
+                                   GSocketConnection *ipc) {
+  JsonParser *parser;
+  GInputStream *input_stream;
+  GError *err = NULL;
+  parser = json_parser_new();
+
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc));
+  gboolean ret = json_parser_load_from_stream(parser, input_stream, NULL, &err);
+
+  if (!ret) {
+    g_printerr("Hyprland workspace: Failed to parse json: %s", err->message);
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+
+  json_reader_read_member(reader, "id");
+  int id = json_reader_get_int_value(reader);
+  struct MonitorEntry *entry = get_button(hypr, id);
+  if (entry) {
+    gtk_widget_add_css_class(entry->button, "focused");
+  }
+  hypr->active_workspace = id;
+  json_reader_end_member(reader);
+
+  g_object_unref(reader);
+  g_object_unref(parser);
+}
 
 static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   GError *error = NULL;
@@ -447,6 +478,26 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   }
 
   parse_initional_workspaces(hypr, ipc);
+  g_object_unref(ipc);
+
+  ipc = g_barbar_hyprland_ipc_controller(&error);
+
+  if (error) {
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+               error->message);
+    return;
+  }
+
+  g_barbar_hyprland_ipc_send_command(ipc, "j/activeworkspace", &error);
+  if (error) {
+    g_printerr(
+        "Hyprland workspace: Error sending command for initial workspace: %s",
+        error->message);
+    return;
+  }
+  parse_active_workspace(hypr, ipc);
+
+  g_object_unref(ipc);
 
   hypr->listener = g_barbar_hyprland_ipc_listner(
       g_barbar_hyprland_workspace_callback, hypr, NULL, &error);

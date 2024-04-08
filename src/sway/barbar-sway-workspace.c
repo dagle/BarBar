@@ -13,21 +13,19 @@
 // TODO:  We need to match against names and not just numbers
 // because if the namespace is named, it isn't a number
 
+/**
+ * BarBarSwayWorkspace:
+ *
+ * A widget to display the sway workspaces as a list of buttons
+ */
 struct _BarBarSwayWorkspace {
   GtkWidget parent_instance;
 
   char *output_name;
 
+  BarBarSwayIpc *ipc;
   struct wl_output *output;
 
-  // struct zriver_status_manager_v1 *status_manager;
-  // struct wl_seat *seat;
-  // struct wl_output *output;
-  // struct zriver_seat_status_v1 *seat_listener;
-  // gboolean focused;
-
-  // This should be configureable, this isn't hardcoded
-  // GtkWidget *buttons[10];
   GList *workspaces; // A list of workspaces;
 };
 
@@ -66,7 +64,8 @@ static GParamSpec *sway_workspace_props[NUM_PROPERTIES] = {
 
 static guint click_signal;
 
-static void g_barbar_sway_workspace_constructed(GObject *object);
+static void g_barbar_sway_workspace_start(GtkWidget *widget);
+
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint workspace,
                                     gpointer user_data);
 
@@ -120,10 +119,11 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
 
   gobject_class->set_property = g_barbar_sway_workspace_set_property;
   gobject_class->get_property = g_barbar_sway_workspace_get_property;
-  gobject_class->constructed = g_barbar_sway_workspace_constructed;
 
   sway_workspace_props[PROP_OUTPUT] =
       g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
+
+  widget_class->root = g_barbar_sway_workspace_start;
 
   click_signal = g_signal_new_class_handler(
       "clicked", G_TYPE_FROM_CLASS(class),
@@ -139,7 +139,6 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
 }
 
 static void g_barbar_sway_workspace_init(BarBarSwayWorkspace *self) {}
-static void g_barbar_sway_workspace_constructed(GObject *object) {}
 
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
                                     gpointer user_data) {
@@ -175,11 +174,11 @@ void g_barbar_sway_read_workspace(JsonReader *reader,
   json_reader_end_member(reader);
 
   json_reader_read_member(reader, "name");
-  workspace->name = json_reader_get_string_value(reader);
+  workspace->name = g_strdup(json_reader_get_string_value(reader));
   json_reader_end_member(reader);
 
   json_reader_read_member(reader, "output");
-  workspace->output = json_reader_get_string_value(reader);
+  workspace->output = g_strdup(json_reader_get_string_value(reader));
   json_reader_end_member(reader);
 }
 
@@ -193,8 +192,6 @@ void g_barbar_sway_workspace_add(BarBarSwayWorkspace *sway,
 
   g_barbar_sway_add_button(sway, &current);
 }
-
-static void g_barbar_workspace_free(struct workspace *workspace) {}
 
 void g_barbar_sway_workspace_empty(BarBarSwayWorkspace *sway,
                                    JsonReader *reader) {
@@ -273,7 +270,7 @@ void g_barbar_sway_workspace_move(BarBarSwayWorkspace *sway,
   json_reader_end_member(reader);
 
   // the workspace is moving away from us
-  if (!strcmp(old.output, sway->output_name)) {
+  if (!g_strcmp0(old.output, sway->output_name)) {
     for (list = sway->workspaces; list; list = list->next) {
       struct entry *e = list->data;
       if (e->num == current.num) {
@@ -442,46 +439,121 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
   }
 }
 
-void g_barbar_sway_workspace_start(BarBarSwayWorkspace *sway) {
-  GdkDisplay *gdk_display;
-  GdkMonitor *monitor;
+gboolean parse_event(BarBarSwayWorkspace *sway, const char *buf, gssize len) {
+  JsonParser *parser;
+  gboolean ret;
+  GError *err = NULL;
 
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, buf, len, &err);
+
+  if (!ret) {
+    g_printerr("Failed to parse json: %s", err->message);
+    return FALSE;
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+
+  json_reader_read_member(reader, "success");
+  gboolean success = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  return success;
+}
+
+void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
+  GInputStream *stream = G_INPUT_STREAM(object);
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
   GError *error = NULL;
-  gchar *buf = NULL;
-  int len;
-  BarBarSwayIpc *ipc;
+  char *str = NULL;
+  gsize len;
+
+  gboolean ret =
+      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+
+  if (error) {
+    return;
+  }
+  parse_event(sway, str, len);
+
+  g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
+}
+
+void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
+  GInputStream *stream = G_INPUT_STREAM(object);
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+  GError *error = NULL;
+  char *str = NULL;
+  gsize len;
+
+  gboolean ret =
+      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+
+  if (error) {
+    g_printerr("Failed to subscribe for workspace events: %s", error->message);
+    return;
+  }
+
+  if (is_success2(str, len)) {
+    g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
+  }
+  g_free(str);
+}
+
+static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
+  GInputStream *stream = G_INPUT_STREAM(object);
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+  GError *error = NULL;
+  char *str = NULL;
+  gsize len;
+  GInputStream *input_stream;
 
   const char *intrest = "[\"workspace\"]";
 
-  gdk_display = gdk_display_get_default();
+  gboolean ret =
+      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
 
-  GtkNative *native = gtk_widget_get_native(GTK_WIDGET(sway));
-  GdkSurface *surface = gtk_native_get_surface(native);
-  monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
-  sway->output = gdk_wayland_monitor_get_wl_output(monitor);
+  if (ret) {
+    g_barbar_sway_handle_workspaces(sway, str, len);
 
-  // TODO: We need to get the output->name, we can't really do that atm
-  // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // support this. This will change in future. For now the user needs to specify
-  // the output. This will be fixed in the future.
+    g_barbar_sway_ipc_send(sway->ipc, SWAY_SUBSCRIBE, intrest);
 
-  ipc = g_barbar_sway_ipc_connect(&error);
+    input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
+    g_barbar_sway_ipc_read_async(input_stream, NULL, sub_cb, sway);
+  }
+}
+
+static void g_barbar_sway_workspace_start(GtkWidget *widget) {
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(widget);
+  GInputStream *input_stream;
+
+  GError *error = NULL;
+  // gchar *buf = NULL;
+  // int len;
+  // BarBarSwayIpc *ipc;
+  //
+
+  sway->ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
     g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
                error->message);
     return;
   }
-  // g_barbar_sway_ipc_subscribe(connection, payload);
-  g_barbar_sway_ipc_send(ipc, SWAY_GET_WORKSPACES, "");
-  len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
-  if (len > 0) {
-    g_barbar_sway_handle_workspaces(sway, buf, len);
 
-    g_free(buf);
-  }
+  g_barbar_sway_ipc_send(sway->ipc, SWAY_GET_WORKSPACES, "");
 
-  g_barbar_sway_ipc_subscribe(ipc, intrest, sway,
-                              g_barbar_sway_handle_workspaces_change);
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
 
-  // g_barbar_sway_ipc_close(ipc);
+  g_barbar_sway_ipc_read_async(input_stream, NULL, sub_cb, sway);
+  // if (len > 0) {
+  //   g_barbar_sway_handle_workspaces(sway, buf, len);
+  //
+  //   g_free(buf);
+  // }
+
+  // g_barbar_sway_ipc_subscribe(sway->ipc, intrest, sway,
+  //                             g_barbar_sway_handle_workspaces_change);
+
+  // sway->subscribe = g_barbar_sway_ipc_subscribe(intrest,
+  //                             g_barbar_sway_handle_workspaces_change, sway);
 }

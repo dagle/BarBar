@@ -150,8 +150,8 @@ static void g_barbar_hyprland_window_callback(uint32_t type, char *args,
   }
 }
 
-static void parse_initional_workspaces(BarBarHyprlandWindow *hypr,
-                                       GSocketConnection *ipc) {
+static void parse_active_workspace(BarBarHyprlandWindow *hypr,
+                                   GSocketConnection *ipc) {
   JsonParser *parser;
   GInputStream *input_stream;
   GError *err = NULL;
@@ -242,7 +242,7 @@ static void g_barbar_hyprland_window_map(GtkWidget *widget) {
         error->message);
     return;
   }
-  parse_initional_workspaces(hypr, ipc);
+  parse_active_workspace(hypr, ipc);
   g_object_unref(ipc);
 
   hypr->listener = g_barbar_hyprland_ipc_listner(

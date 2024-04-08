@@ -39,15 +39,15 @@ static GParamSpec *inhibitor_props[NUM_PROPERTIES] = {
 static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr);
 
 static void
-barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface);
+g_barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE(
     BarBarInhibitor, g_barbar_inhibitor, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE(BARBAR_TYPE_SENSOR_CONTEXT,
-                          barbar_sensor_context_iface_init));
+                          g_barbar_sensor_context_iface_init));
 
 static void
-barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface) {
+g_barbar_sensor_context_iface_init(BarBarSensorContextInterface *iface) {
   iface->start = g_barbar_inhibitor_start;
 }
 

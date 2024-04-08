@@ -4,10 +4,6 @@ libbarbar_src = files(
   'barbar-background.c',
   'barbar-util.c',
   'barbar-error.c',
-  # 'barbar-disk.c',
-  # 'barbar-mpd.c',
-
-  # 'widgets/barbar-rotary.c',
 
   'sensors/barbar-battery.c',
   'sensors/barbar-sensor.c',
@@ -26,27 +22,30 @@ libbarbar_src = files(
   'sensors/barbar-pomodoro.c',
   'sensors/barbar-power-profiles.c',
   'sensors/barbar-systemd-units.c',
+  'sensors/barbar-weather.c',
+  # 'barbar-disk.c',
+  # 'barbar-mpd.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
   'river/barbar-river-view.c',
   'river/barbar-river-mode.c',
 
+  'sway/barbar-sway-ipc.c',
+  'sway/barbar-sway-workspace.c',
+  'sway/barbar-sway-window.c',
+
+  'hyprland/barbar-hyprland-ipc.c',
+  'hyprland/barbar-hyprland-workspace.c',
+  'hyprland/barbar-hyprland-window.c',
+
+  # 'dwl/barbar-dwl-service.c',
+  # 'dwl/barbar-dwl-tags.c',
+
   'widgets/barbar-label.c',
   'widgets/barbar-sensorwidget.c',
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
-
-  # 'river/barbar-river-mode.c',
-  # 'sway/barbar-sway-ipc.c',
-  # 'sway/barbar-sway-workspace.c',
-  # 'sway/barbar-sway-window.c',
-  'hyprland/barbar-hyprland-ipc.c',
-  'hyprland/barbar-hyprland-workspace.c',
-  'hyprland/barbar-hyprland-window.c',
-  # 'dwl/barbar-dwl-service.c',
-  # 'dwl/barbar-dwl-tags.c',
-  'sensors/barbar-weather.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
@@ -59,10 +58,6 @@ libbarbar_headers = [
   'barbar-background.h',
   'barbar-util.h',
   'barbar-error.h',
-  # 'barbar-disk.h',
-  # 'barbar-mpd.h',
-  #
-  # 'widgets/barbar-rotary.c',
 
   'sensors/barbar-battery.h',
   'sensors/barbar-sensor.h',
@@ -80,6 +75,9 @@ libbarbar_headers = [
   'sensors/barbar-pomodoro.h',
   'sensors/barbar-power-profiles.h',
   'sensors/barbar-systemd-units.h',
+  'sensors/barbar-weather.h',
+  # 'barbar-disk.h',
+  # 'barbar-mpd.h',
 
   'sensors/barbar-mpris.h',
 
@@ -92,17 +90,17 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
-  # 'river/barbar-river-mode.h',
-  # 'sway/barbar-sway-ipc.h',
-  # 'sway/barbar-sway-workspace.h',
-  # 'sway/barbar-sway-window.h',
+
   # 'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
+
   # 'dwl/barbar-dwl-service.h',
   # 'dwl/barbar-dwl-tags.h',
-  'sensors/barbar-weather.h',
-  # 'barbar-inhibitor.h',
+ 
+  # 'sway/barbar-sway-ipc.h',
+  'sway/barbar-sway-workspace.h',
+  'sway/barbar-sway-window.h',
 
   'tray/barbar-watcher.h',
   # 'tray/barbar-tray-item.h',

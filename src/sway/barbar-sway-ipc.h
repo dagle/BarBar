@@ -33,6 +33,7 @@
 
 G_BEGIN_DECLS
 
+// request type
 typedef enum {
   SWAY_RUN_COMMAND,
   SWAY_GET_WORKSPACES,
@@ -55,6 +56,7 @@ typedef enum {
 typedef struct _BarBarSwayIpc BarBarSwayIpc;
 typedef struct _BarBarSwayIpcAsyncData BarBarSwayIpcAsyncData;
 
+// add error
 typedef void (*BarBarSwaySubscribeCallback)(gchar *payload, uint32_t length,
                                             uint32_t type, gpointer data);
 
@@ -85,6 +87,15 @@ gssize g_barbar_sway_ipc_read(BarBarSwayIpc *ipc, gchar **payload,
 void g_barbar_sway_ipc_subscribe(BarBarSwayIpc *ipc, const char *payload,
                                  gpointer data,
                                  BarBarSwaySubscribeCallback callback);
+
+void g_barbar_sway_ipc_read_async(GInputStream *input_stream,
+                                  GCancellable *cancellable,
+                                  GAsyncReadyCallback callback, gpointer data);
+
+gboolean g_barbar_sway_ipc_read_finish(GInputStream *stream,
+                                       GAsyncResult *result, guint32 *type,
+                                       char **contents, gsize *length,
+                                       GError **error);
 
 BarBarSwayIpc *g_barbar_sway_ipc_connect(GError **err);
 

@@ -3,6 +3,7 @@
 typedef enum {
   BARBAR_ERROR_COMPOSITOR,
   BARBAR_ERROR_BAD_VALUE,
+  BARBAR_ERROR_BAD_SWAY_IPC,
 } BarBarError;
 
 #define BARBAR_ERROR (g_barbar_error_quark())

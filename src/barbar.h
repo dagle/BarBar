@@ -32,6 +32,8 @@
 #include "hyprland/barbar-hyprland-window.h"
 #include "hyprland/barbar-hyprland-workspace.h"
 
+#include "sway/barbar-sway-workspace.h"
+
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-rotary.h"

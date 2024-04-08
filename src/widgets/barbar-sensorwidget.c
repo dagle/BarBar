@@ -154,6 +154,6 @@ static void g_barbar_sensor_widget_map(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_sensor_widget_parent_class)->map(widget);
 
   if (sw->sensor) {
-    barbar_sensor_context_start(sw->sensor, widget);
+    g_barbar_sensor_context_start(sw->sensor, widget);
   }
 }

@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_SWAY_WORKSPACE_H_
-#define _BARBAR_SWAY_WORKSPACE_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -36,8 +35,4 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarSwayWorkspace, g_barbar_sway_workspace, BARBAR,
                      SWAY_WORKSPACE, GtkWidget)
 
-void g_barbar_sway_workspace_start(BarBarSwayWorkspace *spaces);
-
 G_END_DECLS
-
-#endif /* _BARBAR_SWAY_WORKSPACE_H_ */
