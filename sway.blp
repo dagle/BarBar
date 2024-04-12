@@ -3,10 +3,14 @@ using BarBar 1.0;
 
 // Check the river.blp for a full example
 BarBar.Bar {
-  bar-pos: top;
+  bar-pos: bot;
   Gtk.ActionBar {
     [start]
     BarBar.SwayWorkspace {
+    }
+
+    [start]
+    BarBar.SwayWindow {
     }
   }
 }

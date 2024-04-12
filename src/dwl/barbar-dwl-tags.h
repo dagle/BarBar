@@ -31,11 +31,10 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_DWL_TAG (g_barbar_dwl_tag_get_type())
+#define BARBAR_TYPE_DWL_TAGS (g_barbar_dwl_tags_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarDwlTag, g_barbar_dwl_tag, BARBAR, DWL_TAG, GtkWidget)
-
-void g_barbar_dwl_tag_start(BarBarDwlTag *tag);
+G_DECLARE_FINAL_TYPE(BarBarDwlTags, g_barbar_dwl_tags, BARBAR, DWL_TAGS,
+                     GtkWidget)
 
 G_END_DECLS
 

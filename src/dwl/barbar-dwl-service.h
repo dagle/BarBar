@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_DWL_SERVICE_H_
-#define _BARBAR_DWL_SERVICE_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -35,8 +34,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDwlService, g_barbar_dwl_service, BARBAR,
                      DWL_SERVICE, GObject)
 
-BarBarDwlService *g_barbar_dwl_service_new(void);
+BarBarDwlService *g_barbar_dwl_service_new(const char *pipe);
 
 G_END_DECLS
-
-#endif /* _BARBAR_DWL_SERVICE_H_ */

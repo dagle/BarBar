@@ -26,6 +26,7 @@
 #include "barbar-label.h"
 #include "sensors/barbar-sensor.h"
 #include <tmpl-glib.h>
+
 struct _BarBarLabel {
   GtkWidget parent_instance;
 
@@ -95,7 +96,7 @@ static void g_barbar_label_set_label(BarBarLabel *label, char *text) {
   g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_LABEL]);
 }
 
-static void update(BarBarSensor *sensor, gpointer data) {
+static void update(gpointer data, BarBarSensor *sensor) {
 
   BarBarLabel *label = BARBAR_LABEL(data);
   if (!label->tmpl) {
@@ -143,7 +144,7 @@ static void g_barbar_label_set_sensor(BarBarLabel *label, gpointer data) {
   label->sensor = g_object_ref(data);
 
   // change this to update
-  g_signal_connect(label->sensor, "tick", G_CALLBACK(update), label);
+  g_signal_connect_swapped(label->sensor, "tick", G_CALLBACK(update), label);
 
   g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_SENSOR]);
 }

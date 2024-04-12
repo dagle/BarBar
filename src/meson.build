@@ -32,6 +32,7 @@ libbarbar_src = files(
   'river/barbar-river-mode.c',
 
   'sway/barbar-sway-ipc.c',
+  'sway/barbar-sway-subscribe.c',
   'sway/barbar-sway-workspace.c',
   'sway/barbar-sway-window.c',
 
@@ -39,8 +40,9 @@ libbarbar_src = files(
   'hyprland/barbar-hyprland-workspace.c',
   'hyprland/barbar-hyprland-window.c',
 
-  # 'dwl/barbar-dwl-service.c',
-  # 'dwl/barbar-dwl-tags.c',
+  'dwl/barbar-dwl-status.c',
+  'dwl/barbar-dwl-service.c',
+  'dwl/barbar-dwl-tags.c',
 
   'widgets/barbar-label.c',
   'widgets/barbar-sensorwidget.c',
@@ -98,10 +100,12 @@ libbarbar_headers = [
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
 
-  # 'dwl/barbar-dwl-service.h',
-  # 'dwl/barbar-dwl-tags.h',
+  'dwl/barbar-dwl-status.h',
+  'dwl/barbar-dwl-service.h',
+  'dwl/barbar-dwl-tags.h',
  
-  # 'sway/barbar-sway-ipc.h',
+  'sway/barbar-sway-ipc.h',
+  'sway/barbar-sway-subscribe.h',
   'sway/barbar-sway-workspace.h',
   'sway/barbar-sway-window.h',
 

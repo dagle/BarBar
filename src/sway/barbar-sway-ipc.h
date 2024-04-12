@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_SWAY_IPC_H_
-#define _BARBAR_SWAY_IPC_H_
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -53,40 +52,28 @@ typedef enum {
   SWAY_GET_SEATS = 101,
 } BarBarSwayMessageType;
 
+typedef enum {
+  SWAY_WORKSPACE_EVENT = 0x80000000,
+  SWAY_OUTPUT_EVENT = 0x80000001,
+  SWAY_MODE_EVENT = 0x80000002,
+  SWAY_WINDOW_EVENT = 0x80000003,
+  SWAY_BARCONFIG_EVENT = 0x80000004,
+  SWAY_BINDING_EVENT = 0x80000005,
+  SWAY_SHUTDOWN_EVENT = 0x80000006,
+  SWAY_TICK_EVENT = 0x80000007,
+  SWAY_BARSTATE_EVENT = 0x80000014,
+  SWAY_INPUT_EVENT = 0x80000015,
+} BarBarSwayEventType;
+
 typedef struct _BarBarSwayIpc BarBarSwayIpc;
-typedef struct _BarBarSwayIpcAsyncData BarBarSwayIpcAsyncData;
 
-// add error
-typedef void (*BarBarSwaySubscribeCallback)(gchar *payload, uint32_t length,
-                                            uint32_t type, gpointer data);
+GSocketConnection *g_barbar_sway_ipc_connect(GError **error);
 
-struct _BarBarSwayIpc {
-  GSocketConnection *connection;
+gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream, guint type,
+                                const char *payload, GError **error);
 
-  BarBarSwayIpcAsyncData *subscribe_data;
-};
-
-struct _BarBarSwayIpcAsyncData {
-  // A pointer to the class pointer
-  // A bit like a parrent pointer
-  gpointer *data;
-  uint32_t type;
-  uint32_t plen;
-  gchar *header;
-
-  gchar *payload;
-  BarBarSwaySubscribeCallback callback;
-};
-
-gboolean g_barbar_sway_ipc_send(BarBarSwayIpc *ipc, guint type,
-                                const char *payload);
-
-gssize g_barbar_sway_ipc_read(BarBarSwayIpc *ipc, gchar **payload,
-                              GError **error);
-
-void g_barbar_sway_ipc_subscribe(BarBarSwayIpc *ipc, const char *payload,
-                                 gpointer data,
-                                 BarBarSwaySubscribeCallback callback);
+gssize g_barbar_sway_ipc_read(GInputStream *input_stream, guint32 *type,
+                              gchar **payload, gsize *length, GError **error);
 
 void g_barbar_sway_ipc_read_async(GInputStream *input_stream,
                                   GCancellable *cancellable,
@@ -97,8 +84,6 @@ gboolean g_barbar_sway_ipc_read_finish(GInputStream *stream,
                                        char **contents, gsize *length,
                                        GError **error);
 
-BarBarSwayIpc *g_barbar_sway_ipc_connect(GError **err);
+gboolean g_barbar_sway_message_is_success(const char *buf, gssize len);
 
 G_END_DECLS
-
-#endif /* _BARBAR_SWAY_IPC_H_ */

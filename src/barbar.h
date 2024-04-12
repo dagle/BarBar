@@ -32,7 +32,13 @@
 #include "hyprland/barbar-hyprland-window.h"
 #include "hyprland/barbar-hyprland-workspace.h"
 
+#include "sway/barbar-sway-subscribe.h"
+#include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"
+
+#include "dwl/barbar-dwl-service.h"
+#include "dwl/barbar-dwl-status.h"
+#include "dwl/barbar-dwl-tags.h"
 
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"

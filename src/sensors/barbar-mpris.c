@@ -1,4 +1,5 @@
 #include "barbar-mpris.h"
+#include <gmodule.h>
 #include <playerctl/playerctl.h>
 #include <stdio.h>
 

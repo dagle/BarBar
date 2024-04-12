@@ -1,5 +1,6 @@
 #include "sway/barbar-sway-workspace.h"
 #include "sway/barbar-sway-ipc.h"
+#include "sway/barbar-sway-subscribe.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -23,7 +24,8 @@ struct _BarBarSwayWorkspace {
 
   char *output_name;
 
-  BarBarSwayIpc *ipc;
+  GSocketConnection *ipc;
+  BarBarSwaySubscribe *sub;
   struct wl_output *output;
 
   GList *workspaces; // A list of workspaces;
@@ -78,8 +80,8 @@ static void g_barbar_sway_workspace_set_output(BarBarSwayWorkspace *sway,
 
   g_free(sway->output_name);
 
-  sway->output_name = strdup(output);
-  g_object_notify_by_pspec(G_OBJECT(clock), sway_workspace_props[PROP_OUTPUT]);
+  sway->output_name = g_strdup(output);
+  g_object_notify_by_pspec(G_OBJECT(sway), sway_workspace_props[PROP_OUTPUT]);
 }
 
 static void g_barbar_sway_workspace_set_property(GObject *object,
@@ -141,9 +143,7 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
 static void g_barbar_sway_workspace_init(BarBarSwayWorkspace *self) {}
 
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
-                                    gpointer user_data) {
-  // send a clicky clock
-}
+                                    gpointer user_data) {}
 
 void print_workspace(char *name, struct workspace *workspace) {
   printf("%s: %d %s %d %d %d %s\n", name, workspace->num, workspace->name,
@@ -227,6 +227,10 @@ void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &old);
   json_reader_end_member(reader);
 
+  // TODO:
+  if (!g_strcmp0(sway->output_name, old.output)) {
+  }
+
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
     if (e->num == old.num) {
@@ -241,6 +245,10 @@ void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
   json_reader_read_member(reader, "current");
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
+
+  // TODO:
+  if (!g_strcmp0(sway->output_name, current.output)) {
+  }
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
@@ -331,13 +339,17 @@ void g_barbar_sway_workspace_reload(BarBarSwayWorkspace *sway,
   // reload everythg
 }
 
-static void g_barbar_sway_handle_workspaces_change(gchar *payload, uint32_t len,
-                                                   uint32_t type,
+static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
+                                                   uint32_t len, uint32_t type,
                                                    gpointer data) {
   JsonParser *parser;
   gboolean ret;
   GError *err = NULL;
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+
+  if (type != SWAY_WORKSPACE_EVENT) {
+    return;
+  }
 
   parser = json_parser_new();
   ret = json_parser_load_from_data(parser, payload, len, &err);
@@ -351,6 +363,8 @@ static void g_barbar_sway_handle_workspaces_change(gchar *payload, uint32_t len,
   json_reader_read_member(reader, "change");
   const char *change = json_reader_get_string_value(reader);
   json_reader_end_member(reader);
+
+  // TODO: Add a check if output == sway->output_name
 
   if (!strcmp(change, "init")) {
     g_barbar_sway_workspace_add(sway, reader);
@@ -439,65 +453,10 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
   }
 }
 
-gboolean parse_event(BarBarSwayWorkspace *sway, const char *buf, gssize len) {
-  JsonParser *parser;
-  gboolean ret;
-  GError *err = NULL;
-
-  parser = json_parser_new();
-  ret = json_parser_load_from_data(parser, buf, len, &err);
-
-  if (!ret) {
-    g_printerr("Failed to parse json: %s", err->message);
-    return FALSE;
-  }
-
-  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
-
-  json_reader_read_member(reader, "success");
-  gboolean success = json_reader_get_boolean_value(reader);
-  json_reader_end_member(reader);
-
-  return success;
-}
-
-void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
+static void event_listner(BarBarSwaySubscribe *sub, guint type,
+                          const char *payload, guint length, gpointer data) {
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
-  GError *error = NULL;
-  char *str = NULL;
-  gsize len;
-
-  gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
-
-  if (error) {
-    return;
-  }
-  parse_event(sway, str, len);
-
-  g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
-}
-
-void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
-  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
-  GError *error = NULL;
-  char *str = NULL;
-  gsize len;
-
-  gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
-
-  if (error) {
-    g_printerr("Failed to subscribe for workspace events: %s", error->message);
-    return;
-  }
-
-  if (is_success2(str, len)) {
-    g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
-  }
-  g_free(str);
+  g_barbar_sway_handle_workspaces_change(payload, length, type, sway);
 }
 
 static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
@@ -506,32 +465,31 @@ static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
   GError *error = NULL;
   char *str = NULL;
   gsize len;
-  GInputStream *input_stream;
-
-  const char *intrest = "[\"workspace\"]";
 
   gboolean ret =
       g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
 
+  if (error) {
+    g_printerr("Failed to get workspaces: %s\n", error->message);
+    return;
+  }
   if (ret) {
     g_barbar_sway_handle_workspaces(sway, str, len);
 
-    g_barbar_sway_ipc_send(sway->ipc, SWAY_SUBSCRIBE, intrest);
-
-    input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-    g_barbar_sway_ipc_read_async(input_stream, NULL, sub_cb, sway);
+    g_signal_connect(sway->sub, "event", G_CALLBACK(event_listner), sway);
+    g_barbar_sway_subscribe_connect(sway->sub, &error);
   }
+
+  g_free(str);
 }
 
 static void g_barbar_sway_workspace_start(GtkWidget *widget) {
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(widget);
   GInputStream *input_stream;
-
+  GOutputStream *output_stream;
   GError *error = NULL;
-  // gchar *buf = NULL;
-  // int len;
-  // BarBarSwayIpc *ipc;
-  //
+
+  GTK_WIDGET_CLASS(g_barbar_sway_workspace_parent_class)->root(widget);
 
   sway->ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {
@@ -540,20 +498,26 @@ static void g_barbar_sway_workspace_start(GtkWidget *widget) {
     return;
   }
 
-  g_barbar_sway_ipc_send(sway->ipc, SWAY_GET_WORKSPACES, "");
+  sway->sub =
+      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
+
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
+
+  g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
+
+  if (error != NULL) {
+    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
+               error->message);
+    return;
+  }
+
+  if (error != NULL) {
+    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
+               error->message);
+    return;
+  }
 
   input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
 
-  g_barbar_sway_ipc_read_async(input_stream, NULL, sub_cb, sway);
-  // if (len > 0) {
-  //   g_barbar_sway_handle_workspaces(sway, buf, len);
-  //
-  //   g_free(buf);
-  // }
-
-  // g_barbar_sway_ipc_subscribe(sway->ipc, intrest, sway,
-  //                             g_barbar_sway_handle_workspaces_change);
-
-  // sway->subscribe = g_barbar_sway_ipc_subscribe(intrest,
-  //                             g_barbar_sway_handle_workspaces_change, sway);
+  g_barbar_sway_ipc_read_async(input_stream, NULL, workspaces_cb, sway);
 }

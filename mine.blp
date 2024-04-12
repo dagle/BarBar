@@ -62,6 +62,13 @@ BarBar.Bar {
       use-markup: true;
     }
 
+    //[end]
+    // BarBar.Label {
+    //  sensor: bind mpris.current-player;
+    //  templ: "{{Playerctl.name}} {{if Playerctl.playing}}▶{{else if Playerctl.paused}}⏸{{else}}⏹{{end}} {{Playerctl.artist}} - {{Playerctl.title}}";
+    //  use-markup: true;
+    //}
+
     [end]
     BarBar.Label {
       sensor: battery;
@@ -240,6 +247,9 @@ BarBar.Cpu cpu {
 
 BarBar.Network network {
   interface: "wlan0";
+}
+
+BarBar.Mpris mpris {
 }
 
 BarBar.Backlight backlight {

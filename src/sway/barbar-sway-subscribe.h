@@ -30,9 +30,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_SWAY_WINDOW (g_barbar_sway_window_get_type())
+#define BARBAR_TYPE_SWAY_SUBSCRIBE (g_barbar_sway_subscribe_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarSwayWindow, g_barbar_sway_window, BARBAR,
-                     SWAY_WINDOW, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarSwaySubscribe, g_barbar_sway_subscribe, BARBAR,
+                     SWAY_SUBSCRIBE, GObject)
+
+GObject *g_barbar_sway_subscribe_new(const char *interest);
+
+void g_barbar_sway_subscribe_connect(BarBarSwaySubscribe *self, GError **error);
 
 G_END_DECLS
