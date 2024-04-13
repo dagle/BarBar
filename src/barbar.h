@@ -37,7 +37,6 @@
 #include "sway/barbar-sway-workspace.h"
 
 #include "dwl/barbar-dwl-service.h"
-#include "dwl/barbar-dwl-status.h"
 #include "dwl/barbar-dwl-tags.h"
 
 #include "widgets/barbar-graph.h"

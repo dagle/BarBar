@@ -44,7 +44,6 @@ void g_barbar_init(void) {
   g_barbar_hyprland_window_get_type();
 
   g_barbar_dwl_service_get_type();
-  g_barbar_dwl_status_get_type();
   g_barbar_dwl_tags_get_type();
 
   g_barbar_dbus_menu_get_type();
