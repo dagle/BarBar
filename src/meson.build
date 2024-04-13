@@ -40,7 +40,6 @@ libbarbar_src = files(
   'hyprland/barbar-hyprland-workspace.c',
   'hyprland/barbar-hyprland-window.c',
 
-  'dwl/barbar-dwl-status.c',
   'dwl/barbar-dwl-service.c',
   'dwl/barbar-dwl-tags.c',
 
@@ -100,7 +99,6 @@ libbarbar_headers = [
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
 
-  'dwl/barbar-dwl-status.h',
   'dwl/barbar-dwl-service.h',
   'dwl/barbar-dwl-tags.h',
  
