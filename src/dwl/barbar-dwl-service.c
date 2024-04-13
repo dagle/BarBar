@@ -1,6 +1,5 @@
 #include "dwl/barbar-dwl-service.h"
 #include "barbar-error.h"
-#include "dwl/barbar-dwl-status.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
 #include <stdint.h>
@@ -10,7 +9,6 @@
 struct _BarBarDwlService {
   GObject parent_instance;
 
-  BarBarDwlStatus *status;
   GDataInputStream *input;
   GInputStream *stream;
 
@@ -24,15 +22,6 @@ struct _BarBarDwlService {
   uint32_t counter;
 };
 
-// example output
-// WL-1 tags 0 1 0 0
-// WL-1 layout []=
-// WL-1 title
-// WL-1 appid
-// WL-1 fullscreen
-// WL-1 floating
-// WL-1 selmon 1
-
 typedef enum {
   DWL_TAGS,
   DWL_LAYOUT,
@@ -43,7 +32,20 @@ typedef enum {
   DWL_SELMON,
 } g_barbar_dwl_message_kind;
 
-static void parse_line(char *line, BarBarDwlStatus *status, GError **error) {
+enum {
+  TAGS,
+  LAYOUT,
+  TITLE,
+  APPID,
+  FULLSCREEN,
+  FLOATING,
+  SELMON,
+  NUM_SIGNALS,
+};
+
+static guint dwl_service_signals[NUM_SIGNALS];
+
+static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   g_barbar_dwl_message_kind kind;
   uint32_t num;
 
@@ -53,70 +55,118 @@ static void parse_line(char *line, BarBarDwlStatus *status, GError **error) {
 
   char *save_pointer = NULL;
   char *string = strtok_r(line, " ", &save_pointer);
-  gssize id = 0;
-  while (string != NULL) {
+  char *output_name;
 
-    if (id == 0) {
-      status->output_name = g_strdup(string);
-    } else if (id == 1) {
-      if (strcmp(string, "title") == 0) {
-        kind = DWL_TITLE;
-      } else if (strcmp(string, "appid") == 0) {
-        kind = DWL_APPID;
-      } else if (strcmp(string, "fullscreen") == 0) {
-        kind = DWL_FULLSCREEN;
-      } else if (strcmp(string, "floating") == 0) {
-        kind = DWL_FLOATING;
-      } else if (strcmp(string, "selmon") == 0) {
-        kind = DWL_SELMON;
-      } else if (strcmp(string, "tags") == 0) {
-        kind = DWL_TAGS;
-      } else if (strcmp(string, "layout") == 0) {
-        kind = DWL_LAYOUT;
-      } else {
-        g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_VALUE,
-                    "%s not a valid kind", string);
-        g_free(status->output_name);
-        g_free(status);
+  if (!string) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                "empty line from ipc");
+    return;
+  }
+
+  output_name = string;
+
+  string = strtok_r(NULL, " ", &save_pointer);
+
+  if (!string) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                "No kind paramenter");
+    return;
+  }
+
+  if (strcmp(string, "title") == 0) {
+    kind = DWL_TITLE;
+  } else if (strcmp(string, "appid") == 0) {
+    kind = DWL_APPID;
+  } else if (strcmp(string, "fullscreen") == 0) {
+    kind = DWL_FULLSCREEN;
+  } else if (strcmp(string, "floating") == 0) {
+    kind = DWL_FLOATING;
+  } else if (strcmp(string, "selmon") == 0) {
+    kind = DWL_SELMON;
+  } else if (strcmp(string, "tags") == 0) {
+    kind = DWL_TAGS;
+  } else if (strcmp(string, "layout") == 0) {
+    kind = DWL_LAYOUT;
+  } else {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                "%s not a valid kind", string);
+    return;
+  }
+
+  string = strtok_r(NULL, " ", &save_pointer);
+
+  if (string) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                "No argument for type: %d", kind);
+    return;
+  }
+
+  switch (kind) {
+  case DWL_TITLE: {
+    char *title = string;
+    g_signal_emit(service, dwl_service_signals[TITLE], 0, output_name, title);
+    break;
+  }
+  case DWL_APPID: {
+    char *appid = string;
+    g_signal_emit(service, dwl_service_signals[APPID], 0, output_name, appid);
+    break;
+  }
+  case DWL_FULLSCREEN: {
+    gboolean fullscreen = g_strcmp0(string, "0") != 0;
+    g_signal_emit(service, dwl_service_signals[FULLSCREEN], 0, output_name,
+                  fullscreen);
+    break;
+  }
+  case DWL_FLOATING: {
+    gboolean floating = g_strcmp0(string, "0") != 0;
+    g_signal_emit(service, dwl_service_signals[FLOATING], 0, output_name,
+                  floating);
+    break;
+  }
+  case DWL_SELMON: {
+    gboolean selmon = g_strcmp0(string, "0") != 0;
+    g_signal_emit(service, dwl_service_signals[SELMON], 0, output_name, selmon);
+    break;
+  }
+  case DWL_LAYOUT: {
+    char *layout = string;
+    g_signal_emit(service, dwl_service_signals[LAYOUT], 0, output_name, layout);
+    break;
+  }
+  case DWL_TAGS: {
+    int id = 0;
+    uint32_t occupied, selected, client_tags, urgent;
+    while (string != NULL) {
+      char *endptr;
+      num = strtoul(string, &endptr, 10);
+
+      if (string == endptr) {
+        g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                    "Tag argument number %d: isn't a number %s", id, string);
         return;
       }
-    } else {
-      switch (kind) {
-      case DWL_TITLE:
-        status->title = g_strdup(string);
-        break;
-      case DWL_APPID:
-        status->appid = g_strdup(string);
-        break;
-      case DWL_FULLSCREEN:
-        status->fullscreen = g_strcmp0(string, "0") != 0;
-        break;
-      case DWL_FLOATING:
-        status->floating = g_strcmp0(string, "0") != 0;
-        break;
-      case DWL_SELMON:
-        status->selmon = g_strcmp0(string, "0") != 0;
-        break;
-      case DWL_LAYOUT:
-        status->appid = g_strdup(string);
-        break;
-      case DWL_TAGS:
-        num = strtoul(string, NULL, 10);
-        if (id == 2) {
-          status->occupied = num;
-        } else if (id == 3) {
-          status->selected = num;
-        } else if (id == 4) {
-          status->client_tags = num;
-        } else if (id == 5) {
-          status->urgent = num;
-        }
-
-        break;
+      if (id == 0) {
+        occupied = num;
+      } else if (id == 1) {
+        selected = num;
+      } else if (id == 2) {
+        client_tags = num;
+      } else if (id == 3) {
+        urgent = num;
       }
+      string = strtok_r(NULL, " ", &save_pointer);
+      id++;
     }
-    string = strtok_r(NULL, " ", &save_pointer);
-    id++;
+    if (id != 3) {
+      g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+                  "Bad number of argumentst to tags");
+      return;
+    }
+    g_signal_emit(service, dwl_service_signals[TAGS], 0, output_name, occupied,
+                  selected, client_tags, urgent);
+    break;
+  }
   }
 }
 
@@ -134,7 +184,7 @@ static GParamSpec *dwl_service_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static guint listener;
+// static guint listener;
 
 static GObject *
 g_barbar_dwl_service_constructor(GType type, guint n_construct_properties,
@@ -194,29 +244,14 @@ static void g_barbar_dwl_service_pipe_reader(GObject *object, GAsyncResult *res,
     g_printerr("Failed to read input stream from dwl: %s", error->message);
     return;
   }
-  // is this function defensive enough?
 
-  if (!service->status) {
-    service->status = g_barbar_dwl_status_new();
-  }
-
-  parse_line(line, service->status, &error);
+  parse_line(service, line, &error);
 
   if (error) {
     g_printerr("dwl parse input: %s", error->message);
+    g_error_free(error);
     return;
   }
-
-  service->counter++;
-
-  if (service->counter == 6) {
-    g_signal_emit(service, listener, 0, service->status);
-
-    service->counter = 0;
-    g_clear_pointer(&service->status, g_barbar_dwl_status_unref);
-  }
-
-  // We need to wait until new data
   g_data_input_stream_read_line_async(input, G_PRIORITY_DEFAULT, NULL,
                                       g_barbar_dwl_service_pipe_reader, data);
 }
@@ -256,62 +291,9 @@ static void g_barbar_rotary_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_dwl_service_file_data(GObject *object, GAsyncResult *res,
-                                           gpointer data) {
-  GDataInputStream *input = G_DATA_INPUT_STREAM(object);
-  BarBarDwlService *service = BARBAR_DWL_SERVICE(data);
+static void g_barbar_dwl_service_read_file(BarBarDwlService *service) {
   GError *error = NULL;
   gsize length;
-  gchar *line;
-
-  line = g_data_input_stream_read_line_finish(input, res, &length, &error);
-
-  if (error) {
-    g_printerr("Failed to read input stream from dwl: %s", error->message);
-    return;
-  }
-
-  if (line) {
-    // is this function defensive enough?
-
-    if (!service->status) {
-      service->status = g_barbar_dwl_status_new();
-    }
-
-    parse_line(line, service->status, &error);
-
-    if (error) {
-      g_printerr("dwl parse input: %s", error->message);
-      g_error_free(error);
-      return;
-    }
-
-    service->counter++;
-
-    if (service->counter == 6) {
-      g_signal_emit(service, listener, 0, service->status);
-
-      service->counter = 0;
-      g_clear_pointer(&service->status, g_barbar_dwl_status_unref);
-    }
-
-    g_data_input_stream_read_line_async(input, G_PRIORITY_DEFAULT, NULL,
-                                        g_barbar_dwl_service_file_data, data);
-  }
-}
-
-static void g_barbar_dwl_service_file_changed(GFileMonitor *self, GFile *file,
-                                              GFile *other_file,
-                                              GFileMonitorEvent event_type,
-                                              gpointer data) {
-  BarBarDwlService *service = BARBAR_DWL_SERVICE(data);
-  gsize length;
-  GError *error = NULL;
-
-  // g_data_input_stream_read_line_async(service->input, G_PRIORITY_DEFAULT,
-  // NULL,
-  //                                     g_barbar_dwl_service_file_data, data);
-  // if (event_type == G_FILE_MONITOR_EVENT_CHANGED) {
   char *line;
 
   while ((line = g_data_input_stream_read_line(service->input, &length, NULL,
@@ -322,69 +304,22 @@ static void g_barbar_dwl_service_file_changed(GFileMonitor *self, GFile *file,
       return;
     }
 
-    if (!service->status) {
-      service->status = g_barbar_dwl_status_new();
-    }
-
-    parse_line(line, service->status, &error);
-
-    service->counter++;
-
-    if (service->counter == 6) {
-      g_signal_emit(service, listener, 0, service->status);
-
-      service->counter = 0;
-      g_clear_pointer(&service->status, g_barbar_dwl_status_unref);
-    }
-  }
-  // }
-}
-
-static void g_barbar_dwl_service_readfile(GObject *object, GAsyncResult *res,
-                                          gpointer data) {
-  GDataInputStream *input = G_DATA_INPUT_STREAM(object);
-  BarBarDwlService *service = BARBAR_DWL_SERVICE(data);
-  GError *error = NULL;
-  gsize length;
-  gchar *line;
-
-  line = g_data_input_stream_read_line_finish(input, res, &length, &error);
-
-  if (error) {
-    g_printerr("Failed to read input stream from dwl: %s", error->message);
-    return;
-  }
-
-  if (line) {
-    // is this function defensive enough?
-
-    if (!service->status) {
-      service->status = g_barbar_dwl_status_new();
-    }
-
-    parse_line(line, service->status, &error);
+    parse_line(service, line, &error);
 
     if (error) {
       g_printerr("dwl parse input: %s", error->message);
       g_error_free(error);
       return;
     }
-
-    service->counter++;
-
-    if (service->counter == 6) {
-      g_signal_emit(service, listener, 0, service->status);
-
-      service->counter = 0;
-      g_clear_pointer(&service->status, g_barbar_dwl_status_unref);
-    }
-
-    g_data_input_stream_read_line_async(input, G_PRIORITY_DEFAULT, NULL,
-                                        g_barbar_dwl_service_readfile, data);
-  } else {
-    g_signal_connect(service->monitor, "changed",
-                     G_CALLBACK(g_barbar_dwl_service_file_changed), service);
   }
+}
+
+static void g_barbar_dwl_service_file_changed(GFileMonitor *self, GFile *file,
+                                              GFile *other_file,
+                                              GFileMonitorEvent event_type,
+                                              gpointer data) {
+  BarBarDwlService *service = BARBAR_DWL_SERVICE(data);
+  g_barbar_dwl_service_read_file(service);
 }
 
 static void g_barbar_dwl_service_constructed(GObject *self) {
@@ -413,10 +348,10 @@ static void g_barbar_dwl_service_constructed(GObject *self) {
     }
 
     service->input = g_data_input_stream_new(service->stream);
-    g_data_input_stream_read_line_async(service->input, G_PRIORITY_DEFAULT,
-                                        NULL, g_barbar_dwl_service_readfile,
-                                        service);
-    // g_barbar_dwl_service_readfile(service);
+    g_barbar_dwl_service_read_file(service);
+
+    g_signal_connect(service->monitor, "changed",
+                     G_CALLBACK(g_barbar_dwl_service_file_changed), service);
   } else {
     // or we have piped from stdin
     service->stream = g_unix_input_stream_new(STDIN_FILENO, FALSE);
@@ -443,10 +378,82 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     dwl_service_props);
 
-  listener =
-      g_signal_new("listener", G_TYPE_FROM_CLASS(class),
+  /**
+   * BarBarService::tags:
+   * @monitor: name of the monitor
+   * @occupied: occupied tags
+   * @selected: selected tags
+   * @client-tag: if it's occupied
+   * @urgent: urgent tags
+   *
+   * Tag information
+   */
+  dwl_service_signals[TAGS] =
+      g_signal_new("tags", G_TYPE_FROM_CLASS(class),
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 1, BARBAR_TYPE_DWL_STATUS);
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 5, G_TYPE_STRING,
+                   G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
+  /**
+   * BarBarService::layout:
+   * @monitor: name of the monitor
+   * @layout: String describing the layout
+   *
+   * Current layout
+   */
+  dwl_service_signals[LAYOUT] = g_signal_new(
+      "layout", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+  /**
+   * BarBarService::title:
+   * @monitor: name of the monitor
+   * @title:: String title of the current view
+   *
+   */
+  dwl_service_signals[TITLE] = g_signal_new(
+      "title", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+  /**
+   * BarBarService::appid:
+   * @monitor: name of the monitor
+   * @appid: String appid of the current view
+   *
+   */
+  dwl_service_signals[APPID] = g_signal_new(
+      "appid", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+  /**
+   * BarBarService::fullscreen:
+   * @monitor: name of the monitor
+   * @fullscreen: if we in fullscreen mode
+   *
+   */
+  dwl_service_signals[FULLSCREEN] = g_signal_new(
+      "fullscreen", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+  /**
+   * BarBarService::floating:
+   * @monitor: name of the monitor
+   * @floating: if we are in floating mode
+   *
+   */
+  dwl_service_signals[FLOATING] = g_signal_new(
+      "floating", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+  /**
+   * BarBarService::selmon:
+   * @monitor: name of the monitor
+   * @selmon: if the monitor is selected
+   *
+   */
+  dwl_service_signals[SELMON] = g_signal_new(
+      "selmon", G_TYPE_FROM_CLASS(class),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 }
 
 static void g_barbar_dwl_service_init(BarBarDwlService *self) {}

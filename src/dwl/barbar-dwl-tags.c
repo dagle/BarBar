@@ -1,6 +1,5 @@
 #include "dwl/barbar-dwl-tags.h"
 #include "dwl/barbar-dwl-service.h"
-#include "dwl/barbar-dwl-status.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -156,14 +155,15 @@ static void handle_urgent(BarBarDwlTags *dwl, uint32_t urgent) {
   }
 }
 
-void g_dwl_listen_cb(BarBarDwlService *service, BarBarDwlStatus *status,
+void g_dwl_listen_cb(BarBarDwlService *service, char *output_name,
+                     guint occupied, guint selected, guint urgent,
                      gpointer data) {
   BarBarDwlTags *dwl = BARBAR_DWL_TAGS(data);
 
-  if (!g_strcmp0(dwl->output_name, status->output_name)) {
-    handle_occupied(dwl, status->occupied);
-    handle_selected(dwl, status->selected);
-    handle_urgent(dwl, status->urgent);
+  if (!g_strcmp0(dwl->output_name, output_name)) {
+    handle_occupied(dwl, occupied);
+    handle_selected(dwl, selected);
+    handle_urgent(dwl, urgent);
   }
 }
 
@@ -184,5 +184,5 @@ static void g_barbar_dwl_tag_start(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_dwl_tags_parent_class)->root(widget);
 
   dwl->service = g_barbar_dwl_service_new("/home/dagle/apa.txt");
-  g_signal_connect(dwl->service, "listener", G_CALLBACK(g_dwl_listen_cb), dwl);
+  g_signal_connect(dwl->service, "tags", G_CALLBACK(g_dwl_listen_cb), dwl);
 }
