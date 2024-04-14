@@ -30,9 +30,9 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_DWL_TAGS (g_barbar_dwl_tags_get_type())
+#define BARBAR_TYPE_DWL_LAYOUT (g_barbar_dwl_layout_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarDwlTags, g_barbar_dwl_tags, BARBAR, DWL_TAGS,
+G_DECLARE_FINAL_TYPE(BarBarDwlLayout, g_barbar_dwl_layout, BARBAR, DWL_LAYOUT,
                      GtkWidget)
 
 G_END_DECLS

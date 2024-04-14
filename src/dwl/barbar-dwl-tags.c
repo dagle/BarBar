@@ -155,9 +155,9 @@ static void handle_urgent(BarBarDwlTags *dwl, uint32_t urgent) {
   }
 }
 
-void g_dwl_listen_cb(BarBarDwlService *service, char *output_name,
-                     guint occupied, guint selected, guint urgent,
-                     gpointer data) {
+static void g_dwl_listen_cb(BarBarDwlService *service, char *output_name,
+                            guint occupied, guint selected, guint client_tags,
+                            guint urgent, gpointer data) {
   BarBarDwlTags *dwl = BARBAR_DWL_TAGS(data);
 
   if (!g_strcmp0(dwl->output_name, output_name)) {
@@ -176,6 +176,7 @@ static void g_barbar_dwl_tags_init(BarBarDwlTags *self) {
     gtk_widget_set_parent(btn, GTK_WIDGET(self));
     self->buttons[i] = btn;
   }
+  handle_selected(self, 1);
 }
 
 static void g_barbar_dwl_tag_start(GtkWidget *widget) {
@@ -183,6 +184,6 @@ static void g_barbar_dwl_tag_start(GtkWidget *widget) {
 
   GTK_WIDGET_CLASS(g_barbar_dwl_tags_parent_class)->root(widget);
 
-  dwl->service = g_barbar_dwl_service_new("/home/dagle/apa.txt");
+  dwl->service = g_barbar_dwl_service_new(NULL);
   g_signal_connect(dwl->service, "tags", G_CALLBACK(g_dwl_listen_cb), dwl);
 }

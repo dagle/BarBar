@@ -42,6 +42,8 @@ libbarbar_src = files(
 
   'dwl/barbar-dwl-service.c',
   'dwl/barbar-dwl-tags.c',
+  'dwl/barbar-dwl-layout.c',
+  'dwl/barbar-dwl-title.c',
 
   'widgets/barbar-label.c',
   'widgets/barbar-sensorwidget.c',
@@ -101,6 +103,8 @@ libbarbar_headers = [
 
   'dwl/barbar-dwl-service.h',
   'dwl/barbar-dwl-tags.h',
+  'dwl/barbar-dwl-layout.h',
+  'dwl/barbar-dwl-title.h',
  
   'sway/barbar-sway-ipc.h',
   'sway/barbar-sway-subscribe.h',

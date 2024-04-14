@@ -45,6 +45,8 @@ void g_barbar_init(void) {
 
   g_barbar_dwl_service_get_type();
   g_barbar_dwl_tags_get_type();
+  g_barbar_dwl_title_get_type();
+  g_barbar_dwl_layout_get_type();
 
   g_barbar_dbus_menu_get_type();
   g_barbar_status_watcher_get_type();

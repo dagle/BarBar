@@ -17,9 +17,6 @@ struct _BarBarDwlService {
   GFileMonitor *monitor;
   GFileInputStream *file_input_stream;
   GFile *file;
-
-  // messages comes in chunks of 7 lines.
-  uint32_t counter;
 };
 
 typedef enum {
@@ -95,12 +92,6 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
 
   string = strtok_r(NULL, " ", &save_pointer);
 
-  if (string) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
-                "No argument for type: %d", kind);
-    return;
-  }
-
   switch (kind) {
   case DWL_TITLE: {
     char *title = string;
@@ -113,19 +104,22 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
     break;
   }
   case DWL_FULLSCREEN: {
-    gboolean fullscreen = g_strcmp0(string, "0") != 0;
+    gboolean fullscreen = g_strcmp0(string, "1") == 0;
+    // printf("Fullscreen: %d\n", fullscreen);
     g_signal_emit(service, dwl_service_signals[FULLSCREEN], 0, output_name,
                   fullscreen);
     break;
   }
   case DWL_FLOATING: {
-    gboolean floating = g_strcmp0(string, "0") != 0;
+    gboolean floating = g_strcmp0(string, "1") == 0;
+    // printf("Floating: %d\n", floating);
     g_signal_emit(service, dwl_service_signals[FLOATING], 0, output_name,
                   floating);
     break;
   }
   case DWL_SELMON: {
-    gboolean selmon = g_strcmp0(string, "0") != 0;
+    gboolean selmon = g_strcmp0(string, "1") == 0;
+    // printf("Selmon: %d\n", selmon);
     g_signal_emit(service, dwl_service_signals[SELMON], 0, output_name, selmon);
     break;
   }
@@ -158,7 +152,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
       string = strtok_r(NULL, " ", &save_pointer);
       id++;
     }
-    if (id != 3) {
+    if (id != 4) {
       g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
                   "Bad number of argumentst to tags");
       return;
@@ -183,8 +177,6 @@ enum {
 static GParamSpec *dwl_service_props[NUM_PROPERTIES] = {
     NULL,
 };
-
-// static guint listener;
 
 static GObject *
 g_barbar_dwl_service_constructor(GType type, guint n_construct_properties,
@@ -327,31 +319,39 @@ static void g_barbar_dwl_service_constructed(GObject *self) {
   GError *error = NULL;
 
   if (service->file_path) {
+    GFileType ft;
     service->file = g_file_new_for_path(service->file_path);
+    ft = g_file_query_file_type(service->file, G_FILE_QUERY_INFO_NONE, NULL);
+
     service->file_input_stream = g_file_read(service->file, NULL, &error);
 
     if (service->file_input_stream == NULL) {
       g_printerr("Error opening file: %s\n", error->message);
       g_error_free(error);
-      // cleanup
       return;
     }
     service->stream = G_INPUT_STREAM(service->file_input_stream);
-    service->monitor =
-        g_file_monitor_file(service->file, G_FILE_MONITOR_NONE, NULL, &error);
-
-    if (error) {
-      g_printerr("Error opening file: %s\n", error->message);
-      g_error_free(error);
-      // cleanup
-      return;
-    }
-
     service->input = g_data_input_stream_new(service->stream);
-    g_barbar_dwl_service_read_file(service);
 
-    g_signal_connect(service->monitor, "changed",
-                     G_CALLBACK(g_barbar_dwl_service_file_changed), service);
+    // if we have a fifo, we can read it like a pipe
+    if (ft & G_FILE_TYPE_SPECIAL) {
+      g_data_input_stream_read_line_async(
+          service->input, G_PRIORITY_DEFAULT, NULL,
+          g_barbar_dwl_service_pipe_reader, service);
+    } else {
+      service->monitor =
+          g_file_monitor_file(service->file, G_FILE_MONITOR_NONE, NULL, &error);
+
+      if (error) {
+        g_printerr("Error opening file: %s\n", error->message);
+        g_error_free(error);
+        return;
+      }
+      g_barbar_dwl_service_read_file(service);
+
+      g_signal_connect(service->monitor, "changed",
+                       G_CALLBACK(g_barbar_dwl_service_file_changed), service);
+    }
   } else {
     // or we have piped from stdin
     service->stream = g_unix_input_stream_new(STDIN_FILENO, FALSE);
@@ -407,7 +407,7 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   /**
    * BarBarService::title:
    * @monitor: name of the monitor
-   * @title:: String title of the current view
+   * @title: (nullable): String title of the current view
    *
    */
   dwl_service_signals[TITLE] = g_signal_new(
@@ -417,7 +417,7 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   /**
    * BarBarService::appid:
    * @monitor: name of the monitor
-   * @appid: String appid of the current view
+   * @appid: (nullable): String appid of the current view
    *
    */
   dwl_service_signals[APPID] = g_signal_new(
