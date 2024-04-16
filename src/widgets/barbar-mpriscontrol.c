@@ -23,7 +23,7 @@
 /**
  * BarBarMprisControls:
  *
- * `BarBarMprisControls` is a widget to interact with an mpris sensor
+ * `BarBarMprisControls` is a widget to interact with mpris
  *
  */
 
@@ -31,7 +31,6 @@ struct _BarBarMprisControls {
   GtkWidget parent_instance;
 
   PlayerctlPlayer *player;
-  GtkCssProvider *provider;
 
   GtkAdjustment *time_adjustment;
   GtkAdjustment *volume_adjustment;
@@ -42,7 +41,7 @@ struct _BarBarMprisControls {
   GtkWidget *next_button;
   GtkWidget *prev_button;
 
-  GtkWidget *time_box;
+  GtkWidget *time_scale;
   GtkWidget *time_label;
   GtkWidget *seek_scale;
   GtkWidget *duration_label;
@@ -231,7 +230,7 @@ g_barbar_mpris_controls_class_init(BarBarMprisControlsClass *klass) {
   gtk_widget_class_bind_template_child(widget_class, BarBarMprisControls,
                                        play_button);
   gtk_widget_class_bind_template_child(widget_class, BarBarMprisControls,
-                                       time_box);
+                                       time_scale);
   gtk_widget_class_bind_template_child(widget_class, BarBarMprisControls,
                                        time_label);
   gtk_widget_class_bind_template_child(widget_class, BarBarMprisControls,
@@ -242,10 +241,10 @@ g_barbar_mpris_controls_class_init(BarBarMprisControlsClass *klass) {
                                        volume_button);
 
   gtk_widget_class_bind_template_callback(widget_class, play_button_clicked);
-  gtk_widget_class_bind_template_callback(widget_class,
-                                          time_adjustment_changed);
-  gtk_widget_class_bind_template_callback(widget_class,
-                                          volume_adjustment_changed);
+  // gtk_widget_class_bind_template_callback(widget_class,
+  //                                         time_adjustment_changed);
+  // gtk_widget_class_bind_template_callback(widget_class,
+  //                                         volume_adjustment_changed);
 
   // gtk_widget_class_set_css_name(widget_class, I_("controls"));
   gtk_widget_class_set_css_name(widget_class, "controls");
@@ -319,7 +318,7 @@ static void update_duration(BarBarMprisControls *controls) {
   gint64 timestamp, duration;
   char *time_string;
 
-  if (controls->mpris) {
+  if (controls->player) {
     timestamp = g_barbar_mpris_get_position(controls->mpris);
     duration = g_barbar_mpris_get_duration(controls->mpris);
   } else {

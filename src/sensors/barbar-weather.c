@@ -7,8 +7,11 @@
 /**
  * BarBarWeather:
  *
- * A weather sensor for barbar. It requires you to write desktop, if you don't
- * use barbar executable. See TODO:
+ * A weather sensor for barbar.
+ * By default it also acts as a weather
+ *
+ * It requires you to write desktop, if you don't
+ * use barbar executable.
  */
 
 struct _BarBarWeather {
@@ -24,10 +27,14 @@ struct _BarBarWeather {
 
   guint source_id;
   guint interval;
+
+  gboolean agent;
 };
 
 enum {
   PROP_0,
+
+  PROP_AGENT,
 
   PROP_LOCATION,
   PROP_METAR,
@@ -56,6 +63,16 @@ static void g_barbar_weather_set_metar(BarBarWeather *self, gboolean metar) {
   self->metar = metar;
 }
 
+static void g_barbar_weather_set_agent(BarBarWeather *self, gboolean agent) {
+  g_return_if_fail(BARBAR_IS_WEATHER(self));
+
+  if (self->agent == agent) {
+    return;
+  }
+
+  self->metar = agent;
+}
+
 static void g_barbar_weather_set_contact_info(BarBarWeather *self,
                                               const gchar *contact_info) {
   g_return_if_fail(BARBAR_IS_WEATHER(self));
@@ -77,6 +94,9 @@ static void g_barbar_weather_set_property(GObject *object, guint property_id,
   case PROP_METAR:
     g_barbar_weather_set_metar(weather, g_value_get_boolean(value));
     break;
+  case PROP_AGENT:
+    g_barbar_weather_set_agent(weather, g_value_get_boolean(value));
+    break;
   case PROP_CONTACT_INFO:
     g_barbar_weather_set_contact_info(weather, g_value_get_string(value));
     break;
@@ -92,6 +112,12 @@ static void g_barbar_weather_get_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_LOCATION:
     g_value_set_string(value, "here");
+    break;
+  case PROP_METAR:
+    g_value_set_boolean(value, weather->metar);
+    break;
+  case PROP_AGENT:
+    g_value_set_boolean(value, weather->agent);
     break;
   case PROP_TEMPERATURE:
     g_value_set_double(value, weather->temperature);
@@ -127,7 +153,17 @@ static void g_barbar_weather_class_init(BarBarWeatherClass *class) {
    *
    */
   weather_props[PROP_METAR] = g_param_spec_boolean(
-      "metar", NULL, NULL, FALSE,
+      "metar", NULL, NULL, TRUE,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * BarBarWeather:agent:
+   *
+   * If this sensor should act as a geoclue agent
+   *
+   */
+  weather_props[PROP_AGENT] = g_param_spec_boolean(
+      "agent", NULL, NULL, TRUE,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**

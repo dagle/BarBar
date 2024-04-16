@@ -157,6 +157,8 @@ status_notifier_prots = [
   '../protocol/dbus-status-notifier-item.xml',
 ]
 
+mpris_prots = ['../protocol/mpris-dbus-interface.xml']
+
 gnome = import('gnome')
 
 status_notifier_src = gnome.gdbus_codegen('status-notifier',
@@ -170,6 +172,11 @@ power_profiles_src = gnome.gdbus_codegen('power-profiles-daemon',
   interface_prefix: 'org.freedesktop.UPower',
 )
 
+mpris_src = gnome.gdbus_codegen('mpris',
+  sources: mpris_prots,
+  namespace: 'Mpris',
+)
+
 # content_files += gnome.gdbus_codegen(
 #   meson.project_name(),
 #   sources: dbus_xml['org.freedesktop.UPower.PowerProfiles'],
@@ -179,7 +186,7 @@ power_profiles_src = gnome.gdbus_codegen('power-profiles-daemon',
 #   build_by_default: true,
 # )
 
-libbarbar = library(barbar_package, libbarbar_src, wayland_src, status_notifier_src, power_profiles_src,
+libbarbar = library(barbar_package, libbarbar_src, wayland_src, status_notifier_src, power_profiles_src, mpris_src,
   dependencies : deps, install: true)
 
 pkg = import('pkgconfig')

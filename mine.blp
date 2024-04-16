@@ -62,6 +62,13 @@ BarBar.Bar {
       use-markup: true;
     }
 
+    [end]
+    BarBar.Label {
+      sensor: bind mpris.current-player.position;
+      // templ: "{{if (BarBarCpu.percent) > 0.8}} <span color=\"#bd111f\">{{i32(BarBarCpu.percent * 100)}}%<span> {{else if (BarBarCpu.percent) > 0.5}}<span color=\"#fcba03\">{{i32(BarBarCpu.percent * 100)}}%</span>{{else}}<span color=\"#419e16\">{{i32(BarBarCpu.percent * 100)}}%</span>{{end}} ";
+      use-markup: true;
+    }
+
     //[end]
     // BarBar.Label {
     //  sensor: bind mpris.current-player;
