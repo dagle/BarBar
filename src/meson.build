@@ -186,7 +186,8 @@ mpris_src = gnome.gdbus_codegen('mpris',
 #   build_by_default: true,
 # )
 
-libbarbar = library(barbar_package, libbarbar_src, wayland_src, status_notifier_src, power_profiles_src, mpris_src,
+libbarbar = library(barbar_package, libbarbar_src, wayland_src,
+  status_notifier_src, power_profiles_src, mpris_src,
   dependencies : deps, install: true)
 
 pkg = import('pkgconfig')

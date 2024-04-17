@@ -1,4 +1,5 @@
 #include "sensors/mpris/barbar-mpris-player.h"
+#include "mpris.h"
 #include <gio/gio.h>
 
 #define MPRIS_PATH "/org/mpris/MediaPlayer2"
@@ -7,17 +8,25 @@
 // #define SET_MEMBER "Set"
 
 struct _BarBarMprisPlayer {
-  // OrgMprisMediaPlayer2Player *proxy;
+  MprisOrgMprisMediaPlayer2Player *proxy;
   gchar *player_name;
   gchar *instance;
   gchar *bus_name;
-  // PlayerctlSource source;
-  GError *init_error;
-  gboolean initted;
+  GBusType bus_type;
+
+  gint64 length;
+  gchar *title;
+  gchar *artist;
+
+  gint64 position;
+
+  // GError *init_error;
+  // gboolean initted;
   // PlayerctlPlaybackStatus cached_status;
-  gint64 cached_position;
-  gchar *cached_track_id;
-  struct timespec cached_position_monotonic;
+
+  // gint64 cached_position;
+  // gchar *cached_track_id;
+  // struct timespec cached_position_monotonic;
 };
 
 enum {
@@ -25,7 +34,7 @@ enum {
 
   PROP_PLAYER_NAME,
   PROP_PLAYER_INSTANCE,
-  PROP_SOURCE,
+  PROP_BUS_TYPE,
   PROP_PLAYBACK_STATUS,
   PROP_LOOP_STATUS,
   PROP_SHUFFLE,
@@ -60,11 +69,34 @@ static GParamSpec *mpris_player_props[N_PROPERTIES] = {
 
 static guint connection_signals[LAST_SIGNAL] = {0};
 
-G_DEFINE_TYPE(BarBarMprisPlayer, g_barbar_mpris, G_TYPE_OBJECT);
+static gboolean playerctl_player_initable_init(GInitable *initable,
+                                               GCancellable *cancellable,
+                                               GError **err);
 
-BarBarMprisPlayer *pctl_player_name_new(char *player_name, GBusType type) {
-  return NULL;
+G_DEFINE_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT);
+
+static void g_barbar_mpris_player_class_init(BarBarMprisPlayerClass *class) {}
+static void g_barbar_mpris_player_init(BarBarMprisPlayer *self) {}
+
+static gboolean playerctl_player_initable_init(GInitable *initable,
+                                               GCancellable *cancellable,
+                                               GError **err) {}
+
+BarBarMprisPlayer *g_barbar_mpris_player_new(char *player_name, GBusType type,
+                                             GError **error) {
+  GError *err = NULL;
+  BarBarMprisPlayer *player;
+
+  player =
+      g_initable_new(BARBAR_TYPE_MPRIS_PLAYER, NULL, &err, "player-instance",
+                     player_name, "bus-type", type, NULL);
+
+  if (err != NULL) {
+    g_propagate_error(error, err);
+    return NULL;
+  }
+
+  return player;
 }
 
-static void g_barbar_mpris_class_init(BarBarMprisPlayerClass *class) {}
-static void g_barbar_mpris_init(BarBarMprisPlayer *self) {}
+// void g_barbar_
