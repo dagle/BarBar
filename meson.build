@@ -31,7 +31,6 @@ libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
 
 libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
-# geocode = dependency('geocode-glib-2.0')
 
 libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
@@ -39,7 +38,6 @@ wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
 
 gtk = dependency('gtk4')
-# gtk = dependency('gtk4', version : '>=4.14.0')
 
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         required: true,
@@ -53,7 +51,6 @@ deps = [
   gtk,
   wayland_client,
   thread_dep,
-  # libmpdclient,
   giounix,
   udev,
   json,
@@ -64,48 +61,13 @@ deps = [
   template_glib,
   libgweather,
   libgeoclue,
-  # geocode,
   m_dep,
   module,
 ]
 
 LIBS = [glib, gio, gobject]
-# wayland_client = dependency('wayland-client')
-# wayland_cursor = dependency('wayland-cursor')
 wayland_protos = dependency('wayland-protocols')
-# gtkmm = dependency('gtkmm-3.0', version : ['>=3.22.0'])
-# dbusmenu_gtk = dependency('dbusmenu-gtk3-0.4', required: get_option('dbusmenu-gtk'))
-# giounix = dependency('gio-unix-2.0', required: (get_option('dbusmenu-gtk').enabled() or
-                                                # get_option('logind').enabled() or
-                                                # get_option('upower_glib').enabled() or
-                                                # get_option('mpris').enabled()))
-# jsoncpp = dependency('jsoncpp', version : ['>=1.9.2'], fallback : ['jsoncpp', 'jsoncpp_dep'])
-# sigcpp = dependency('sigc++-2.0')
-# libinotify = dependency('libinotify', required: false)
-# libepoll = dependency('epoll-shim', required: false)
-# libinput = dependency('libinput', required: get_option('libinput'))
-# libnl = dependency('libnl-3.0', required: get_option('libnl'))
-# libnlgen = dependency('libnl-genl-3.0', required: get_option('libnl'))
-# upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
-# playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
-# libpulse = dependency('libpulse', required: get_option('pulseaudio'))
-# libudev = dependency('libudev', required: get_option('libudev'))
-# libevdev = dependency('libevdev', required: get_option('libevdev'))
-# libmpdclient = dependency('libmpdclient', required: get_option('mpd'))
-# xkbregistry = dependency('xkbregistry')
-# libjack = dependency('jack', required: get_option('jack'))
-# libwireplumber = dependency('wireplumber-0.4', required: get_option('wireplumber'))
-#
-
-# configure_file(input: 'config.h.meson',
-#   output: 'config.h',
-#   configuration : conf_data
-# )
-
-# subdir('protocol')
 subdir('src')
-# subdir('docs')
-#
 
 
 

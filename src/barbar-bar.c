@@ -49,10 +49,10 @@ GType g_barbar_position_get_type(void) {
   if (g_once_init_enter(&barbar_bar_role_type)) {
 
     static GEnumValue pattern_types[] = {
-        {BARBAR_POS_TOP, "top", "top"},
-        {BARBAR_POS_BOTTOM, "bottom", "bot"},
-        {BARBAR_POS_LEFT, "left", "left"},
-        {BARBAR_POS_RIGHT, "right", "right"},
+        {BARBAR_POS_TOP, "BARBAR_POS_TOP", "top"},
+        {BARBAR_POS_BOTTOM, "BARBAR_POS_BOTTOM", "bot"},
+        {BARBAR_POS_LEFT, "BARBAR_POS_LEFT", "left"},
+        {BARBAR_POS_RIGHT, "BARBAR_POS_RIGHT", "right"},
         {0, NULL, NULL},
     };
 

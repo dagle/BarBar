@@ -345,7 +345,7 @@ static void update_playing(BarBarMprisControls *controls) {
   const char *icon_name;
   const char *tooltip_text;
 
-  if (controls->mpris)
+  if (controls->player)
     playing = g_barbar_mpris_get_playing(controls->mpris);
   else
     playing = FALSE;

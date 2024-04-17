@@ -1,5 +1,6 @@
 #include "barbar-mpris.h"
 #include "barbar-mpris-player.h"
+#include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
 #include <gmodule.h>
 #include <stdio.h>
@@ -251,10 +252,8 @@ gchar *g_barbar_mpris_format_player(BarBarMpris *mpris, const char *format) {
 //   return g_string_free(printed, FALSE);
 // }
 
-#define PLAYERCTLD_BUS_NAME "org.mpris.MediaPlayer2.playerctld"
-#define MPRIS_PREFIX "org.mpris.MediaPlayer2."
-
-GList *pctl_list_player_names_on_bus(GDBusProxy *proxy, GError **error) {
+static GList *g_barbar_mpris_players_names_on_bus(GDBusProxy *proxy,
+                                                  GError **error) {
   GError *err = NULL;
   GList *players = NULL;
 
@@ -293,18 +292,20 @@ void g_barbar_mpris_list_players(BarBarMpris *mpris, GError **error) {
   GError *err = NULL;
 
   GList *session_players =
-      pctl_list_player_names_on_bus(mpris->session_proxy, &err);
+      g_barbar_mpris_players_names_on_bus(mpris->session_proxy, &err);
   if (err != NULL) {
     g_propagate_error(error, err);
     return;
   }
 
   GList *system_players =
-      pctl_list_player_names_on_bus(mpris->system_proxy, &err);
+      g_barbar_mpris_players_names_on_bus(mpris->system_proxy, &err);
   if (err != NULL) {
     g_propagate_error(error, err);
     return;
   }
+
+  // TODO: free?
 
   mpris->players = g_list_concat(session_players, system_players);
 

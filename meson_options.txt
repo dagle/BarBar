@@ -2,7 +2,6 @@ option('gtk_doc', type : 'boolean', value : false)
 # option('gtk_doc-html', type : 'boolean', value : true)
 # option('gtk_doc-pdf', type : 'boolean', value : false)
 
-option('mpd', type: 'feature', value: 'auto', description: 'Enable support for the Music Player Daemon')
 option('mpris', type: 'feature', value: 'auto', description: 'Enable support for mpris')
 option('logind', type: 'feature', value: 'auto', description: 'Enable support for logind')
 option('dbusmenu-gtk', type: 'feature', value: 'auto', description: 'Enable support for tray')

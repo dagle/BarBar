@@ -29,8 +29,39 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_MPRIS_PLAYER (g_barbar_mpris_player_get_type())
+/**
+ * BarBarMprisPlaybackStatus:
+ * @BARBAR_PLAYBACK_STATUS_PLAYING: the player is playing.
+ * @BARBAR_PLAYBACK_STATUS_PAUSED: the player is paused.
+ * @BARBAR_PLAYBACK_STATUS_STOPPED: the player is stopped.
+ *
+ * Describs the playback status of a mpris player
+ */
+typedef enum {
+  BARBAR_PLAYBACK_STATUS_PLAYING,
+  BARBAR_PLAYBACK_STATUS_PAUSED,
+  BARBAR_PLAYBACK_STATUS_STOPPED,
+} BarBarMprisPlaybackStatus;
 
+#define BARBAR_TYPE_PLAYBACK_STATUS (g_barbar_playback_status_get_type())
+
+/**
+ * BarBarMprisLoopStatus:
+ * @BARBAR_PLAYBACK_LOOP_STATUS_NONE: no loop
+ * @BARBAR_PLAYBACK_LOOP_STATUS_TRACK: loop the current track
+ * @BARBAR_PLAYBACK_LOOK_STATUS_PLAYLIST: loop the playlist
+ *
+ * Describs the loop status of a mpris player
+ */
+typedef enum {
+  BARBAR_PLAYBACK_LOOP_STATUS_NONE,
+  BARBAR_PLAYBACK_LOOP_STATUS_TRACK,
+  BARBAR_PLAYBACK_LOOK_STATUS_PLAYLIST,
+} BarBarMprisLoopStatus;
+
+#define BARBAR_TYPE_LOOP_STATUS (g_barbar_playback_status_get_type())
+
+#define BARBAR_TYPE_MPRIS_PLAYER (g_barbar_mpris_player_get_type())
 G_DECLARE_FINAL_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, BARBAR,
                      MPRIS_PLAYER, GObject)
 

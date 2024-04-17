@@ -23,8 +23,6 @@ libbarbar_src = files(
   'sensors/barbar-power-profiles.c',
   'sensors/barbar-systemd-units.c',
   'sensors/barbar-weather.c',
-  # 'barbar-disk.c',
-  # 'barbar-mpd.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -80,8 +78,6 @@ libbarbar_headers = [
   'sensors/barbar-power-profiles.h',
   'sensors/barbar-systemd-units.h',
   'sensors/barbar-weather.h',
-  # 'barbar-disk.h',
-  # 'barbar-mpd.h',
 
   'sensors/barbar-mpris.h',
 

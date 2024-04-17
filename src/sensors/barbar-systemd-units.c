@@ -60,11 +60,11 @@ GType g_barbar_bus_type_get_type(void) {
   static gsize barbar_bus_type;
   if (g_once_init_enter(&barbar_bus_type)) {
 
-    static GEnumValue pattern_types[] = {
-        {G_BUS_TYPE_STARTER, "starter", "starter"},
-        {G_BUS_TYPE_NONE, "none", "none"},
-        {G_BUS_TYPE_SYSTEM, "system", "system"},
-        {G_BUS_TYPE_SESSION, "session", "session"},
+    static const GEnumValue pattern_types[] = {
+        {G_BUS_TYPE_STARTER, "G_BUS_TYPE_STARTER", "starter"},
+        {G_BUS_TYPE_NONE, "G_BUS_TYPE_NONE", "none"},
+        {G_BUS_TYPE_SYSTEM, "G_BUS_TYPE_SYSTEM", "system"},
+        {G_BUS_TYPE_SESSION, "G_BUS_TYPE_SESSION", "session"},
         {0, NULL, NULL},
     };
 
