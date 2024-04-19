@@ -1,4 +1,5 @@
 #include "sensors/mpris/barbar-mpris-player.h"
+#include "barbar-error.h"
 #include "mpris.h"
 #include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
@@ -47,6 +48,12 @@ GType g_barbar_loop_status_get_type(void) {
   return barbar_loop_status_type;
 }
 
+/**
+ * BarBarMprisPlayer:
+ *
+ * A mpris player, containing information about what is currently playing etc.
+ *
+ */
 struct _BarBarMprisPlayer {
   MprisOrgMprisMediaPlayer2Player *proxy;
   gchar *name;
@@ -104,9 +111,9 @@ static GParamSpec *mpris_player_props[N_PROPERTIES] = {
 
 static guint connection_signals[LAST_SIGNAL] = {0};
 
-static gboolean playerctl_player_initable_init(GInitable *initable,
-                                               GCancellable *cancellable,
-                                               GError **err);
+static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
+                                                    GCancellable *cancellable,
+                                                    GError **err);
 
 G_DEFINE_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT);
 
@@ -375,22 +382,22 @@ static void on_some_property_notify(GObject *proxy, GParamSpec *pspec,
   BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(user_data);
 }
 
-static gboolean playerctl_player_initable_init(GInitable *initable,
-                                               GCancellable *cancellable,
-                                               GError **error) {
+static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
+                                                    GCancellable *cancellable,
+                                                    GError **error) {
   GError *err = NULL;
   BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(initable);
 
   if (!player->instance) {
-    // g_set_error(GError **err, GQuark domain, gint code, const gchar *format,
-    // ...)
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_MPRIS,
+                "No player instance set");
     return FALSE;
   }
 
   // we need to have the bus_type defined
   if (player->bus_type < 1) {
-    // g_set_error(GError **err, GQuark domain, gint code, const gchar *format,
-    // ...)
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_MPRIS,
+                "No bus_type configured");
     return FALSE;
   }
 
@@ -406,8 +413,7 @@ static gboolean playerctl_player_initable_init(GInitable *initable,
 
   g_barbar_mpris_player_initial_values(player);
   g_signal_connect(player->proxy, "g-properties-changed",
-                   G_CALLBACK(playerctl_player_properties_changed_callback),
-                   player);
+                   G_CALLBACK(on_some_property_notify), player);
 
   // g_signal_connect(player->proxy, "g-properties-changed",
   //                  G_CALLBACK(playerctl_player_properties_changed_callback),
