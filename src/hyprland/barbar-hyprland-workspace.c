@@ -23,7 +23,8 @@ struct _BarBarHyprlandWorkspace {
 
   char *output_name;
   gboolean focused;
-  int active_workspace;
+  int active_workspace; // Is the current active workspace, may not be our
+                        // workspace
 
   GSocketConnection *listener;
 
@@ -183,6 +184,23 @@ static struct MonitorEntry *get_button(BarBarHyprlandWorkspace *hypr, int id) {
   return NULL;
 }
 
+static struct MonitorEntry *get_button_name(BarBarHyprlandWorkspace *hypr,
+                                            const char *name) {
+  GList *list;
+  if (!name) {
+    return NULL;
+  }
+
+  for (list = hypr->workspaces; list; list = list->next) {
+    struct MonitorEntry *e = list->data;
+    const char *ename = gtk_button_get_label(GTK_BUTTON(e->button));
+    if (!strcmp(ename, name)) {
+      return e;
+    }
+  }
+  return NULL;
+}
+
 static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
                                                  gpointer data) {
   BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(data);
@@ -195,7 +213,13 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
 
     entry = get_button(hypr, hypr->active_workspace);
     if (entry) {
-      gtk_widget_remove_css_class(entry->button, "focused");
+      if (hypr->focused) {
+        gtk_widget_remove_css_class(entry->button, "focused");
+      } else {
+        gtk_widget_remove_css_class(entry->button, "visible");
+      }
+    } else {
+      printf("workspace entry is null\n");
     }
 
     hypr->active_workspace = id;
@@ -203,19 +227,37 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
     entry = get_button(hypr, hypr->active_workspace);
 
     if (entry) {
-      gtk_widget_add_css_class(entry->button, "focused");
+      if (hypr->focused) {
+        gtk_widget_add_css_class(entry->button, "focused");
+      } else {
+        gtk_widget_add_css_class(entry->button, "visible");
+      }
+    } else {
+      printf("workspace entry is null\n");
     }
     g_strfreev(tokens);
     break;
   }
   case HYPRLAND_URGENT: {
-    printf("urgent: %s\n", args);
+    // WINDOWADDRESS
     break;
   }
-  case HYPRLAND_FOCUSEDMON:
-    printf("focused mon: %s\n", args);
+  case HYPRLAND_FOCUSEDMON: {
+    // MONNAME,WORKSPACENAME
+    gchar **tokens = g_strsplit(args, ",", -1);
+    const char *monname = tokens[0];
+
+    // do we need to do anything more? HYPRLAND_WORKSPACEV2 will happen?
+    if (!hypr->output_name || !g_strcmp0(hypr->output_name, monname)) {
+      hypr->focused = TRUE;
+    } else {
+      hypr->focused = FALSE;
+    }
+
     break;
+  }
   case HYPRLAND_CREATEWORKSPACEV2: {
+    // WORKSPACEID,WORKSPACENAME
     gchar **tokens = g_strsplit(args, ",", -1);
 
     int id = atoi(tokens[0]);
@@ -224,6 +266,7 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
     break;
   }
   case HYPRLAND_DESTROYWORKSPACEV2: {
+    // WORKSPACEID,WORKSPACENAME
     gchar **tokens = g_strsplit(args, ",", -1);
 
     int id = atoi(tokens[0]);
@@ -233,6 +276,7 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
     break;
   }
   case HYPRLAND_MOVEWORKSPACEV2: {
+    // WORKSPACEID,WORKSPACENAME,MONNAME
     gchar **tokens = g_strsplit(args, ",", -1);
 
     int id = atoi(tokens[0]);
@@ -241,6 +285,7 @@ static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
     break;
   }
   case HYPRLAND_RENAMEWORKSPACE: {
+    // WORKSPACEID,NEWNAME
     gchar **tokens = g_strsplit(args, ",", -1);
     int id = atoi(tokens[0]);
     g_barbar_hyprland_rename_workspace(hypr, id, tokens[1]);
@@ -443,6 +488,16 @@ static void parse_active_workspace(BarBarHyprlandWorkspace *hypr,
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
 
+  json_reader_read_member(reader, "monitor");
+  const char *monitor = json_reader_get_string_value(reader);
+  if (hypr->output_name && g_strcmp0(hypr->output_name, monitor)) {
+    json_reader_end_member(reader);
+    hypr->active_workspace = 0;
+    hypr->focused = FALSE;
+    goto cleanup;
+  }
+  json_reader_end_member(reader);
+
   json_reader_read_member(reader, "id");
   int id = json_reader_get_int_value(reader);
   struct MonitorEntry *entry = get_button(hypr, id);
@@ -450,8 +505,10 @@ static void parse_active_workspace(BarBarHyprlandWorkspace *hypr,
     gtk_widget_add_css_class(entry->button, "focused");
   }
   hypr->active_workspace = id;
+  hypr->focused = TRUE;
   json_reader_end_member(reader);
 
+cleanup:
   g_object_unref(reader);
   g_object_unref(parser);
 }
@@ -471,9 +528,9 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
 
   g_barbar_hyprland_ipc_send_command(ipc, "j/workspaces", &error);
   if (error) {
-    g_printerr(
-        "Hyprland workspace: Error sending command for initial workspaces: %s",
-        error->message);
+    g_printerr("Hyprland workspace: Error sending command for initial "
+               "workspaces: %s",
+               error->message);
     return;
   }
 

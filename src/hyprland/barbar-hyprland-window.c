@@ -32,13 +32,6 @@ struct _BarBarHyprlandWindow {
   GtkWidget *label;
 };
 
-// struct entry {
-//   int id;
-//   int num;
-//
-//   GtkWidget *button;
-// };
-
 enum {
   PROP_0,
 
@@ -141,8 +134,11 @@ static void g_barbar_hyprland_window_callback(uint32_t type, char *args,
   }
   case HYPRLAND_FOCUSEDMON: {
     gchar **tokens = g_strsplit(args, ",", -1);
-    if (g_strcmp0(hypr->output_name, tokens[0])) {
+    const char *monname = tokens[0];
+    if (!hypr->output_name || !g_strcmp0(hypr->output_name, monname)) {
       hypr->focused = TRUE;
+    } else {
+      hypr->focused = FALSE;
     }
     g_strfreev(tokens);
     break;
@@ -194,7 +190,6 @@ static void parse_initional_monitor(BarBarHyprlandWindow *hypr,
   json_reader_read_member(reader, "monitor");
   const char *monitor = json_reader_get_string_value(reader);
   if (!g_strcmp0(hypr->output_name, monitor)) {
-    printf("true!\n");
     hypr->focused = TRUE;
   }
   json_reader_end_member(reader);

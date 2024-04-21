@@ -35,6 +35,7 @@ libbarbar_src = files(
   'sway/barbar-sway-window.c',
 
   'hyprland/barbar-hyprland-ipc.c',
+  'hyprland/barbar-hyprland-submap.c',
   'hyprland/barbar-hyprland-workspace.c',
   'hyprland/barbar-hyprland-window.c',
 
@@ -94,6 +95,7 @@ libbarbar_headers = [
   'widgets/barbar-valueicon.h',
 
   # 'hyprland/barbar-hyprland-ipc.h',
+  'hyprland/barbar-hyprland-submap.h',
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
 
