@@ -262,9 +262,10 @@ static void g_barbar_dwl_service_set_pipe(BarBarDwlService *self,
   g_object_notify_by_pspec(G_OBJECT(self), dwl_service_props[PROP_FILEPATH]);
 }
 
-static void g_barbar_rotary_set_property(GObject *object, guint property_id,
-                                         const GValue *value,
-                                         GParamSpec *pspec) {
+static void g_barbar_dwl_service_set_property(GObject *object,
+                                              guint property_id,
+                                              const GValue *value,
+                                              GParamSpec *pspec) {
   BarBarDwlService *service = BARBAR_DWL_SERVICE(object);
   switch (property_id) {
   case PROP_FILEPATH:
@@ -275,8 +276,9 @@ static void g_barbar_rotary_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_rotary_get_property(GObject *object, guint property_id,
-                                         GValue *value, GParamSpec *pspec) {
+static void g_barbar_dwl_service_get_property(GObject *object,
+                                              guint property_id, GValue *value,
+                                              GParamSpec *pspec) {
   switch (property_id) {
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -366,8 +368,8 @@ static void g_barbar_dwl_service_constructed(GObject *self) {
 static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
 
-  gobject_class->set_property = g_barbar_rotary_set_property;
-  gobject_class->get_property = g_barbar_rotary_get_property;
+  gobject_class->set_property = g_barbar_dwl_service_set_property;
+  gobject_class->get_property = g_barbar_dwl_service_get_property;
 
   gobject_class->constructor = g_barbar_dwl_service_constructor;
   gobject_class->constructed = g_barbar_dwl_service_constructed;
@@ -379,11 +381,12 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
                                     dwl_service_props);
 
   /**
-   * BarBarService::tags:
+   * BarBarDwlService::tags:
+   * @service: this object
    * @monitor: name of the monitor
    * @occupied: occupied tags
    * @selected: selected tags
-   * @client-tag: if it's occupied
+   * @clienttag: if it's occupied
    * @urgent: urgent tags
    *
    * Tag information
@@ -394,7 +397,8 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
                    0, NULL, NULL, NULL, G_TYPE_NONE, 5, G_TYPE_STRING,
                    G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
   /**
-   * BarBarService::layout:
+   * BarBarDwlService::layout:
+   * @service: this object
    * @monitor: name of the monitor
    * @layout: String describing the layout
    *
@@ -404,18 +408,23 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
       "layout", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+
   /**
-   * BarBarService::title:
+   * BarBarDwlService::title:
+   * @service: this object
    * @monitor: name of the monitor
    * @title: (nullable): String title of the current view
    *
+   * Current title
    */
   dwl_service_signals[TITLE] = g_signal_new(
       "title", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+
   /**
-   * BarBarService::appid:
+   * BarBarDwlService::appid:
+   * @service: this object
    * @monitor: name of the monitor
    * @appid: (nullable): String appid of the current view
    *
@@ -424,8 +433,10 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
       "appid", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+
   /**
-   * BarBarService::fullscreen:
+   * BarBarDwlService::fullscreen:
+   * @service: this object
    * @monitor: name of the monitor
    * @fullscreen: if we in fullscreen mode
    *
@@ -434,8 +445,10 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
       "fullscreen", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+
   /**
-   * BarBarService::floating:
+   * BarBarDwlService::floating:
+   * @service: this object
    * @monitor: name of the monitor
    * @floating: if we are in floating mode
    *
@@ -444,8 +457,10 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
       "floating", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+
   /**
-   * BarBarService::selmon:
+   * BarBarDwlService::selmon:
+   * @service: this object
    * @monitor: name of the monitor
    * @selmon: if the monitor is selected
    *
