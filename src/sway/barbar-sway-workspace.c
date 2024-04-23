@@ -451,6 +451,8 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 
     json_reader_end_element(reader);
   }
+  g_object_unref(reader);
+  g_object_unref(parser);
 }
 
 static void event_listner(BarBarSwaySubscribe *sub, guint type,

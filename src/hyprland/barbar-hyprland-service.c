@@ -13,6 +13,10 @@ struct _BarBarHyprlandService {
   GSocketConnection *connection;
   GInputStream *input_stream;
   GDataInputStream *data_stream;
+
+  char *submap;
+  char *keyboard;
+  char *layout;
 };
 
 enum {
@@ -54,6 +58,10 @@ G_DEFINE_TYPE(BarBarHyprlandService, g_barbar_hyprland_service, G_TYPE_OBJECT)
 enum {
   PROP_0,
 
+  PROP_SUBMAP,
+  PROP_KEYBOARD,
+  PROP_LAYOUT,
+
   NUM_PROPERTIES,
 };
 
@@ -62,6 +70,50 @@ static GParamSpec *hypr_service_props[NUM_PROPERTIES] = {
 };
 
 static BarBarHyprlandService *the_singleton = NULL;
+
+static void g_babrab_hyprland_service_set_submap(BarBarHyprlandService *service,
+                                                 const char *submap) {
+  g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
+
+  if (!g_strcmp0(service->submap, submap)) {
+    return;
+  }
+
+  g_free(service->submap);
+  service->submap = g_strdup(submap);
+
+  g_object_notify_by_pspec(G_OBJECT(service), hypr_service_props[PROP_SUBMAP]);
+}
+
+static void
+g_babrab_hyprland_service_set_keyboard(BarBarHyprlandService *service,
+                                       const char *keyboard) {
+  g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
+
+  if (!g_strcmp0(service->keyboard, keyboard)) {
+    return;
+  }
+
+  g_free(service->keyboard);
+  service->keyboard = g_strdup(keyboard);
+
+  g_object_notify_by_pspec(G_OBJECT(service),
+                           hypr_service_props[PROP_KEYBOARD]);
+}
+
+static void g_babrab_hyprland_service_set_layout(BarBarHyprlandService *service,
+                                                 const char *layout) {
+  g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
+
+  if (!g_strcmp0(service->layout, layout)) {
+    return;
+  }
+
+  g_free(service->submap);
+  service->layout = g_strdup(layout);
+
+  g_object_notify_by_pspec(G_OBJECT(service), hypr_service_props[PROP_LAYOUT]);
+}
 
 static GObject *
 g_barbar_hyprland_service_constructor(GType type, guint n_construct_params,
@@ -84,9 +136,6 @@ static void g_barbar_hyprland_service_set_property(GObject *object,
                                                    GParamSpec *pspec) {
   BarBarHyprlandService *service = BARBAR_HYPRLAND_SERVICE(object);
   switch (property_id) {
-  // case PROP_FILEPATH:
-  //   g_barbar_dwl_service_set_pipe(service, g_value_get_string(value));
-  //   break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -96,7 +145,13 @@ static void g_barbar_hyprland_service_get_property(GObject *object,
                                                    guint property_id,
                                                    GValue *value,
                                                    GParamSpec *pspec) {
+
+  BarBarHyprlandService *service = BARBAR_HYPRLAND_SERVICE(object);
+
   switch (property_id) {
+  case PROP_SUBMAP:
+    g_value_set_string(value, service->submap);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -106,7 +161,7 @@ static void g_barbar_hyprland_service_get_property(GObject *object,
   if (!strncmp(input, #name ">>", sizeof(#name) + 1)) {                        \
     args = line + sizeof(#name) + 1;                                           \
     stmts;                                                                     \
-    return;                                                                    \
+    goto end;                                                                  \
   }
 
 static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
@@ -176,32 +231,37 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
 
   EVENT_TYPE(line, createworkspacev2, {
     gchar **tokens = g_strsplit(args, ",", -1);
+    int id = atoi(tokens[0]);
 
-    g_signal_emit(service, hyprland_service_signals[CREATEWORKSPACEV2], 0,
-                  tokens[0], tokens[1]);
+    g_signal_emit(service, hyprland_service_signals[CREATEWORKSPACEV2], 0, id,
+                  tokens[1]);
     g_strfreev(tokens);
   });
 
   EVENT_TYPE(line, destroyworkspacev2, {
     gchar **tokens = g_strsplit(args, ",", -1);
-    g_signal_emit(service, hyprland_service_signals[DESTROYWORKSPACEV2], 0,
-                  tokens[0], tokens[1]);
+    int id = atoi(tokens[0]);
+
+    g_signal_emit(service, hyprland_service_signals[DESTROYWORKSPACEV2], 0, id,
+                  tokens[1]);
     g_strfreev(tokens);
   });
 
   EVENT_TYPE(line, moveworkspacev2, {
     gchar **tokens = g_strsplit(args, ",", -1);
+    int id = atoi(tokens[0]);
 
-    g_signal_emit(service, hyprland_service_signals[MOVEWORKSPACEV2], 0,
-                  tokens[0], tokens[1], tokens[2]);
+    g_signal_emit(service, hyprland_service_signals[MOVEWORKSPACEV2], 0, id,
+                  tokens[1], tokens[2]);
     g_strfreev(tokens);
   });
 
   EVENT_TYPE(line, renameworkspace, {
     gchar **tokens = g_strsplit(args, ",", -1);
+    int id = atoi(tokens[0]);
 
-    g_signal_emit(service, hyprland_service_signals[RENAMEWORKSPACE], 0,
-                  tokens[0], tokens[1]);
+    g_signal_emit(service, hyprland_service_signals[RENAMEWORKSPACE], 0, id,
+                  tokens[1]);
     g_strfreev(tokens);
   });
 
@@ -216,8 +276,9 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
   EVENT_TYPE(line, activelayout, {
     gchar **tokens = g_strsplit(args, ",", -1);
 
-    g_signal_emit(service, hyprland_service_signals[ACTIVELAYOUT], 0, tokens[0],
-                  tokens[1]);
+    g_babrab_hyprland_service_set_keyboard(service, tokens[0]);
+    g_babrab_hyprland_service_set_layout(service, tokens[1]);
+
     g_strfreev(tokens);
   });
 
@@ -251,7 +312,12 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
 
   EVENT_TYPE(line, submap, {
     // TODO:check for null
-    g_signal_emit(service, hyprland_service_signals[SUBMAP], 0, args);
+    // g_signal_emit(service, hyprland_service_signals[SUBMAP], 0, args);
+
+    g_babrab_hyprland_service_set_submap(service, args);
+
+    // g_object_notify_by_pspec(G_OBJECT(service),
+    //                          hypr_service_props[PROP_SUBMAP]);
   });
 
   EVENT_TYPE(line, changefloatingmode, {
@@ -309,6 +375,10 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
     g_signal_emit(service, hyprland_service_signals[PIN], 0, tokens[0], state);
     g_strfreev(tokens);
   });
+
+end:
+  g_data_input_stream_read_line_async(data_stream, G_PRIORITY_DEFAULT, NULL,
+                                      g_barbar_hyprland_line_reader, data);
 }
 
 static void g_barbar_hyprland_service_constructed(GObject *self) {
@@ -346,22 +416,29 @@ static void g_barbar_hyprland_service_constructed(GObject *self) {
                                       NULL, g_barbar_hyprland_line_reader,
                                       service);
 }
+// static void g_barbar_service_start(BarBarSensor *sensor) {}
 
 static void
 g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  // BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_hyprland_service_set_property;
   gobject_class->get_property = g_barbar_hyprland_service_get_property;
 
   gobject_class->constructor = g_barbar_hyprland_service_constructor;
   gobject_class->constructed = g_barbar_hyprland_service_constructed;
+  // sensor_class->start = g_barbar_service_start;
 
-  // dwl_service_props[PROP_FILEPATH] = g_param_spec_string(
-  //     "file_path", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
-  //
-  // g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
-  //                                   dwl_service_props);
+  hypr_service_props[PROP_SUBMAP] =
+      g_param_spec_string("submap", NULL, NULL, NULL, G_PARAM_READABLE);
+  hypr_service_props[PROP_KEYBOARD] =
+      g_param_spec_string("keyboard", NULL, NULL, NULL, G_PARAM_READABLE);
+  hypr_service_props[PROP_LAYOUT] =
+      g_param_spec_string("layout", NULL, NULL, NULL, G_PARAM_READABLE);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
+                                    hypr_service_props);
 
   /**
    * BarBarHyprlandService::workspace:
@@ -403,6 +480,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
+  // TODO:
   /**
    * BarBarHyprlandService::active-window-v2:
    * @service: this object
@@ -415,6 +493,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
+  // TODO:
   /**
    * BarBarHyprlandService::fullscreen:
    * @service: this object
@@ -464,7 +543,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   hyprland_service_signals[CREATEWORKSPACEV2] = g_signal_new(
       "create-workspace", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
   /**
    * BarBarHyprlandService::destroy-workspace:
@@ -477,7 +556,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   hyprland_service_signals[DESTROYWORKSPACEV2] = g_signal_new(
       "destroy-workspace", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
   /**
    * BarBarHyprlandService::move-workspace:
@@ -491,7 +570,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   hyprland_service_signals[MOVEWORKSPACEV2] = g_signal_new(
       "move-workspace", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+      NULL, NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_STRING, G_TYPE_STRING);
 
   /**
    * BarBarHyprlandService::rename-workspace:
@@ -504,7 +583,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   hyprland_service_signals[RENAMEWORKSPACE] = g_signal_new(
       "rename-workspace", G_TYPE_FROM_CLASS(class),
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
   /**
    * BarBarHyprlandService::activespecial:
@@ -597,18 +676,6 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
       g_signal_new("close-layer", G_TYPE_FROM_CLASS(class),
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
-  /**
-   * BarBarHyprlandService::submap:
-   * @service: this object
-   * @name: (nullable): name of created submap
-   *
-   * emitted when a keybind submap changes. Empty means default.
-   */
-  hyprland_service_signals[SUBMAP] =
-      g_signal_new("submap", G_TYPE_FROM_CLASS(class),
-                   G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
-
   /**
    * BarBarHyprlandService::floating-mode:
    * @service: this object

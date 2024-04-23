@@ -1,4 +1,5 @@
-#include "src/hyprland/barbar-hyprland-submap.h"
+#include "hyprland/barbar-hyprland-submap.h"
+#include "hyprland/barbar-hyprland-service.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -10,7 +11,7 @@
 struct _BarBarHyprlandSubmap {
   BarBarSensor parent_instance;
 
-  GSocketConnection *listener;
+  BarBarHyprlandService *service;
 
   char *mode;
 };
@@ -27,9 +28,9 @@ static GParamSpec *hyprland_submap_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-staticvoid g_barbar_hyprland_submap_set(BarBarHyprlandSubmap *hypr,
-                                        const char *args) {
-  g_return_if_fail(BARBAR_IS_HYPERLAND_SUBMAP(hypr));
+static void g_barbar_hyprland_submap_set(BarBarHyprlandSubmap *hypr,
+                                         const char *args) {
+  g_return_if_fail(BARBAR_IS_HYPRLAND_SUBMAP(hypr));
 
   g_free(hypr->mode);
   hypr->mode = g_strdup(hypr->mode);
@@ -62,7 +63,7 @@ static void g_barbar_hyprland_submap_get_property(GObject *object,
 
   switch (property_id) {
   case PROP_MODE:
-    g_value_set_double(value, submap->mode);
+    g_value_set_string(value, submap->mode);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -87,33 +88,20 @@ g_barbar_hyprland_submap_class_init(BarBarHyprlandSubmapClass *class) {
   hyprland_submap_props[PROP_MODE] =
       g_param_spec_double("mode", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
 
-  g_object_class_install_properties(gobject_class, CPU_NUM_PROPERTIES,
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     hyprland_submap_props);
 }
 
 static void g_barbar_hyprland_submap_init(BarBarHyprlandSubmap *self) {}
 
-static void g_barbar_hyprland_workspace_callback(uint32_t type, char *args,
-                                                 gpointer data) {
-  BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(data);
-  if (type == HYPRLAND_SUBMAP) {
-    g_barbar_hyprland_submap_set(hypr, args);
-  }
-}
-
 static void g_barbar_hyprland_submap_update(BarBarSensor *sensor) {
   GError *error = NULL;
 
-  BarBarHyprlandSubmap *submap = BARBAR_HYPRLAND_SUBMAP(object);
-
-  GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
+  BarBarHyprlandSubmap *submap = BARBAR_HYPRLAND_SUBMAP(sensor);
 
   if (error) {
     g_printerr("Hyprland submap: Error connecting to the ipc: %s",
                error->message);
     return;
   }
-
-  hypr->listener = g_barbar_hyprland_ipc_listner(
-      g_barbar_hyprland_submap_callback, hypr, NULL, &error);
 }

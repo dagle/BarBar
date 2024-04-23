@@ -1,6 +1,7 @@
 #include "barbar-hyprland-window.h"
 #include "barbar-hyprland-ipc.h"
 #include "gtk4-layer-shell.h"
+#include "hyprland/barbar-hyprland-service.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -27,7 +28,7 @@ struct _BarBarHyprlandWindow {
   gboolean focused;
   gboolean global;
 
-  GSocketConnection *listener;
+  BarBarHyprlandService *service;
 
   GtkWidget *label;
 };
@@ -121,28 +122,26 @@ static void g_barbar_hyprland_window_set_window(BarBarHyprlandWindow *self,
   }
 }
 
-static void g_barbar_hyprland_window_callback(uint32_t type, char *args,
-                                              gpointer data) {
+static void g_barbar_hyprland_workspace_focused_monitor_callback(
+    BarBarHyprlandService *service, const char *monitor, const char *workspace,
+    gpointer data) {
   BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(data);
 
-  switch (type) {
-  case HYPRLAND_ACTIVEWINDOW: {
-    gchar **tokens = g_strsplit(args, ",", -1);
-    g_barbar_hyprland_window_set_window(hypr, tokens[1]);
-    g_strfreev(tokens);
-    break;
+  if (!hypr->output_name || !g_strcmp0(hypr->output_name, monitor)) {
+    hypr->focused = TRUE;
+  } else {
+    hypr->focused = FALSE;
   }
-  case HYPRLAND_FOCUSEDMON: {
-    gchar **tokens = g_strsplit(args, ",", -1);
-    const char *monname = tokens[0];
-    if (!hypr->output_name || !g_strcmp0(hypr->output_name, monname)) {
-      hypr->focused = TRUE;
-    } else {
-      hypr->focused = FALSE;
-    }
-    g_strfreev(tokens);
-    break;
-  }
+}
+
+static void g_barbar_hyprland_workspace_active_window_callback(
+    BarBarHyprlandService *service, const char *class, const char *title,
+    gpointer data) {
+
+  BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(data);
+
+  if (hypr->focused) {
+    g_barbar_hyprland_window_set_window(hypr, title);
   }
 }
 
@@ -240,10 +239,13 @@ static void g_barbar_hyprland_window_map(GtkWidget *widget) {
   parse_active_workspace(hypr, ipc);
   g_object_unref(ipc);
 
-  hypr->listener = g_barbar_hyprland_ipc_listner(
-      g_barbar_hyprland_window_callback, hypr, NULL, &error);
+  hypr->service = g_barbar_hyprland_service_new();
 
-  if (error) {
-    g_printerr("error setting up listner: %s\n", error->message);
-  }
+  g_signal_connect(
+      hypr->service, "focused-monitor",
+      G_CALLBACK(g_barbar_hyprland_workspace_focused_monitor_callback), hypr);
+
+  g_signal_connect(
+      hypr->service, "active-window",
+      G_CALLBACK(g_barbar_hyprland_workspace_active_window_callback), hypr);
 }

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "barbar-sensor.h"
+#include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
@@ -33,6 +33,6 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_HYPRLAND_SUBMAP (g_barbar_hyprland_submap_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarHyprlandSubmap, g_barbar_hyprland_submap, BARBAR,
-    HYPRLAND_SUBMAP, BarBarSensor)
+                     HYPRLAND_SUBMAP, BarBarSensor)
 
 G_END_DECLS
