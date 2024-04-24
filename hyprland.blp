@@ -12,5 +12,12 @@ BarBar.Bar {
     [center]
     BarBar.HyprlandWindow {
     }
+    [end]
+    Gtk.Label {
+      label: bind cpu.percent;
+    }
   }
+}
+
+BarBar.Cpu cpu {
 }

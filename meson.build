@@ -36,6 +36,7 @@ libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber
 playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
+# xkbcommon = dependency('xkbcommon')
 
 gtk = dependency('gtk4')
 
@@ -61,6 +62,7 @@ deps = [
   template_glib,
   libgweather,
   libgeoclue,
+  # xkbcommon,
   m_dep,
   module,
 ]

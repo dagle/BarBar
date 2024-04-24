@@ -152,6 +152,12 @@ static void g_barbar_hyprland_service_get_property(GObject *object,
   case PROP_SUBMAP:
     g_value_set_string(value, service->submap);
     break;
+  case PROP_KEYBOARD:
+    g_value_set_string(value, service->keyboard);
+    break;
+  case PROP_LAYOUT:
+    g_value_set_string(value, service->layout);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -599,18 +605,18 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
-  /**
-   * BarBarHyprlandService::activelayout:
-   * @service: this object
-   * @keyboardname: name of keyboard device
-   * @layoutname: name of keyboard layout.
-   *
-   * emitted on a layout change of the active keyboard
-   */
-  hyprland_service_signals[ACTIVELAYOUT] = g_signal_new(
-      "active-layout", G_TYPE_FROM_CLASS(class),
-      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+  // /**
+  //  * BarBarHyprlandService::activelayout:
+  //  * @service: this object
+  //  * @keyboardname: name of keyboard device
+  //  * @layoutname: name of keyboard layout.
+  //  *
+  //  * emitted on a layout change of the active keyboard
+  //  */
+  // hyprland_service_signals[ACTIVELAYOUT] = g_signal_new(
+  //     "active-layout", G_TYPE_FROM_CLASS(class),
+  //     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
+  //     NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
   /**
    * BarBarHyprlandService::open-window:

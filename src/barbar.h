@@ -33,6 +33,7 @@
 #include "hyprland/barbar-hyprland-window.h"
 #include "hyprland/barbar-hyprland-workspace.h"
 
+#include "sway/barbar-sway-language.h"
 #include "sway/barbar-sway-subscribe.h"
 #include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"

@@ -37,6 +37,7 @@ void g_barbar_init(void) {
   g_barbar_river_mode_get_type();
 
   g_barbar_sway_subscribe_get_type();
+  g_barbar_sway_language_get_type();
   g_barbar_sway_workspace_get_type();
   g_barbar_sway_window_get_type();
 

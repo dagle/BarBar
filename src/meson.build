@@ -32,6 +32,7 @@ libbarbar_src = files(
   'sway/barbar-sway-ipc.c',
   'sway/barbar-sway-subscribe.c',
   'sway/barbar-sway-workspace.c',
+  'sway/barbar-sway-language.c',
   'sway/barbar-sway-window.c',
 
   'hyprland/barbar-hyprland-ipc.c',
@@ -109,6 +110,7 @@ libbarbar_headers = [
   'sway/barbar-sway-ipc.h',
   'sway/barbar-sway-subscribe.h',
   'sway/barbar-sway-workspace.h',
+  'sway/barbar-sway-language.h',
   'sway/barbar-sway-window.h',
 
   'tray/barbar-watcher.h',

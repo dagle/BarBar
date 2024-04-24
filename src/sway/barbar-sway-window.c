@@ -195,7 +195,6 @@ static void g_barbar_sway_initial_window(BarBarSwayWindow *sway, gchar *payload,
 static void event_listner(BarBarSwaySubscribe *sub, guint type,
                           const char *payload, guint length, gpointer data) {
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(data);
-  printf("message: %s\n", payload);
   g_barbar_sway_handle_window_change(payload, length, type, sway);
 }
 

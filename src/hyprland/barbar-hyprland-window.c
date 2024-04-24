@@ -12,9 +12,6 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-// TODO:  We need to match against names and not just numbers
-// because if the namespace is named, it isn't a number
-
 /**
  * BarBarHyprlandWindow:
  *

@@ -12,5 +12,21 @@ BarBar.Bar {
     [start]
     BarBar.SwayWindow {
     }
+
+    [end]
+    Gtk.Label {
+      label: bind lang.identifer;
+    }
+
+    [end]
+    Gtk.Label {
+      label: bind cpu.percent;
+    }
   }
+}
+
+BarBar.SwayLanguage lang {
+}
+
+BarBar.Cpu cpu {
 }
