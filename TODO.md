@@ -8,15 +8,16 @@ as a device? This would be great for batteries, mpris etc since we could just re
 
 # Default css
 
-
+- [ ] Default css
 # A generic interface to a list in sensors?
+# Mpris
 
-# mpris
 - [x] create a format function
 - [ ] be able to listen to multiple players
 - [ ] send/create updates correctly
 
-# modules 
+# modules
+
 - [x] game-mode
 - [x] power-profiles
 - [x] systemd-units

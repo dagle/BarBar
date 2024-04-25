@@ -22,22 +22,17 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_DISK_H_
-#define _BARBAR_DISK_H_
+#pragma once
 
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_DISK (g_barbar_disk_get_type())
+#define BARBAR_TYPE_FILESYSTEM (g_barbar_filesystem_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarDisk, g_barbar_disk, BARBAR, DISK, GtkWidget)
-
-void g_barbar_disk_start(BarBarDisk *disk);
-GtkWidget *g_barbar_disk_new(char *path);
+G_DECLARE_FINAL_TYPE(BarBarFilesystem, g_barbar_filesystem, BARBAR, FILESYSTEM,
+                     BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_BAR_H_ */

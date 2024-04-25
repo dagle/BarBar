@@ -14,7 +14,7 @@ struct _BarBarSwayLanguage {
 
   GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
-  struct xkb_context *ctx;
+  // struct xkb_context *ctx;
 
   char *keyboard;
   char *identifier;
@@ -120,19 +120,21 @@ static void g_barbar_sway_workspace_set_layout(BarBarSwayLanguage *sway,
   if (!layout) {
     return;
   }
+  // TODO: Can we do this without trying to implement this our selfs
 
-  struct xkb_keymap *kb =
-      xkb_keymap_new_from_string(sway->ctx, layout, XKB_KEYMAP_FORMAT_TEXT_V1,
-                                 XKB_KEYMAP_COMPILE_NO_FLAGS);
-  xkb_layout_index_t idx = xkb_keymap_num_layouts(kb);
-
-  for (int i = 0; i < idx; i++) {
-
-    const char *str = xkb_keymap_layout_get_name(kb, i);
-    printf("kb: %s\n", str);
-  }
-
-  xkb_keymap_unref(kb);
+  // struct xkb_keymap *kb =
+  //     xkb_keymap_new_from_string(sway->ctx, layout,
+  //     XKB_KEYMAP_FORMAT_TEXT_V1,
+  //                                XKB_KEYMAP_COMPILE_NO_FLAGS);
+  // xkb_layout_index_t idx = xkb_keymap_num_layouts(kb);
+  //
+  // for (int i = 0; i < idx; i++) {
+  //
+  //   const char *str = xkb_keymap_layout_get_name(kb, i);
+  //   printf("kb: %s\n", str);
+  // }
+  //
+  // xkb_keymap_unref(kb);
 }
 
 static void g_barbar_sway_language_set_property(GObject *object,
@@ -320,12 +322,12 @@ static void g_barbar_sway_language_start(BarBarSensor *sensor) {
   GOutputStream *output_stream;
   GError *error = NULL;
 
-  sway->ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+  // sway->ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
-  if (!sway->ctx) {
-    g_printerr("Sway language: Couldn't initialize xkb context");
-    return;
-  }
+  // if (!sway->ctx) {
+  //   g_printerr("Sway language: Couldn't initialize xkb context");
+  //   return;
+  // }
 
   sway->ipc = g_barbar_sway_ipc_connect(&error);
   if (error != NULL) {

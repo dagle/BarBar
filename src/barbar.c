@@ -17,7 +17,9 @@ void g_barbar_init(void) {
   g_barbar_power_profile_get_type();
   g_barbar_bus_type_get_type();
   g_barbar_systemd_units_get_type();
+  g_barbar_game_mode_get_type();
   g_barbar_weather_get_type();
+  g_barbar_filesystem_get_type();
 
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();

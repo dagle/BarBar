@@ -185,5 +185,6 @@ static void g_barbar_cpu_start(BarBarSensor *sensor) {
     g_source_remove(cpu->source_id);
   }
   g_barbar_cpu_update(cpu);
-  g_timeout_add_full(0, cpu->interval, g_barbar_cpu_update, cpu, NULL);
+  cpu->source_id =
+      g_timeout_add_full(0, cpu->interval, g_barbar_cpu_update, cpu, NULL);
 }

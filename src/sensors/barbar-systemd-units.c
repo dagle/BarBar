@@ -183,6 +183,13 @@ static void get_default_value(BarBarSystemdUnits *units) {
 static void g_properties_changed(GDBusProxy *self, GVariant *changed_properties,
                                  char **invalidated_properties, gpointer data) {
   BarBarSystemdUnits *units = BARBAR_SYSTEMD_UNITS(data);
+
+  guint failed;
+
+  if (!g_variant_lookup(changed_properties, "NFailedUnits", "&u", &failed)) {
+    return;
+  }
+  g_barbar_systemd_units_set_failed(units, failed);
 }
 
 static void units_cb(GObject *object, GAsyncResult *res, gpointer data) {

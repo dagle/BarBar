@@ -13,8 +13,9 @@ struct _BarBarGameMode {
   BarBarSensor parent_instance;
 
   GDBusProxy *proxy;
+  int name_watcher;
 
-  guint game_count;
+  gint game_count;
 };
 
 enum {
@@ -39,24 +40,30 @@ static GParamSpec *systemd_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-// static void g_barbar_systemd_units_set_profile(BarBarSystemdUnits *units,
-//                                                guint failed) {
-//   g_return_if_fail(BARBAR_IS_SYSTEMD_UNITS(units));
-//
-//   if (units->failed_unit == failed) {
-//     return;
-//   }
-//
-//   units->failed_unit = failed;
-//
-//   g_object_notify_by_pspec(G_OBJECT(units),
-//   systemd_props[PROP_FAILED_UNITS]);
-// }
+static void g_barbar_game_mode_set_count(BarBarGameMode *mode, gint games) {
+  g_return_if_fail(BARBAR_IS_GAME_MODE(mode));
+  gint old;
+
+  if (mode->game_count == games) {
+    return;
+  }
+  old = mode->game_count;
+
+  mode->game_count = games;
+
+  g_object_notify_by_pspec(G_OBJECT(mode), systemd_props[PROP_GAME_COUNT]);
+
+  // if we swapped from true to false or false to true, we need to single it.
+  if (old > 1 && games <= 0) {
+    g_object_notify_by_pspec(G_OBJECT(mode), systemd_props[PROP_ENABLED]);
+  } else if (old <= 0 && games > 0) {
+    g_object_notify_by_pspec(G_OBJECT(mode), systemd_props[PROP_ENABLED]);
+  }
+}
 
 static void g_barbar_game_mode_set_property(GObject *object, guint property_id,
                                             const GValue *value,
                                             GParamSpec *pspec) {
-
   BarBarGameMode *mode = BARBAR_GAME_MODE(object);
 
   switch (property_id) {
@@ -67,7 +74,6 @@ static void g_barbar_game_mode_set_property(GObject *object, guint property_id,
 
 static void g_barbar_game_mode_get_property(GObject *object, guint property_id,
                                             GValue *value, GParamSpec *pspec) {
-
   BarBarGameMode *mode = BARBAR_GAME_MODE(object);
   switch (property_id) {
   case PROP_GAME_COUNT:
@@ -81,7 +87,7 @@ static void g_barbar_game_mode_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_systemd_units_class_init(BarBarGameModeClass *class) {
+static void g_barbar_game_mode_class_init(BarBarGameModeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
@@ -96,9 +102,9 @@ static void g_barbar_systemd_units_class_init(BarBarGameModeClass *class) {
    * How many games are currently running.
    *
    */
-  systemd_props[PROP_GAME_COUNT] = g_param_spec_uint(
-      "game-count", NULL, NULL, 0, G_MAXUINT, 0,
-      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+  systemd_props[PROP_GAME_COUNT] =
+      g_param_spec_uint("game-count", NULL, NULL, 0, G_MAXUINT, 0,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
    * BarBarGameMode:enabled:
@@ -114,18 +120,19 @@ static void g_barbar_systemd_units_class_init(BarBarGameModeClass *class) {
 
 static void g_barbar_game_mode_init(BarBarGameMode *mode) {}
 
-static void update_failed(GObject *object, GAsyncResult *res, gpointer data) {
+static void get_clients(GObject *object, GAsyncResult *res, gpointer data) {
   GError *error = NULL;
 
-  BarBarGameMode *mode = BARBAR_GAME_MODE(object);
+  BarBarGameMode *mode = BARBAR_GAME_MODE(data);
 
   GVariant *ret = g_dbus_proxy_call_finish(G_DBUS_PROXY(object), res, &error);
 
   if (error || !ret) {
-    g_printerr("Failed to get failed systemd-units: %s\n", error->message);
+    g_printerr("Failed to get initial game-mode: %s\n", error->message);
     g_error_free(error);
   }
-  guint failed;
+
+  gint games;
   GVariant *container;
   g_variant_get(ret, "(v)", &container);
 
@@ -133,29 +140,46 @@ static void update_failed(GObject *object, GAsyncResult *res, gpointer data) {
     return;
   }
   const GVariantType *type = g_variant_get_type(container);
-  if (g_variant_type_equal(type, G_VARIANT_TYPE_UINT32)) {
-    g_variant_get(container, "u", &failed);
-
-    // g_barbar_systemd_units_set_profile(units, failed);
+  if (g_variant_type_equal(type, G_VARIANT_TYPE_INT32)) {
+    g_variant_get(container, "i", &games);
+    g_barbar_game_mode_set_count(mode, games);
   }
   g_variant_unref(container);
   g_variant_unref(ret);
 }
 
-static void get_failed_units(BarBarGameMode *units) {
+static void get_running_games(BarBarGameMode *mode) {
   g_dbus_proxy_call(
-      units->proxy, "Get",
+      mode->proxy, "Get",
       g_variant_new("(ss)", "com.feralinteractive.GameMode", "ClientCount"),
-      G_DBUS_CALL_FLAGS_NONE, -1, NULL, update_failed, units);
+      G_DBUS_CALL_FLAGS_NONE, -1, NULL, get_clients, mode);
 }
 
-static void get_default_value(BarBarGameMode *units) {
-  get_failed_units(units);
-}
+static void get_default_value(BarBarGameMode *mode) { get_running_games(mode); }
 
-static void g_properties_changed(GDBusProxy *self, GVariant *changed_properties,
-                                 char **invalidated_properties, gpointer data) {
+static void g_properties_changed(GDBusProxy *self, gchar *sender_name,
+                                 gchar *signal_name, GVariant *parameters,
+                                 gpointer data) {
   BarBarGameMode *mode = BARBAR_GAME_MODE(data);
+  // Why can't we use g-property-changed? A bug in game-mode?
+  if (!g_strcmp0(signal_name, "PropertiesChanged")) {
+    get_default_value(mode);
+  }
+}
+
+static void mode_appeared(GDBusConnection *connection, const gchar *name,
+                          const gchar *name_owner, gpointer data) {
+  BarBarGameMode *mode = BARBAR_GAME_MODE(data);
+
+  get_default_value(mode);
+}
+
+static void mode_disappear(GDBusConnection *connection, const gchar *name,
+                           gpointer data) {
+
+  BarBarGameMode *mode = BARBAR_GAME_MODE(data);
+
+  g_barbar_game_mode_set_count(mode, 0);
 }
 
 static void mode_cb(GObject *object, GAsyncResult *res, gpointer data) {
@@ -170,8 +194,11 @@ static void mode_cb(GObject *object, GAsyncResult *res, gpointer data) {
   }
   get_default_value(mode);
 
-  g_signal_connect(mode->proxy, "g-properties-changed",
-                   G_CALLBACK(g_properties_changed), mode);
+  g_signal_connect(mode->proxy, "g-signal", G_CALLBACK(g_properties_changed),
+                   mode);
+  mode->name_watcher = g_bus_watch_name(
+      G_BUS_TYPE_SESSION, "com.feralinteractive.GameMode",
+      G_BUS_NAME_WATCHER_FLAGS_NONE, mode_appeared, mode_disappear, mode, NULL);
 }
 
 static void g_barbar_game_mode_start(BarBarSensor *sensor) {

@@ -102,13 +102,6 @@ BarBar.Bar {
     //}
 
     [end]
-    BarBar.Label network_label {
-      sensor: network;
-      templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
-    }
-
-
-    [end]
     Gtk.ScaleButton volume {
       adjustment: Adjustment {
         lower: 0.0;
@@ -288,3 +281,7 @@ BarBar.SystemdUnits units {
 
 BarBar.Weather weater {
 }
+
+BarBar.GameMode {
+
+  }

@@ -22,7 +22,9 @@ libbarbar_src = files(
   'sensors/barbar-pomodoro.c',
   'sensors/barbar-power-profiles.c',
   'sensors/barbar-systemd-units.c',
+  'sensors/barbar-gamemode.c',
   'sensors/barbar-weather.c',
+  'sensors/barbar-filesystem.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -80,7 +82,9 @@ libbarbar_headers = [
   'sensors/barbar-pomodoro.h',
   'sensors/barbar-power-profiles.h',
   'sensors/barbar-systemd-units.h',
+  'sensors/barbar-gamemode.h',
   'sensors/barbar-weather.h',
+  'sensors/barbar-filesystem.h',
 
   'sensors/barbar-mpris.h',
 
