@@ -2,7 +2,6 @@
 #include <glibtop.h>
 #include <glibtop/fsusage.h>
 #include <stdio.h>
-#include <sys/statvfs.h>
 
 /**
  * BarBarFilesystem:

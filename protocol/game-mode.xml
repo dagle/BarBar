@@ -1,0 +1,95 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping"></method>
+    <method name="GetMachineId">
+      <arg direction="out" name="machine_uuid" type="s"></arg>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg direction="out" name="xml_data" type="s"></arg>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="in" name="property_name" type="s"></arg>
+      <arg direction="out" name="value" type="v"></arg>
+    </method>
+    <method name="GetAll">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="out" name="props" type="a{sv}"></arg>
+    </method>
+    <method name="Set">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="in" name="property_name" type="s"></arg>
+      <arg direction="in" name="value" type="v"></arg>
+    </method>
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"></arg>
+      <arg name="changed_properties" type="a{sv}"></arg>
+      <arg name="invalidated_properties" type="as"></arg>
+    </signal>
+  </interface>
+  <interface name="com.feralinteractive.GameMode">
+    <property access="read" name="ClientCount" type="i"></property>
+    <method name="RegisterGame">
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="UnregisterGame">
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="QueryStatus">
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="RegisterGameByPID">
+      <arg direction="in" type="i"></arg>
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="UnregisterGameByPID">
+      <arg direction="in" type="i"></arg>
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="QueryStatusByPID">
+      <arg direction="in" type="i"></arg>
+      <arg direction="in" type="i"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="RegisterGameByPIDFd">
+      <arg direction="in" type="h"></arg>
+      <arg direction="in" type="h"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="UnregisterGameByPIDFd">
+      <arg direction="in" type="h"></arg>
+      <arg direction="in" type="h"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="QueryStatusByPIDFd">
+      <arg direction="in" type="h"></arg>
+      <arg direction="in" type="h"></arg>
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="RefreshConfig">
+      <arg direction="out" type="i"></arg>
+    </method>
+    <method name="ListGames">
+      <arg direction="out" type="a(io)"></arg>
+    </method>
+    <signal name="GameRegistered">
+      <arg type="i"></arg>
+      <arg type="o"></arg>
+    </signal>
+    <signal name="GameUnregistered">
+      <arg type="i"></arg>
+      <arg type="o"></arg>
+    </signal>
+  </interface>
+  <node name="Games"></node>
+</node>

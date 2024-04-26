@@ -30,9 +30,8 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
+#define BARBAR_TYPE_DISK (g_barbar_disk_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
-                     BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarDisk, g_barbar_disk, BARBAR, DISK, BarBarSensor)
 
 G_END_DECLS

@@ -1,0 +1,803 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping"></method>
+    <method name="GetMachineId">
+      <arg direction="out" name="machine_uuid" type="s"></arg>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg direction="out" name="xml_data" type="s"></arg>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="in" name="property_name" type="s"></arg>
+      <arg direction="out" name="value" type="v"></arg>
+    </method>
+    <method name="GetAll">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="out" name="props" type="a{sv}"></arg>
+    </method>
+    <method name="Set">
+      <arg direction="in" name="interface_name" type="s"></arg>
+      <arg direction="in" name="property_name" type="s"></arg>
+      <arg direction="in" name="value" type="v"></arg>
+    </method>
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"></arg>
+      <arg name="changed_properties" type="a{sv}"></arg>
+      <arg name="invalidated_properties" type="as"></arg>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.systemd1.Manager">
+    <property access="read" name="Version" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="Features" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="Virtualization" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="ConfidentialVirtualization" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="Architecture" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="Tainted" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="FirmwareTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="FirmwareTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="LoaderTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="LoaderTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="KernelTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="KernelTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UserspaceTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UserspaceTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="FinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="FinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="SecurityStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="SecurityStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="SecurityFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="SecurityFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="GeneratorsStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="GeneratorsStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="GeneratorsFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="GeneratorsFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="UnitsLoadTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDSecurityStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDSecurityStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDSecurityFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDSecurityFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDGeneratorsStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDGeneratorsStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDGeneratorsFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDGeneratorsFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDUnitsLoadStartTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDUnitsLoadStartTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDUnitsLoadFinishTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="InitRDUnitsLoadFinishTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="readwrite" name="LogLevel" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="LogTarget" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="NNames" type="u">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="NFailedUnits" type="u"></property>
+    <property access="read" name="NJobs" type="u">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="NInstalledJobs" type="u">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="NFailedJobs" type="u">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="Progress" type="d">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="Environment" type="as">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="ConfirmSpawn" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="ShowStatus" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="UnitPath" type="as">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultStandardOutput" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultStandardError" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="WatchdogDevice" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="WatchdogLastPingTimestamp" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="WatchdogLastPingTimestampMonotonic" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="RuntimeWatchdogUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="RuntimeWatchdogPreUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="RuntimeWatchdogPreGovernor" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="RebootWatchdogUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="KExecWatchdogUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="readwrite" name="ServiceWatchdogs" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="ControlGroup" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="SystemState" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="ExitCode" type="y">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="DefaultTimerAccuracyUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultTimeoutStartUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultTimeoutStopUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultTimeoutAbortUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="DefaultDeviceTimeoutUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultRestartUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultStartLimitIntervalUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultStartLimitBurst" type="u">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultCPUAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultBlockIOAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultIOAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultIPAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultMemoryAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultTasksAccounting" type="b">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitCPU" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitCPUSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitFSIZE" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitFSIZESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitDATA" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitDATASoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitSTACK" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitSTACKSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitCORE" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitCORESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRSS" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRSSSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNOFILE" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNOFILESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitAS" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitASSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNPROC" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNPROCSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitMEMLOCK" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitMEMLOCKSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitLOCKS" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitLOCKSSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitSIGPENDING" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitSIGPENDINGSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitMSGQUEUE" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitMSGQUEUESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNICE" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitNICESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRTPRIO" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRTPRIOSoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRTTIME" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultLimitRTTIMESoft" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultTasksMax" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="DefaultMemoryPressureThresholdUSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="DefaultMemoryPressureWatch" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"></annotation>
+    </property>
+    <property access="read" name="TimerSlackNSec" type="t">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultOOMPolicy" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="DefaultOOMScoreAdjust" type="i">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <property access="read" name="CtrlAltDelBurstAction" type="s">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="const"></annotation>
+    </property>
+    <method name="GetUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+    </method>
+    <method name="GetUnitByPID">
+      <arg direction="in" name="pid" type="u"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+    </method>
+    <method name="GetUnitByInvocationID">
+      <arg direction="in" name="invocation_id" type="ay"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+    </method>
+    <method name="GetUnitByControlGroup">
+      <arg direction="in" name="cgroup" type="s"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+    </method>
+    <method name="GetUnitByPIDFD">
+      <arg direction="in" name="pidfd" type="h"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+      <arg direction="out" name="unit_id" type="s"></arg>
+      <arg direction="out" name="invocation_id" type="ay"></arg>
+    </method>
+    <method name="LoadUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="out" name="unit" type="o"></arg>
+    </method>
+    <method name="StartUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="StartUnitWithFlags">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="in" name="flags" type="t"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="StartUnitReplace">
+      <arg direction="in" name="old_unit" type="s"></arg>
+      <arg direction="in" name="new_unit" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="StopUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="ReloadUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="RestartUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="TryRestartUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="ReloadOrRestartUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="ReloadOrTryRestartUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="EnqueueUnitJob">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="job_type" type="s"></arg>
+      <arg direction="in" name="job_mode" type="s"></arg>
+      <arg direction="out" name="job_id" type="u"></arg>
+      <arg direction="out" name="job_path" type="o"></arg>
+      <arg direction="out" name="unit_id" type="s"></arg>
+      <arg direction="out" name="unit_path" type="o"></arg>
+      <arg direction="out" name="job_type" type="s"></arg>
+      <arg direction="out" name="affected_jobs" type="a(uosos)"></arg>
+    </method>
+    <method name="KillUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="whom" type="s"></arg>
+      <arg direction="in" name="signal" type="i"></arg>
+    </method>
+    <method name="QueueSignalUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="whom" type="s"></arg>
+      <arg direction="in" name="signal" type="i"></arg>
+      <arg direction="in" name="value" type="i"></arg>
+    </method>
+    <method name="CleanUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mask" type="as"></arg>
+    </method>
+    <method name="FreezeUnit">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="ThawUnit">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="ResetFailedUnit">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="SetUnitProperties">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="properties" type="a(sv)"></arg>
+    </method>
+    <method name="BindMountUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="source" type="s"></arg>
+      <arg direction="in" name="destination" type="s"></arg>
+      <arg direction="in" name="read_only" type="b"></arg>
+      <arg direction="in" name="mkdir" type="b"></arg>
+    </method>
+    <method name="MountImageUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="source" type="s"></arg>
+      <arg direction="in" name="destination" type="s"></arg>
+      <arg direction="in" name="read_only" type="b"></arg>
+      <arg direction="in" name="mkdir" type="b"></arg>
+      <arg direction="in" name="options" type="a(ss)"></arg>
+    </method>
+    <method name="RefUnit">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="UnrefUnit">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="StartTransientUnit">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="in" name="properties" type="a(sv)"></arg>
+      <arg direction="in" name="aux" type="a(sa(sv))"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="GetUnitProcesses">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="out" name="processes" type="a(sus)"></arg>
+    </method>
+    <method name="AttachProcessesToUnit">
+      <arg direction="in" name="unit_name" type="s"></arg>
+      <arg direction="in" name="subcgroup" type="s"></arg>
+      <arg direction="in" name="pids" type="au"></arg>
+    </method>
+    <method name="AbandonScope">
+      <arg direction="in" name="name" type="s"></arg>
+    </method>
+    <method name="GetJob">
+      <arg direction="in" name="id" type="u"></arg>
+      <arg direction="out" name="job" type="o"></arg>
+    </method>
+    <method name="GetJobAfter">
+      <arg direction="in" name="id" type="u"></arg>
+      <arg direction="out" name="jobs" type="a(usssoo)"></arg>
+    </method>
+    <method name="GetJobBefore">
+      <arg direction="in" name="id" type="u"></arg>
+      <arg direction="out" name="jobs" type="a(usssoo)"></arg>
+    </method>
+    <method name="CancelJob">
+      <arg direction="in" name="id" type="u"></arg>
+    </method>
+    <method name="ClearJobs"></method>
+    <method name="ResetFailed"></method>
+    <method name="SetShowStatus">
+      <arg direction="in" name="mode" type="s"></arg>
+    </method>
+    <method name="ListUnits">
+      <arg direction="out" name="units" type="a(ssssssouso)"></arg>
+    </method>
+    <method name="ListUnitsFiltered">
+      <arg direction="in" name="states" type="as"></arg>
+      <arg direction="out" name="units" type="a(ssssssouso)"></arg>
+    </method>
+    <method name="ListUnitsByPatterns">
+      <arg direction="in" name="states" type="as"></arg>
+      <arg direction="in" name="patterns" type="as"></arg>
+      <arg direction="out" name="units" type="a(ssssssouso)"></arg>
+    </method>
+    <method name="ListUnitsByNames">
+      <arg direction="in" name="names" type="as"></arg>
+      <arg direction="out" name="units" type="a(ssssssouso)"></arg>
+    </method>
+    <method name="ListJobs">
+      <arg direction="out" name="jobs" type="a(usssoo)"></arg>
+    </method>
+    <method name="Subscribe"></method>
+    <method name="Unsubscribe"></method>
+    <method name="Dump">
+      <arg direction="out" name="output" type="s"></arg>
+    </method>
+    <method name="DumpUnitsMatchingPatterns">
+      <arg direction="in" name="patterns" type="as"></arg>
+      <arg direction="out" name="output" type="s"></arg>
+    </method>
+    <method name="DumpByFileDescriptor">
+      <arg direction="out" name="fd" type="h"></arg>
+    </method>
+    <method name="DumpUnitsMatchingPatternsByFileDescriptor">
+      <arg direction="in" name="patterns" type="as"></arg>
+      <arg direction="out" name="fd" type="h"></arg>
+    </method>
+    <method name="Reload"></method>
+    <method name="Reexecute">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"></annotation>
+    </method>
+    <method name="Exit"></method>
+    <method name="Reboot"></method>
+    <method name="SoftReboot">
+      <arg direction="in" name="new_root" type="s"></arg>
+    </method>
+    <method name="PowerOff"></method>
+    <method name="Halt"></method>
+    <method name="KExec"></method>
+    <method name="SwitchRoot">
+      <arg direction="in" name="new_root" type="s"></arg>
+      <arg direction="in" name="init" type="s"></arg>
+    </method>
+    <method name="SetEnvironment">
+      <arg direction="in" name="assignments" type="as"></arg>
+    </method>
+    <method name="UnsetEnvironment">
+      <arg direction="in" name="names" type="as"></arg>
+    </method>
+    <method name="UnsetAndSetEnvironment">
+      <arg direction="in" name="names" type="as"></arg>
+      <arg direction="in" name="assignments" type="as"></arg>
+    </method>
+    <method name="EnqueueMarkedJobs">
+      <arg direction="out" name="jobs" type="ao"></arg>
+    </method>
+    <method name="ListUnitFiles">
+      <arg direction="out" name="unit_files" type="a(ss)"></arg>
+    </method>
+    <method name="ListUnitFilesByPatterns">
+      <arg direction="in" name="states" type="as"></arg>
+      <arg direction="in" name="patterns" type="as"></arg>
+      <arg direction="out" name="unit_files" type="a(ss)"></arg>
+    </method>
+    <method name="GetUnitFileState">
+      <arg direction="in" name="file" type="s"></arg>
+      <arg direction="out" name="state" type="s"></arg>
+    </method>
+    <method name="EnableUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="DisableUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="EnableUnitFilesWithFlags">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="flags" type="t"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="DisableUnitFilesWithFlags">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="flags" type="t"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="DisableUnitFilesWithFlagsAndInstallInfo">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="flags" type="t"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="ReenableUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="LinkUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="PresetUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="PresetUnitFilesWithMode">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="carries_install_info" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="MaskUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="UnmaskUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="RevertUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="SetDefaultTarget">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="GetDefaultTarget">
+      <arg direction="out" name="name" type="s"></arg>
+    </method>
+    <method name="PresetAllUnitFiles">
+      <arg direction="in" name="mode" type="s"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="AddDependencyUnitFiles">
+      <arg direction="in" name="files" type="as"></arg>
+      <arg direction="in" name="target" type="s"></arg>
+      <arg direction="in" name="type" type="s"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="in" name="force" type="b"></arg>
+      <arg direction="out" name="changes" type="a(sss)"></arg>
+    </method>
+    <method name="GetUnitFileLinks">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="in" name="runtime" type="b"></arg>
+      <arg direction="out" name="links" type="as"></arg>
+    </method>
+    <method name="SetExitCode">
+      <arg direction="in" name="number" type="y"></arg>
+    </method>
+    <method name="LookupDynamicUserByName">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="out" name="uid" type="u"></arg>
+    </method>
+    <method name="LookupDynamicUserByUID">
+      <arg direction="in" name="uid" type="u"></arg>
+      <arg direction="out" name="name" type="s"></arg>
+    </method>
+    <method name="GetDynamicUsers">
+      <arg direction="out" name="users" type="a(us)"></arg>
+    </method>
+    <method name="DumpUnitFileDescriptorStore">
+      <arg direction="in" name="name" type="s"></arg>
+      <arg direction="out" name="entries" type="a(suuutuusu)"></arg>
+    </method>
+    <signal name="UnitNew">
+      <arg name="id" type="s"></arg>
+      <arg name="unit" type="o"></arg>
+    </signal>
+    <signal name="UnitRemoved">
+      <arg name="id" type="s"></arg>
+      <arg name="unit" type="o"></arg>
+    </signal>
+    <signal name="JobNew">
+      <arg name="id" type="u"></arg>
+      <arg name="job" type="o"></arg>
+      <arg name="unit" type="s"></arg>
+    </signal>
+    <signal name="JobRemoved">
+      <arg name="id" type="u"></arg>
+      <arg name="job" type="o"></arg>
+      <arg name="unit" type="s"></arg>
+      <arg name="result" type="s"></arg>
+    </signal>
+    <signal name="StartupFinished">
+      <arg name="firmware" type="t"></arg>
+      <arg name="loader" type="t"></arg>
+      <arg name="kernel" type="t"></arg>
+      <arg name="initrd" type="t"></arg>
+      <arg name="userspace" type="t"></arg>
+      <arg name="total" type="t"></arg>
+    </signal>
+    <signal name="UnitFilesChanged"></signal>
+    <signal name="Reloading">
+      <arg name="active" type="b"></arg>
+    </signal>
+  </interface>
+  <node name="unit"></node>
+  <node name="job"></node>
+</node>
