@@ -1,0 +1,32 @@
+using Gtk 4.0;
+using BarBar 1.0;
+
+BarBar.Background background {
+  top-margin: 50;
+  bottom-margin: 50;
+  right-margin: 200;
+  left-margin: 200;
+  // Gtk.LevelBar {
+  //   orientation: vertical;
+  //   value: bind cpu.percent;
+  // }
+  // BarBar.Rotary {
+  //   value: bind cpu.percent;
+  // }
+  Gtk.Label clock {}
+
+  Gtk.Label date {}
+
+  Gtk.Label system {}
+
+  Gtk.Label cpu {}
+
+  // BarBar.TopCpu {
+  // }
+  Gtk.Label mem {}
+
+  // BarBar.TopMem {
+  // }
+  // BarBar.TopCpu {
+  // }
+}

@@ -1,7 +1,5 @@
 using Gtk 4.0;
 using BarBar 1.0;
-using Vte 3.91;
-
 // At toplevel, you should define windows or signals
 // Barbar.Bar is a window
 BarBar.Bar {
@@ -10,26 +8,21 @@ BarBar.Bar {
   // screen-num: 1
   Gtk.ActionBar {
     // We have custom widgets for river, hyprland, dwl etc
-    [start]
-    BarBar.RiverTag {
-    }
 
     [start]
-    BarBar.StatusWatcher {
-    }
+    BarBar.RiverTag {}
 
     [start]
-    BarBar.RiverLayout {
-    }
+    BarBar.StatusWatcher {}
 
     [start]
-    BarBar.RiverMode {
-    }
+    BarBar.RiverLayout {}
+
+    [start]
+    BarBar.RiverMode {}
 
     [center]
-    BarBar.RiverView {
-    }
-
+    BarBar.RiverView {}
 
     [end]
     Gtk.ScaleButton volume {
@@ -41,12 +34,13 @@ BarBar.Bar {
         value: bind plumb.percent bidirectional;
       };
     }
-    //[end]
-    //BarBar.RiverLayout {
-    //}
 
+    // [end]
+    // BarBar.RiverLayout {
+    // }
     // A simple clock containing a clock, it's binds to the signal
     // and that is it.
+
     [end]
     Gtk.Label {
       label: bind clock.time;
@@ -58,6 +52,7 @@ BarBar.Bar {
     }
 
     // We are not limited to labels, we can do more fancy stuff too.
+
     [end]
     Gtk.LevelBar {
       value: bind mem.percent;
@@ -78,14 +73,14 @@ BarBar.Bar {
     // See manual for this
     // [end]
     // Gtk.Label {
-      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-      // use-markup: true;
+    // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+    // use-markup: true;
     // }
-
     // But wait there is more! We have a custom label widget. It's a bit different.
     // The difference is that it takes a signal from a sensor and then uses a template
     // to display it. It uses template-glib and have access to all properties and can 
     // loops, if's and much more.
+
     [end]
     BarBar.Label network_label {
       sensor: network;
@@ -108,12 +103,12 @@ BarBar.Bar {
 
     [end]
     BarBar.SensorWidget {
-       sensor: BarBar.Inhibitor inhibit {
-       };
-       child: Gtk.ToggleButton {
-          label: "inhibitor";
-          active: bind inhibit.enabled bidirectional;
-       };
+      sensor: BarBar.Inhibitor inhibit {};
+
+      child: Gtk.ToggleButton {
+        label: "inhibitor";
+        active: bind inhibit.enabled bidirectional;
+      };
     }
 
     [end]
@@ -139,6 +134,7 @@ BarBar.Bar {
     BarBar.Graph {
       value: bind cpu.percent;
     }
+
     // [end]
     // BarBar.Rotary {
     //   value: bind cpu.percent;
@@ -148,7 +144,6 @@ BarBar.Bar {
     Gtk.Label {
       label: bind pomodoro.current;
     }
-
   }
 }
 
@@ -161,7 +156,6 @@ BarBar.Background background {
   bottom-margin: 50;
   right-margin: 200;
   left-margin: 200;
-
   // Gtk.LevelBar {
   //   orientation: vertical;
   //   value: bind cpu.percent;
@@ -181,9 +175,7 @@ BarBar.Clock clock {
   // tick => $label_update(clock_label);
 }
 
-
-BarBar.Mem mem {
-}
+BarBar.Mem mem {}
 
 BarBar.Cpu cpu {
   interval: 1000;
@@ -193,32 +185,25 @@ BarBar.Network network {
   interface: "wlan0";
 }
 
-BarBar.Backlight backlight {
-}
+BarBar.Backlight backlight {}
 
-BarBar.Battery battery {
-}
+BarBar.Battery battery {}
 
-BarBar.Wireplumber plumb {
-}
+BarBar.Wireplumber plumb {}
 
-BarBar.Keyboard key {
-}
+BarBar.Keyboard key {}
 
-BarBar.Temperature temperature {
-}
+BarBar.Temperature temperature {}
 
 BarBar.Pomodoro pomodoro {
   length: 10;
   running: true;
 }
 
-BarBar.PowerProfile profile {
-}
+BarBar.PowerProfile profile {}
 
 BarBar.SystemdUnits units {
   bus-type: session;
 }
 
-BarBar.Weather weater {
-}
+BarBar.Weather weater {}
