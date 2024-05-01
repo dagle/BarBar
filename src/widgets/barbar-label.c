@@ -16,16 +16,16 @@
  *
  */
 
+#include "barbar-label.h"
+#include "sensors/barbar-sensor.h"
+#include <tmpl-glib.h>
+
 /**
  * BarBarLabel:
  *
  * This is a gtk label with some extras. The main function is
  * the template functionallity to update the code.
  */
-
-#include "barbar-label.h"
-#include "sensors/barbar-sensor.h"
-#include <tmpl-glib.h>
 
 struct _BarBarLabel {
   GtkWidget parent_instance;
@@ -39,7 +39,16 @@ struct _BarBarLabel {
   BarBarSensor *sensor;
 };
 
-G_DEFINE_TYPE(BarBarLabel, g_barbar_label, GTK_TYPE_WIDGET)
+static GtkBuildableIface *parent_buildable_iface;
+static void barbar_label_buildable_interface_init(GtkBuildableIface *iface);
+static void barbar_label_buildable_add_child(GtkBuildable *buildable,
+                                             GtkBuilder *builder,
+                                             GObject *child, const char *type);
+
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarLabel, g_barbar_label, GTK_TYPE_WIDGET,
+    G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+                          barbar_label_buildable_interface_init))
 
 enum {
   PROP_0,
@@ -51,10 +60,44 @@ enum {
 
   NUM_PROPERTIES,
 };
-
 static GParamSpec *label_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static void barbar_label_buildable_interface_init(GtkBuildableIface *iface) {
+  parent_buildable_iface = g_type_interface_peek_parent(iface);
+  iface->add_child = barbar_label_buildable_add_child;
+}
+
+/**
+ * barbar_label_set_child: (attributes org.gtk.Method.set_property=child)
+ * @label: a `BarbarLabel`
+ * @child: the child label
+ *
+ * Sets the child widget of @window.
+ */
+static void barbar_label_set_child(BarBarLabel *label, GtkLabel *child) {
+  g_return_if_fail(BARBAR_IS_LABEL(label));
+  g_return_if_fail(GTK_IS_LABEL(child));
+
+  if (label->child == GTK_WIDGET(child))
+    return;
+
+  g_clear_pointer(&label->child, gtk_widget_unparent);
+
+  label->child = GTK_WIDGET(child);
+
+  g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_CHILD]);
+}
+
+static void barbar_label_buildable_add_child(GtkBuildable *buildable,
+                                             GtkBuilder *builder,
+                                             GObject *child, const char *type) {
+  if (GTK_IS_LABEL(child))
+    barbar_label_set_child(BARBAR_LABEL(buildable), GTK_LABEL(child));
+  else
+    parent_buildable_iface->add_child(buildable, builder, child, type);
+}
 
 static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   g_return_if_fail(BARBAR_IS_LABEL(label));
@@ -97,7 +140,6 @@ static void g_barbar_label_set_label(BarBarLabel *label, char *text) {
 }
 
 static void update(gpointer data, BarBarSensor *sensor) {
-
   BarBarLabel *label = BARBAR_LABEL(data);
   if (!label->tmpl) {
     return;
@@ -158,9 +200,6 @@ static void g_barbar_label_set_property(GObject *object, guint property_id,
   case PROP_TEMPL:
     g_barbar_label_set_templ(label, g_value_get_string(value));
     break;
-  // case PROP_LABEL:
-  //   g_barbar_label_set_label(label, g_value_get_string(value));
-  //   break;
   case PROP_SENSOR:
     g_barbar_label_set_sensor(label, g_value_get_object(value));
     break;
@@ -176,7 +215,6 @@ static void g_barbar_label_set_property(GObject *object, guint property_id,
 
 static void g_barbar_label_get_property(GObject *object, guint property_id,
                                         GValue *value, GParamSpec *pspec) {
-
   BarBarLabel *label = BARBAR_LABEL(object);
   switch (property_id) {
   case PROP_CHILD:
@@ -253,7 +291,5 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
   gtk_widget_class_set_css_name(widget_class, "barbar-label");
 }
 static void g_barbar_label_init(BarBarLabel *label) {
-  label->child = gtk_label_new("");
-
   gtk_widget_set_parent(label->child, GTK_WIDGET(label));
 }

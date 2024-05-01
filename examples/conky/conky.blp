@@ -2,10 +2,265 @@ using Gtk 4.0;
 using BarBar 1.0;
 
 BarBar.Background background {
-  top-margin: 50;
-  bottom-margin: 50;
-  right-margin: 200;
-  left-margin: 200;
+  top-margin: 0;
+  bottom-margin: 0;
+  right-margin: 0;
+  left-margin: 1100;
+  Gtk.Box {
+    orientation: vertical;
+      [child]
+      Gtk.Label {
+        label: bind time.time;
+        justify: center;
+        name: "time";
+      }
+
+      [child]
+      Gtk.Label {
+        label: bind date.time;
+        justify: center;
+        name: "date";
+      }
+      Gtk.Box {
+        orientation: horizontal;
+        homogeneous: true;
+        [child]
+        Gtk.Label {
+          xalign: 0;
+          label: "System";
+          name: "header";
+        }
+        [child]
+        Gtk.Separator {
+          orientation: horizontal;
+        }
+      }
+      Gtk.Grid {
+        column-homogeneous: true;
+        [child]
+        Gtk.Label {
+          label: "Hostname:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "arch-server";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "OS:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 1;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Arch linux";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 1;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Kernel:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 2;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "6.8.7-arch1-2";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 2;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Uptime:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 3;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "1h 37m 56s";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 3;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Processes:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 4;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "352";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 4;
+          }
+        }
+      }
+      [child]
+      Gtk.Separator {
+        orientation: horizontal;
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Cpu";
+        xalign: 0;
+        name: "header";
+      }
+
+      Gtk.Grid {
+        column-homogeneous: true;
+        [child]
+        Gtk.Label {
+          label: "Cpu Frequency";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "800Mhz";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Cpu Temperature";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 1;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "+33.0C";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 1;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Cpu Usage";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 2;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "11%";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 2;
+          }
+        }
+      }
+      [child]
+      BarBar.Graph {
+        value: bind cpu.percent;
+        min-height: 40;
+      }
+
+      [child]
+      Gtk.Separator {
+        orientation: horizontal;
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Memory";
+        xalign: 0;
+        name: "header";
+      }
+      Gtk.Grid {
+        column-homogeneous: true;
+        [child]
+        Gtk.Label {
+          label: "Swap Usage:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "0/16Gb";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 0;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "Memory Usage:";
+          xalign: 0;
+          layout {
+            column: 0;
+            row: 1;
+          }
+        }
+        [child]
+        Gtk.Label {
+          label: "3.6/64Gb";
+          xalign: 1;
+          layout {
+            column: 1;
+            row: 1;
+          }
+        }
+      }
+
+      [child]
+      BarBar.Graph {
+        value: bind mem.percent;
+        min-height: 40;
+      }
+  }
+
   // Gtk.LevelBar {
   //   orientation: vertical;
   //   value: bind cpu.percent;
@@ -13,20 +268,40 @@ BarBar.Background background {
   // BarBar.Rotary {
   //   value: bind cpu.percent;
   // }
-  Gtk.Label clock {}
+  // Gtk.Label clock {}
 
-  Gtk.Label date {}
+  // Gtk.Label date {}
 
-  Gtk.Label system {}
+  // Gtk.Label system {}
 
-  Gtk.Label cpu {}
+  // Gtk.Label cpu {}
 
   // BarBar.TopCpu {
   // }
-  Gtk.Label mem {}
+  // Gtk.Label mem {}
 
   // BarBar.TopMem {
   // }
   // BarBar.TopCpu {
   // }
+}
+
+BarBar.Cpu cpu {
+  interval: 1000;
+}
+
+BarBar.Mem mem {
+  interval: 1000;
+}
+
+BarBar.Clock time {
+  interval: 1000;
+  format: "%H:%M";
+}
+
+BarBar.Clock date {
+  // todo OMP stuff, so we can make the clock edge trigger.
+  // then we could do 1000*3600*24; and just update the clock once per day.
+  interval: 1000;
+  format: "%B %d, %Y";
 }

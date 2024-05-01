@@ -239,7 +239,45 @@ static inline double get_y(double height, GList *link) {
   return height - height * *v;
 }
 
-static void update_path(BarBarGraph *self) {
+static void update_path_discrete(BarBarGraph *self) {
+  GskPathBuilder *builder;
+  builder = gsk_path_builder_new();
+  GList *link = self->queue->head;
+
+  if (!link) {
+    return;
+  }
+
+  double x = 0;
+
+  double y = get_y(self->height, link);
+  double delta = self->width / self->capasity;
+
+  gsk_path_builder_move_to(builder, 0, y);
+  double next = y;
+  while (link) {
+
+    gsk_path_builder_line_to(builder, x, next);
+    next = get_y(self->height, link);
+    gsk_path_builder_line_to(builder, x, next);
+    link = link->next;
+    if (link) {
+      x += delta;
+    }
+  }
+
+  if (self->fill) {
+    gsk_path_builder_line_to(builder, x, self->height);
+    gsk_path_builder_line_to(builder, 0, self->height);
+
+    gsk_path_builder_line_to(builder, 0, y);
+  }
+
+  g_clear_pointer(&self->path, gsk_path_unref);
+  self->path = gsk_path_builder_free_to_path(builder);
+}
+
+static void update_path_continuous(BarBarGraph *self) {
   GskPathBuilder *builder;
   builder = gsk_path_builder_new();
   GList *link = self->queue->head;
@@ -298,7 +336,11 @@ static void push_update(BarBarGraph *self, double value) {
     self->items++;
     self->full = self->items >= self->capasity;
   }
-  update_path(self);
+  if (self->discrete) {
+    update_path_discrete(self);
+  } else {
+    update_path_continuous(self);
+  }
 }
 
 static void g_barbar_graph_dispose(GObject *object) {

@@ -66,6 +66,10 @@ static void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
 static void g_barbar_clock_set_format(BarBarClock *clock, const char *format) {
   g_return_if_fail(BARBAR_IS_CLOCK(clock));
 
+  if (!g_strcmp0(clock->format, format)) {
+    return;
+  }
+
   g_free(clock->format);
   clock->format = g_strdup(format);
 

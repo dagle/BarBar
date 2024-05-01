@@ -1,6 +1,7 @@
 #include "barbar.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
+#include <string.h>
 
 #include "sensors/barbar-clock.h"
 #include "sensors/barbar-sensor.h"
@@ -50,6 +51,43 @@ G_MODULE_EXPORT char *barbar_strdup_printf(GtkWidget *label, const char *format,
   return buffer;
 }
 
+G_MODULE_EXPORT char *barbar_header_static(GtkWidget *label, gpointer data) {
+  gchar *buffer;
+  printf("what is happening?!\n");
+
+  const char *str = gtk_label_get_label(GTK_LABEL(label));
+
+  int len = strlen(str);
+  int widget_width = gtk_widget_get_width(label);
+  int count = widget_width - len;
+
+  if (count < 0) {
+    printf("widget_width is: %d\n", widget_width);
+    buffer = g_strdup_printf("%s", str);
+    return buffer;
+  }
+
+  gchar *dash_string = g_strnfill(count, '-');
+  buffer = g_strdup_printf("%s%s", str, dash_string);
+
+  return buffer;
+}
+
+G_MODULE_EXPORT char *barbar_header_dynamic(GtkWidget *label,
+                                            const char seperator,
+                                            const char *format, ...) {
+  gchar *buffer;
+  va_list args;
+
+  va_start(args, format);
+  buffer = g_strdup_vprintf(format, args);
+  va_end(args);
+
+  return buffer;
+
+  return buffer;
+}
+
 static void activate(GtkApplication *app, void *data) {
   GtkBuilderScope *scope;
   GtkBuilder *builder;
@@ -58,6 +96,8 @@ static void activate(GtkApplication *app, void *data) {
   // gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope), label_update);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   barbar_strdup_printf);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  barbar_header_static);
 
   barbar_default_style_provider("barbar/style.css");
 
@@ -72,13 +112,15 @@ static void activate(GtkApplication *app, void *data) {
 
   GSList *list = gtk_builder_get_objects(builder);
 
+  GObject *win;
   for (GSList *it = list; it; it = it->next) {
     GObject *object = it->data;
 
     if (GTK_IS_WINDOW(object)) {
       GtkWindow *window = GTK_WINDOW(object);
+      win = object;
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
-      gtk_window_present(window);
+      gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
     } else if (BARBAR_IS_SENSOR(object)) {
       // TODO: We shouldn't leak the sensors.
       g_object_ref(object);

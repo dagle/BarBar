@@ -26,6 +26,4 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarLabel, g_barbar_label, BARBAR, LABEL, GtkWidget)
 
-/* void label_update(GtkWidget *object, GObject *sensor); */
-
 G_END_DECLS
