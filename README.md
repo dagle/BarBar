@@ -84,4 +84,4 @@ and uses gi-docgen.
 For online [docs](TODO)
 
 If you want completion in your editor (more incoming):
-typescritp: [ts-for-gir](https://github.com/gjsify/ts-for-gir) , lua: [gir-to-stub](https://github.com/dagle/gir-to-stub)
+typescript: [ts-for-gir](https://github.com/gjsify/ts-for-gir) , lua: [gir-to-stub](https://github.com/dagle/gir-to-stub)

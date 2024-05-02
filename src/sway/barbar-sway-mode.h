@@ -30,9 +30,9 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_SWAY_LANGUAGE (g_barbar_sway_language_get_type())
+#define BARBAR_TYPE_SWAY_MODE (g_barbar_sway_language_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarSwayMode, g_barbar_sway_mode, BARBAR, SWAY_LANGUAGE,
+G_DECLARE_FINAL_TYPE(BarBarSwayMode, g_barbar_sway_mode, BARBAR, SWAY_MODE,
                      BarBarSensor)
 
 G_END_DECLS

@@ -62,6 +62,10 @@ static gboolean g_barbar_cpu_update(gpointer data);
 static void g_barbar_cpu_set_interval(BarBarCpu *cpu, guint inteval) {
   g_return_if_fail(BARBAR_IS_CPU(cpu));
 
+  if (cpu->interval == inteval) {
+    return;
+  }
+
   cpu->interval = inteval;
 
   g_object_notify_by_pspec(G_OBJECT(cpu), cpu_props[CPU_PROP_INTERVAL]);

@@ -24,15 +24,15 @@
 
 #pragma once
 
+#include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_RIVER_MODE (g_barbar_river_mode_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarRiverMode, g_barbar_river_mode, BARBAR, RIVER_MODE,
-                     GtkWidget)
+                     BarBarSensor)
 
 G_END_DECLS

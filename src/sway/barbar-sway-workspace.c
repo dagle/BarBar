@@ -26,7 +26,7 @@ struct _BarBarSwayWorkspace {
 
   GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
-  struct wl_output *output;
+  // struct wl_output *output; in future versions?
 
   GList *workspaces; // A list of workspaces;
 };
@@ -356,6 +356,8 @@ static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_object_unref(parser);
+    return;
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -432,6 +434,7 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_object_unref(parser);
     return;
   }
 
@@ -472,7 +475,8 @@ static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
       g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
 
   if (error) {
-    g_printerr("Failed to get workspaces: %s\n", error->message);
+    g_printerr("Sway workspace: Failed to get workspaces: %s\n",
+               error->message);
     return;
   }
   if (ret) {
