@@ -7,7 +7,7 @@ Bar-graph
 
 # conky layout
 
-- [ ] make a conky layout
+- [ ] make a conky layout, it's currently way to hard to make a conky setup
 
 # libgtop
 - [ ] add device name or identifier to disks

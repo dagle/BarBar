@@ -1,6 +1,11 @@
 #include "barbar-rotary.h"
 #include <gsk/gsk.h>
 
+/**
+ * BarBarRotary:
+ *
+ * A rotary widget to display a bar in a circular fashion
+ */
 struct _BarBarRotary {
   GtkWidget parent_instance;
 
@@ -240,9 +245,11 @@ static inline gboolean match_orientation(GtkSizeRequestMode mode,
   return FALSE;
 }
 
-void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
-                             int for_size, int *minimum, int *natural,
-                             int *minimum_baseline, int *natural_baseline) {
+static void g_barbar_rotary_measure(GtkWidget *widget,
+                                    GtkOrientation orientation, int for_size,
+                                    int *minimum, int *natural,
+                                    int *minimum_baseline,
+                                    int *natural_baseline) {
 
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
@@ -254,7 +261,7 @@ void g_barbar_rotary_measure(GtkWidget *widget, GtkOrientation orientation,
   }
 }
 
-void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
+static void g_barbar_rotary_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
 
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
@@ -283,8 +290,8 @@ static void update_circle(BarBarRotary *self) {
   self->circle = gsk_path_builder_free_to_path(builder);
 }
 
-void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
-                                   int baseline) {
+static void g_barbar_rotary_size_allocate(GtkWidget *widget, int width,
+                                          int height, int baseline) {
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
   self->width = width;
@@ -293,7 +300,7 @@ void g_barbar_rotary_size_allocate(GtkWidget *widget, int width, int height,
   update_rotary(self);
 }
 
-GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget) {
+static GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget) {
   BarBarRotary *self = BARBAR_ROTARY(widget);
 
   return self->mode;

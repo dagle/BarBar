@@ -30,9 +30,9 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_RIVER_VIEW (g_barbar_river_view_get_type())
+#define BARBAR_TYPE_CPU_PROCESSES (g_barbar_cpu_processes_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarRiverView, g_barbar_river_view, BARBAR, RIVER_VIEW,
-                     GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, BARBAR,
+                     CPU_PROCESSES, GtkWidget)
 
 G_END_DECLS

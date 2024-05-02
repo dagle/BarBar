@@ -1,5 +1,10 @@
 #include "barbar-graph.h"
 
+/**
+ * BarBarGraph:
+ *
+ * Display changes over time for a value
+ */
 struct _BarBarGraph {
   GtkWidget parent_instance;
 

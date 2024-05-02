@@ -36,6 +36,7 @@ libbarbar_src = files(
   'sway/barbar-sway-workspace.c',
   'sway/barbar-sway-language.c',
   'sway/barbar-sway-window.c',
+  'sway/barbar-sway-mode.c',
 
   'hyprland/barbar-hyprland-ipc.c',
   'hyprland/barbar-hyprland-service.c',
@@ -53,6 +54,7 @@ libbarbar_src = files(
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
   'widgets/barbar-valueicon.c',
+  'widgets/barbar-separator.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
@@ -97,6 +99,7 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
+  'widgets/barbar-separator.h',
 
   'widgets/barbar-valueicon.h',
 
@@ -116,6 +119,7 @@ libbarbar_headers = [
   'sway/barbar-sway-workspace.h',
   'sway/barbar-sway-language.h',
   'sway/barbar-sway-window.h',
+  'sway/barbar-sway-mode.h',
 
   'tray/barbar-watcher.h',
   # 'tray/barbar-tray-item.h',

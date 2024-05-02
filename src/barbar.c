@@ -26,6 +26,7 @@ void g_barbar_init(void) {
   g_barbar_label_get_type();
   g_barbar_sensor_widget_get_type();
   g_barbar_value_icon_get_type();
+  g_barbar_separator_get_type();
 
   g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();
@@ -42,6 +43,7 @@ void g_barbar_init(void) {
   g_barbar_sway_language_get_type();
   g_barbar_sway_workspace_get_type();
   g_barbar_sway_window_get_type();
+  g_barbar_sway_mode_get_type();
 
   g_barbar_hyprland_service_get_type();
   g_barbar_hyprland_workspace_get_type();

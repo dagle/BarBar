@@ -7,6 +7,7 @@ BarBar.Background background {
   right-margin: 0;
   left-margin: 1100;
   Gtk.Box {
+    hexpand: true;
     orientation: vertical;
       [child]
       Gtk.Label {
@@ -23,7 +24,6 @@ BarBar.Background background {
       }
       Gtk.Box {
         orientation: horizontal;
-        homogeneous: true;
         [child]
         Gtk.Label {
           xalign: 0;
@@ -31,8 +31,9 @@ BarBar.Background background {
           name: "header";
         }
         [child]
-        Gtk.Separator {
-          orientation: horizontal;
+        BarBar.Separator {
+        hexpand: true;
+          //orientation: horizontal;
         }
       }
       Gtk.Grid {
@@ -128,16 +129,20 @@ BarBar.Background background {
           }
         }
       }
-      [child]
-      Gtk.Separator {
-        orientation: horizontal;
-      }
 
-      [child]
-      Gtk.Label {
-        label: "Cpu";
-        xalign: 0;
-        name: "header";
+      Gtk.Box {
+        orientation: horizontal;
+        [child]
+        Gtk.Label {
+          xalign: 0;
+          label: "Cpu";
+          name: "header";
+        }
+        [child]
+        BarBar.Separator {
+        hexpand: true;
+          //orientation: horizontal;
+        }
       }
 
       Gtk.Grid {
@@ -203,17 +208,21 @@ BarBar.Background background {
         min-height: 40;
       }
 
-      [child]
-      Gtk.Separator {
+      Gtk.Box {
         orientation: horizontal;
+        [child]
+        Gtk.Label {
+          xalign: 0;
+          label: "Memory";
+          name: "header";
+        }
+        [child]
+        BarBar.Separator {
+        hexpand: true;
+          //orientation: horizontal;
+        }
       }
 
-      [child]
-      Gtk.Label {
-        label: "Memory";
-        xalign: 0;
-        name: "header";
-      }
       Gtk.Grid {
         column-homogeneous: true;
         [child]

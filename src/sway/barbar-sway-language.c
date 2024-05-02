@@ -200,8 +200,8 @@ static void g_barbar_sway_language_class_init(BarBarSwayLanguageClass *class) {
 
 static void g_barbar_sway_language_init(BarBarSwayLanguage *self) {}
 
-static void g_barbar_sway_handle_workspaces(BarBarSwayLanguage *sway,
-                                            gchar *payload, gssize len) {
+static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
+                                        gchar *payload, gssize len) {
   JsonParser *parser;
   gboolean ret;
   GError *err = NULL;
@@ -257,6 +257,10 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
   gboolean ret;
   BarBarSwayLanguage *sway = BARBAR_SWAY_LANGUAGE(data);
 
+  if (type != SWAY_INPUT_EVENT) {
+    return;
+  }
+
   parser = json_parser_new();
   ret = json_parser_load_from_data(parser, payload, len, &err);
 
@@ -306,10 +310,10 @@ static void input_cb(GObject *object, GAsyncResult *res, gpointer data) {
     return;
   }
   if (ret) {
-    g_barbar_sway_handle_workspaces(sway, str, len);
+    g_barbar_sway_handle_inputs(sway, str, len);
 
-    // g_signal_connect(sway->sub, "event", G_CALLBACK(event_listner), sway);
-    // g_barbar_sway_subscribe_connect(sway->sub, &error);
+    g_signal_connect(sway->sub, "event", G_CALLBACK(event_listner), sway);
+    g_barbar_sway_subscribe_connect(sway->sub, &error);
   }
 
   g_free(str);

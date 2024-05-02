@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_RIVER_TAGS_H_
-#define _BARBAR_RIVER_TAGS_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -37,5 +36,3 @@ G_DECLARE_FINAL_TYPE(BarBarRiverTag, g_barbar_river_tag, BARBAR, RIVER_TAG,
                      GtkWidget)
 
 G_END_DECLS
-
-#endif /* _BARBAR_RIVER_TAGS_H_ */

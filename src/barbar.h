@@ -35,6 +35,7 @@
 #include "hyprland/barbar-hyprland-workspace.h"
 
 #include "sway/barbar-sway-language.h"
+#include "sway/barbar-sway-mode.h"
 #include "sway/barbar-sway-subscribe.h"
 #include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"
@@ -48,6 +49,7 @@
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
+#include "widgets/barbar-separator.h"
 #include "widgets/barbar-valueicon.h"
 
 #include "tray/barbar-dbusmenu.h"
