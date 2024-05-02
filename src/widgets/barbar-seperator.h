@@ -24,15 +24,15 @@
 
 #pragma once
 
-#include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_SWAY_LANGUAGE (g_barbar_sway_language_get_type())
+#define BARBAR_TYPE_SEPARATOR (g_barbar_separator_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarSwayMode, g_barbar_sway_mode, BARBAR, SWAY_LANGUAGE,
-                     BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarSeparator, g_barbar_separator, BARBAR, SEPARATOR,
+                     GtkWidget)
 
 G_END_DECLS
