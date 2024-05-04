@@ -1,0 +1,160 @@
+* {
+  border-radius: 0;
+}
+
+window {
+    font-family: FontAwesome, Terminess Nerd Font;
+    font-size: 12px;
+    min-height: 0;
+    /* background-color: black; */
+    transition-property: background-color;
+    transition-duration: .5s;
+    color: #ffffff;
+    border: none;
+}
+
+window.background {
+  padding: 8px;
+  /* background-color: #2b60b5; */
+  background-color: rgba(0, 0, 0, 0.5);
+  font-family: FontAwesome, Terminess Nerd Font;
+  font-size: 14px;
+}
+
+label#time {
+  font-size: 48px;
+}
+
+barbar-separator {
+    background-color: #C0FF00;
+    /* border-color: #C0FF00; */
+    /* border-bottom-style: solid; */
+    /* border-bottom: 1px solid; */
+    margin: 1em 3px 0.8em 3px;
+}
+
+label#date {
+  font-size: 24px;
+}
+
+label#header {
+  font-size: 18px;
+  color: #C0FF00;
+}
+
+button {
+  min-height: 21px;
+  min-width: 14px;
+  padding: 0 5px;
+  color: #444444;
+}
+
+.scale button#backbutton {
+  background: black;
+}
+
+rotary {
+  color: green;
+}
+
+graph {
+  color: white;
+  border: 1px solid;
+  border-color: white;
+}
+
+river-tag button {
+  min-height: 21px;
+  min-width: 14px;
+  padding: 0 5px;
+  background: black;
+  border: none;
+  color: #444444;
+}
+
+river-tag button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+river-tag button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+river-tag button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
+
+dwl-tag button {
+  min-height: 21px;
+  min-width: 14px;
+  padding: 0 5px;
+  background: black;
+  border: none;
+  color: #444444;
+}
+
+dwl-tag button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+dwl-tag button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+dwl-tag button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
+
+hypr-workspace button {
+  background: black;
+  border: none;
+  color: #ffffff;
+}
+
+hypr-workspace button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+    color: #ffffff;
+}
+
+hypr-workspace button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+hypr-workspace button.visible {
+    box-shadow: inherit;
+    color: #ffffff;
+    border-bottom: 1px solid #060670;
+}
+
+sway-workspace button {
+  background: black;
+  border: none;
+  color: #444444;
+}
+
+sway-workspace button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+sway-workspace button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+sway-workspace button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
