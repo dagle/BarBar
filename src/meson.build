@@ -55,6 +55,7 @@ libbarbar_src = files(
   'widgets/barbar-graph.c',
   'widgets/barbar-valueicon.c',
   'widgets/barbar-separator.c',
+  'widgets/barbar-processes.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
@@ -100,6 +101,7 @@ libbarbar_headers = [
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
   'widgets/barbar-separator.h',
+  'widgets/barbar-processes.h',
 
   'widgets/barbar-valueicon.h',
 

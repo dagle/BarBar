@@ -47,6 +47,7 @@
 
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"
+#include "widgets/barbar-processes.h"
 #include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
 #include "widgets/barbar-separator.h"

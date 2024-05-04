@@ -27,6 +27,7 @@ void g_barbar_init(void) {
   g_barbar_sensor_widget_get_type();
   g_barbar_value_icon_get_type();
   g_barbar_separator_get_type();
+  g_barbar_cpu_processes_get_type();
 
   g_barbar_wireplumber_get_type();
   g_barbar_mpris_get_type();

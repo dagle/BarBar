@@ -1,6 +1,9 @@
 #include "barbar-processes.h"
 #include <glibtop.h>
 #include <glibtop/cpu.h>
+#include <glibtop/proclist.h>
+#include <glibtop/procstate.h>
+#include <glibtop/proctime.h>
 #include <math.h>
 
 /**
@@ -12,8 +15,23 @@
 struct _BarBarCpuProcesses {
   GtkWidget parent_instance;
 
+  // double prev_total;
+  // double prev_utime;
+  // double prev_stime;
+  GList *lines;
+
+  GtkWidget *label;
+
   guint interval;
   guint source_id;
+};
+
+struct procline {
+  GtkWidget *box;
+  GtkWidget *name;
+  GtkWidget *pid;
+  GtkWidget *cpu;
+  GtkWidget *mem;
 };
 
 enum {
@@ -72,34 +90,50 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
 
   widget_class->root = g_barbar_cpu_processes_root;
 
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "process-list");
 }
 
-static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {}
+static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {
+  self->label = gtk_label_new("test");
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+}
 
 static gboolean g_barbar_cpu_processes_update(gpointer data) {
   BarBarCpuProcesses *self = BARBAR_CPU_PROCESSES(data);
-
-  double total, idle;
-
+  glibtop_proclist buf;
+  guint64 total;
   glibtop_cpu cpu;
+  pid_t *pids;
 
   glibtop_init();
 
   glibtop_get_cpu(&cpu);
 
+  // TODO: is 0, 0 right?
+  pids = glibtop_get_proclist(&buf, 0, 0);
   total = ((unsigned long)cpu.total) ? ((double)cpu.total) : 1.0;
-  idle = ((unsigned long)cpu.idle) ? ((double)cpu.idle) : 1.0;
+  // guint64 total_delta = total - self->prev_total;
 
-  // self->percent = (1.0 - (idle - self->prev_idle) / (total -
-  // self->prev_total));
-  //
-  // self->prev_idle = idle;
+  for (int i = 0; i < buf.number; ++i) {
+    glibtop_proc_time ptime;
+    glibtop_proc_time prev_ptime;
+    glibtop_proc_state pstate;
+    guint64 utime_delta;
+    guint64 stime_delta;
+
+    pid_t p = pids[i];
+
+    // get the proc time twice so we can calculate the usage
+    glibtop_get_proc_time(&ptime, p);
+    glibtop_get_proc_state(&pstate, p);
+
+    // double usage = (ptime.utime + ptime.stime) / (double)total_delta;
+    // printf("process %s usage: %f\n", pstate.cmd, usage);
+  }
+
   // self->prev_total = total;
 
-  // g_object_notify_by_pspec(G_OBJECT(self), cpu_props[CPU_PROP_PERCENT]);
-  // g_signal_emit(G_OBJECT(self), cpu_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
 
@@ -110,6 +144,7 @@ static void g_barbar_cpu_processes_root(GtkWidget *widget) {
     g_source_remove(cpu->source_id);
   }
   g_barbar_cpu_processes_update(cpu);
-  cpu->source_id = g_timeout_add_full(0, cpu->interval,
-                                      g_barbar_cpu_processes_update, cpu, NULL);
+  // cpu->source_id = g_timeout_add_full(0, cpu->interval,
+  //                                     g_barbar_cpu_processes_update, cpu,
+  //                                     NULL);
 }
