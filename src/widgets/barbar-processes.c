@@ -37,6 +37,7 @@ struct procline {
 enum {
   PROP_0,
 
+  PROP_DELTA,
   PROP_INTERVAL,
   PROP_NUMBER,
 
@@ -99,14 +100,24 @@ static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {
   gtk_widget_set_parent(self->label, GTK_WIDGET(self));
 }
 
+struct state {
+  // int number;
+  pid_t *pids;
+  glibtop_proc_time *ptime;
+  glibtop_proc_state *pstate;
+
+  glibtop_proc_time *delta_ptime;
+  glibtop_proc_state *delta_pstate;
+};
+
+static void g_barbar_state_sort(struct state *state) {}
+
 static gboolean g_barbar_cpu_processes_update(gpointer data) {
   BarBarCpuProcesses *self = BARBAR_CPU_PROCESSES(data);
   glibtop_proclist buf;
   guint64 total;
   glibtop_cpu cpu;
   pid_t *pids;
-
-  glibtop_init();
 
   glibtop_get_cpu(&cpu);
 
@@ -119,8 +130,8 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
     glibtop_proc_time ptime;
     glibtop_proc_time prev_ptime;
     glibtop_proc_state pstate;
-    guint64 utime_delta;
-    guint64 stime_delta;
+    // guint64 utime_delta;
+    // guint64 stime_delta;
 
     pid_t p = pids[i];
 
@@ -131,6 +142,9 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
     // double usage = (ptime.utime + ptime.stime) / (double)total_delta;
     // printf("process %s usage: %f\n", pstate.cmd, usage);
   }
+  // sleep some how
+
+  // g_timeout_add_full(0, tick->interval, g_barbar_tick_update, tick, NULL);
 
   // self->prev_total = total;
 
@@ -139,6 +153,7 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
 
 static void g_barbar_cpu_processes_root(GtkWidget *widget) {
   BarBarCpuProcesses *cpu = BARBAR_CPU_PROCESSES(widget);
+  glibtop_init();
 
   if (cpu->source_id > 0) {
     g_source_remove(cpu->source_id);

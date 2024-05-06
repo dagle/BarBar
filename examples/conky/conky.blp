@@ -58,6 +58,7 @@ BarBar.Background background {
 
       [child]
       Gtk.Label {
+        hexpand: true;
         label: "arch-server";
         xalign: 1;
 
@@ -173,199 +174,248 @@ BarBar.Background background {
       }
     }
 
-    // Gtk.Grid {
-    //   hexpand: true;
-    //   [child]
-    //   Gtk.Label {
-    //     label: "Cpu:";
-    //     xalign: 0;
-    //     layout {
-    //       column: 0;
-    //       row: 0;
-    //     }
-    //   }
-    //   [child]
-    //   Gtk.Label {
-    //     label: "800Mhz";
-    //     xalign: 0;
-    //     layout {
-    //       column: 1;
-    //       row: 0;
-    //     }
-    //   }
-    // }
-    // Gtk.Box {
-    //   orientation: horizontal;
-    //   [child]
-    //   Gtk.Label {
-    //     xalign: 0;
-    //     label: "Cpu";
-    //     name: "header";
-    //   }
-    //   [child]
-    //   BarBar.Separator {
-    //     hexpand: true;
-    //     // orientation: horizontal;
-    //   }
-    // }
-    // Gtk.Grid {
-    //   hexpand: true;
-    //   [child]
-    //   Gtk.Label {
-    //     label: "Hostname:";
-    //     xalign: 0;
-    //     layout {
-    //       column: 0;
-    //       row: 0;
-    //     }
-    //   }
-    //   [child]
-    //   Gtk.Label {
-    //     label: "arch-server";
-    //     xalign: 1;
-    //     layout {
-    //       column: 1;
-    //       row: 0;
-    //     }
-    //   }
-    // Gtk.Grid {
-    //   hexpand: true;
-    //   [child]
-    //   Gtk.Label {
-    //     label: "Cpu:";
-    //     xalign: 0;
-    //     layout {
-    //       column: 0;
-    //       row: 0;
-    //     }
-    //   }
-    //   [child]
-    //   Gtk.Label {
-    //     halign: end;
-    //     label: "800Mhz";
-    //     xalign: 1;
-    //     layout {
-    //       column: 1;
-    //       row: 0;
-    //     }
-    //   }
-    // [child]
-    // Gtk.Label {
-    //   label: "Cpu Temperature";
-    //   xalign: 0;
-    //   layout {
-    //     column: 0;
-    //     row: 1;
-    //   }
-    // }
-    // [child]
-    // Gtk.Label {
-    //   label: "+33.0C";
-    //   xalign: 1;
-    //   layout {
-    //     column: 1;
-    //     row: 1;
-    //   }
-    // }
-    // [child]
-    // Gtk.Label {
-    //   label: "Cpu Usage";
-    //   xalign: 0;
-    //   layout {
-    //     column: 0;
-    //     row: 2;
-    //   }
-    // }
-    // [child]
-    // Gtk.Label {
-    //   label: "11%";
-    //   xalign: 1;
-    //   layout {
-    //     column: 1;
-    //     row: 2;
-    //   }
-    // }
-    // }
-    // 
-    //    [child]
-    //    BarBar.Graph {
-    //      value: bind cpu.percent;
-    //      min-height: 40;
-    //    }
-    // 
+    Gtk.Grid {
+      hexpand: true;
+
+      [child]
+      Gtk.Label {
+        label: "Cpu:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        halign: end;
+        label: "800Mhz";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Cpu Temperature";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "+33.0C";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Cpu Usage";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 2;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "11%";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 2;
+        }
+      }
+    }
+
+    [child]
+    BarBar.Graph {
+      value: bind cpu.percent;
+      min-height: 40;
+    }
+
     //    [child]
     //    BarBar.CpuProcesses {}
     // 
-    //    Gtk.Box {
-    //      orientation: horizontal;
-    // 
-    //      [child]
-    //      Gtk.Label {
-    //        xalign: 0;
-    //        label: "Memory";
-    //        name: "header";
-    //      }
-    // 
-    //      [child]
-    //      BarBar.Separator {
-    //        hexpand: true;
-    //        // orientation: horizontal;
-    //      }
-    //    }
-    // 
-    //    Gtk.Grid {
-    //      column-homogeneous: true;
-    // 
-    //      [child]
-    //      Gtk.Label {
-    //        label: "Swap Usage:";
-    //        xalign: 0;
-    // 
-    //        layout {
-    //          column: 0;
-    //          row: 0;
-    //        }
-    //      }
-    // 
-    //      [child]
-    //      Gtk.Label {
-    //        label: "0/16Gb";
-    //        xalign: 1;
-    // 
-    //        layout {
-    //          column: 1;
-    //          row: 0;
-    //        }
-    //      }
-    // 
-    //      [child]
-    //      Gtk.Label {
-    //        label: "Memory Usage:";
-    //        xalign: 0;
-    // 
-    //        layout {
-    //          column: 0;
-    //          row: 1;
-    //        }
-    //      }
-    // 
-    //      [child]
-    //      Gtk.Label {
-    //        label: "3.6/64Gb";
-    //        xalign: 1;
-    // 
-    //        layout {
-    //          column: 1;
-    //          row: 1;
-    //        }
-    //      }
-    //    }
-    // 
+    Gtk.Box {
+      orientation: horizontal;
+
+      [child]
+      Gtk.Label {
+        xalign: 0;
+        label: "Memory";
+        name: "header";
+      }
+
+      [child]
+      BarBar.Separator {
+        hexpand: true;
+        // orientation: horizontal;
+      }
+    }
+
+    Gtk.Grid {
+      hexpand: true;
+
+      [child]
+      Gtk.Label {
+        label: "Swap Usage:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "0/16Gb";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Memory Usage:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "3.6/64Gb";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 1;
+        }
+      }
+    }
+
+    [child]
+    BarBar.Graph {
+      value: bind mem.percent;
+      min-height: 40;
+    }
+
+    Gtk.Box {
+      orientation: horizontal;
+
+      [child]
+      Gtk.Label {
+        xalign: 0;
+        label: "Disk";
+        name: "header";
+      }
+
+      [child]
+      BarBar.Separator {
+        hexpand: true;
+      }
+    }
+
+    Gtk.Grid {
+      hexpand: true;
+
+      [child]
+      Gtk.Label {
+        label: "Disk Usage:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "95,7G/1830G";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 0;
+        }
+      }
+    }
+
+    Gtk.Box {
+      orientation: horizontal;
+
+      [child]
+      Gtk.Label {
+        xalign: 0;
+        label: "Network";
+        name: "header";
+      }
+
+      [child]
+      BarBar.Separator {
+        hexpand: true;
+      }
+    }
+
+    Gtk.Grid {
+      hexpand: true;
+
+      [child]
+      Gtk.Label {
+        label: "Swap Usage:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 0;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "0/16Gb";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 0;
+        }
+      }
+    }
+
     //    [child]
-    //    BarBar.Graph {
-    //      value: bind mem.percent;
-    //      min-height: 40;
-    //    }
+    //    BarBar.CpuProcesses {}
+    //
   }
 
   // Gtk.LevelBar {
