@@ -135,8 +135,8 @@ static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
   cmd_props[CMD_PROP_VALUE] =
       g_param_spec_string("value", NULL, NULL, NULL, G_PARAM_READABLE);
 
-  cmd_props[CMD_PROP_VALUE] = g_param_spec_object(
-      "value", NULL, NULL, GTK_TYPE_EXPRESSION, G_PARAM_READABLE);
+  // cmd_props[CMD_PROP_VALUE] = g_param_spec_object(
+  //     "value", NULL, NULL, GTK_TYPE_EXPRESSION, G_PARAM_READABLE);
 
   /**
    * BarBarCmd:interval:

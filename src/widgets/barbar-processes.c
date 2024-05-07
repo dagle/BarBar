@@ -37,7 +37,7 @@ struct procline {
 enum {
   PROP_0,
 
-  PROP_DELTA,
+  // PROP_DELTA,
   PROP_INTERVAL,
   PROP_NUMBER,
 
