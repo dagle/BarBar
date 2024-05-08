@@ -1,5 +1,4 @@
-#ifndef __BARBAR_H__
-#define __BARBAR_H__
+#pragma once
 
 #include "barbar-background.h"
 #include "barbar-bar.h"
@@ -58,5 +57,3 @@
 #include "tray/barbar-watcher.h"
 
 void g_barbar_init(void);
-
-#endif /* __BARBAR_H__ */

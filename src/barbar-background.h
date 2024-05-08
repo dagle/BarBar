@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BACKGROUND_H_
-#define _BARBAR_BACKGROUND_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -39,5 +38,3 @@ G_DECLARE_FINAL_TYPE(BarBarBackground, g_barbar_background, BARBAR, BACKGROUND,
 GtkWidget *g_barbar_background_new(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_BACKGROUND_H_ */

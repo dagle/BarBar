@@ -24,20 +24,15 @@
 
 #pragma once
 
-#include "status-notifier.h"
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-// This module is only called tray, it's really a status-notifier
-// The difference is that you can have multiple status-notifiers for
-// one or more bars.
-#define BARBAR_TYPE_TRAY (g_barbar_tray_get_type())
+#define BARBAR_TYPE_UPTIME (g_barbar_uptime_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GtkWidget)
-
-/* void g_barbar_tray_update(BarBarTray *self); */
+G_DECLARE_FINAL_TYPE(BarBarUptime, g_barbar_uptime, BARBAR, UPTIME,
+                     BarBarSensor)
 
 G_END_DECLS

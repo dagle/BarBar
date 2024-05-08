@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BAR_H_
-#define _BARBAR_BAR_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -58,5 +57,3 @@ G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWindow)
 GtkWidget *g_barbar_bar_new(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_BAR_H_ */

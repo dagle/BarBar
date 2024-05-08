@@ -21,23 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 #pragma once
 
-#include "status-notifier.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-// This module is only called tray, it's really a status-notifier
-// The difference is that you can have multiple status-notifiers for
-// one or more bars.
-#define BARBAR_TYPE_TRAY (g_barbar_tray_get_type())
+#define BARBAR_TYPE_ROTARY (g_barbar_rotary_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GtkWidget)
+/* G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GObject)
+ */
+G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
 
-/* void g_barbar_tray_update(BarBarTray *self); */
+GtkWidget *g_barbar_rotary_new(void);
 
 G_END_DECLS

@@ -59,7 +59,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "arch-server";
+        label: bind hostname.value;
         xalign: 1;
 
         layout {
@@ -103,7 +103,7 @@ BarBar.Background background {
 
       [child]
       Gtk.Label {
-        label: "6.8.7-arch1-2";
+        label: bind kernel.value;
         xalign: 1;
 
         layout {
@@ -413,9 +413,8 @@ BarBar.Background background {
       }
     }
 
-    //    [child]
-    //    BarBar.CpuProcesses {}
-    //
+    [child]
+    BarBar.CpuProcesses {}
   }
 
   // Gtk.LevelBar {
@@ -456,4 +455,12 @@ BarBar.Clock date {
   // then we could do 1000*3600*24; and just update the clock once per day.
   interval: 1000;
   format: "%B %d, %Y";
+}
+
+BarBar.Cmd hostname {
+  cmd: "uname -n";
+}
+
+BarBar.Cmd kernel {
+  cmd: "uname -r";
 }

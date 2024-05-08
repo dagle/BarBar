@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_DIAGRAM_H_
-#define _BARBAR_DIAGRAM_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -38,5 +37,3 @@ G_DECLARE_FINAL_TYPE(BarBarDiagram, g_barbar_rotary, BARBAR, DIAGRAM, GtkWidget)
 GtkWidget *g_barbar_diagram_new(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_DIAGRAM_H_ */

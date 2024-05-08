@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_INHIBITOR_H_
-#define _BARBAR_INHIBITOR_H_
+#pragma once
 
 #include "sensors/barbar-sensorcontext.h"
 #include <glib-object.h>
@@ -36,8 +35,4 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarInhibitor, g_barbar_inhibitor, BARBAR, INHIBITOR,
                      GObject)
 
-/* void g_barbar_inhibitor_start(BarBarInhibitor *inhibitor); */
-
 G_END_DECLS
-
-#endif /* _BARBAR_INHIBITOR_H_ */

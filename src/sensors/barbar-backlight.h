@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BACKLIGHT_H_
-#define _BARBAR_BACKLIGHT_H_
+#pragma once
 
 #include "barbar-sensor.h"
 #include <glib-object.h>
@@ -38,5 +37,3 @@ G_DECLARE_FINAL_TYPE(BarBarBacklight, g_barbar_backlight, BARBAR, BACKLIGHT,
                      BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_BACKLIGHT_H_ */

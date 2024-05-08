@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_MPRIS_H_
-#define _BARBAR_MPRIS_H_
+#pragma once
 
 #include "sensors/barbar-sensor.h"
 #include <glib-object.h>
@@ -42,5 +41,3 @@ PlayerctlPlayer *g_barbar_mpris_get_current_player(BarBarMpris *mpris);
 char *get_current_player_print(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_MPRIS_H_ */

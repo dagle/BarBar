@@ -284,19 +284,6 @@ static void g_barbar_bar_constructed(GObject *object) {
                        bar->bottom_margin);
 
   g_barbar_bar_set_pos_internal(bar, bar->pos);
-
-  GtkCssProvider *css_provider;
-  GdkDisplay *display;
-
-  display = gtk_widget_get_display(GTK_WIDGET(gtk_window));
-
-  css_provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_path(css_provider,
-                                  "/home/dagle/.config/barbar/style.css");
-
-  gtk_style_context_add_provider_for_display(display,
-                                             GTK_STYLE_PROVIDER(css_provider),
-                                             GTK_STYLE_PROVIDER_PRIORITY_USER);
 }
 
 /**

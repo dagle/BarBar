@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_WIREPLUMBER_H_
-#define _BARBAR_WIREPLUMBER_H_
+#pragma once
 
 #include "barbar-sensor.h"
 #include <glib-object.h>
@@ -38,5 +37,3 @@ G_DECLARE_FINAL_TYPE(BarBarWireplumber, g_barbar_wireplumber, BARBAR,
                      WIREPLUMBER, BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_BAR_H_ */

@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_UTIL_H_
-#define _BARBAR_UTIL_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -40,5 +39,3 @@ GtkBuilder *barbar_default_builder(const char *path, GError **err);
 GtkBuilder *barbar_default_blueprint(const char *path, GError *err);
 
 G_END_DECLS
-
-#endif /* _BARBAR_UTIL_H_ */

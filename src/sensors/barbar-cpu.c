@@ -59,14 +59,14 @@ static void g_barbar_cpu_start(BarBarSensor *sensor);
 static void g_barbar_cpu_constructed(GObject *object);
 static gboolean g_barbar_cpu_update(gpointer data);
 
-static void g_barbar_cpu_set_interval(BarBarCpu *cpu, guint inteval) {
+static void g_barbar_cpu_set_interval(BarBarCpu *cpu, guint interval) {
   g_return_if_fail(BARBAR_IS_CPU(cpu));
 
-  if (cpu->interval == inteval) {
+  if (cpu->interval == interval) {
     return;
   }
 
-  cpu->interval = inteval;
+  cpu->interval = interval;
 
   g_object_notify_by_pspec(G_OBJECT(cpu), cpu_props[CPU_PROP_INTERVAL]);
 }
@@ -166,8 +166,6 @@ static gboolean g_barbar_cpu_update(gpointer data) {
 
   glibtop_cpu cpu;
 
-  glibtop_init();
-
   glibtop_get_cpu(&cpu);
 
   total = ((unsigned long)cpu.total) ? ((double)cpu.total) : 1.0;
@@ -184,6 +182,8 @@ static gboolean g_barbar_cpu_update(gpointer data) {
 }
 
 static void g_barbar_cpu_start(BarBarSensor *sensor) {
+  glibtop_init();
+
   BarBarCpu *cpu = BARBAR_CPU(sensor);
   if (cpu->source_id > 0) {
     g_source_remove(cpu->source_id);

@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_MEM_H_
-#define _BARBAR_MEM_H_
+#pragma once
 
 #include "barbar-sensor.h"
 #include <glib-object.h>
@@ -36,5 +35,3 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_MEM_H_ */

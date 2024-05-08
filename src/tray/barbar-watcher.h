@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_STATUS_WATCHER_H_
-#define _BARBAR_STATUS_WATCHER_H_
+#pragma once
 
 #include "status-notifier.h"
 #include <glib-object.h>
@@ -42,10 +41,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, BARBAR,
                      STATUS_WATCHER, GtkWidget)
 
-/* void g_barbar_status_watcher_update(BarBarStatusWatcher *self); */
-
 BarBarStatusWatcher *g_barbar_status_watcher_new(void);
 
 G_END_DECLS
-
-#endif /* _BARBAR_STATUS_WATCHER_H_ */

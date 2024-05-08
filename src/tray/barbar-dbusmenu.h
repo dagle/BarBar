@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_DBUSMENU_H_
-#define _BARBAR_DBUSMENU_H_
+#pragma once
 
 #include "status-notifier.h"
 #include <glib-object.h>
@@ -44,5 +43,3 @@ const char *g_barbar_dbus_menu_path(BarBarDBusMenu *menu);
 void g_barbar_dbus_menu_event(BarBarDBusMenu *menu, int id);
 
 G_END_DECLS
-
-#endif /* _BARBAR_DBUSMENU_H_ */

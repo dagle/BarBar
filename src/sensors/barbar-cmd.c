@@ -125,7 +125,7 @@ static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
    * Command to be executed
    */
   cmd_props[CMD_PROP_CMD] = g_param_spec_string(
-      "command", "cmd", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+      "cmd", "command", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
    * BarBarCmd:value:
@@ -187,7 +187,7 @@ static gboolean g_barbar_cmd_update(gpointer data) {
   if (err) {
     g_printerr("Command: failed: %s\n", err->message);
     g_error_free(err);
-    g_object_unref(proc);
+    // g_object_unref(proc);
     return G_SOURCE_REMOVE;
   }
 

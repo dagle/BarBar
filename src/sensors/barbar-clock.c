@@ -50,8 +50,6 @@ static GParamSpec *clock_props[NUM_PROPERTIES] = {
 
 static guint clock_signals[NUM_SIGNALS];
 
-static void g_barbar_clock_constructed(GObject *self);
-
 static void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
   g_return_if_fail(BARBAR_IS_CLOCK(clock));
 
@@ -167,7 +165,6 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
 
   gobject_class->set_property = g_barbar_clock_set_property;
   gobject_class->get_property = g_barbar_clock_get_property;
-  gobject_class->constructed = g_barbar_clock_constructed;
 
   gobject_class->dispose = g_barbar_clock_dispose;
 
@@ -191,7 +188,7 @@ static void g_barbar_clock_class_init(BarBarClockClass *class) {
   /**
    * BarBarClock:time:
    *
-   * The format the clock should use, uses g_date_time_format.
+   * Formated string of the time
    */
   clock_props[PROP_TIME] =
       g_param_spec_string("time", NULL, NULL, NULL, G_PARAM_READABLE);
@@ -233,18 +230,10 @@ static void g_barbar_clock_init(BarBarClock *clock) {
   clock->interval = DEFAULT_INTERVAL;
 }
 
-static void g_barbar_clock_constructed(GObject *object) {
-  BarBarClock *clock = BARBAR_CLOCK(object);
-
-  G_OBJECT_CLASS(g_barbar_clock_parent_class)->constructed(object);
-}
-
 static gboolean g_barbar_clock_update(gpointer data) {
   BarBarClock *clock = BARBAR_CLOCK(data);
 
-  if (clock->time) {
-    g_date_time_unref(clock->time);
-  }
+  g_clear_pointer(&clock->time, g_date_time_unref);
 
   if (clock->timezone) {
     clock->time = g_date_time_new_now(clock->timezone);

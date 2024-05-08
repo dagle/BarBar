@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_SENSOR_H_
-#define _BARBAR_SENSOR_H_
+#pragma once
 
 #include <glib-object.h>
 #include <glib.h>
@@ -43,5 +42,3 @@ struct _BarBarSensorClass {
 void g_barbar_sensor_start(BarBarSensor *self);
 
 G_END_DECLS
-
-#endif /* _BARBAR_SENSOR_H_ */

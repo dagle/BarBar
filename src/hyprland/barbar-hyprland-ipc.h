@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_HYPRLAND_IPC_H_
-#define _BARBAR_HYPRLAND_IPC_H_
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -103,5 +102,3 @@ g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
                               GDestroyNotify destroy, GError **error);
 
 G_END_DECLS
-
-#endif /* _BARBAR_SWAY_HYPRLAND_H_ */

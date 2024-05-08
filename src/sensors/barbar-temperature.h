@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_TEMPERATURE_H_
-#define _BARBAR_TEMPERATURE_H_
+#pragma once
 
 #include "sensors/barbar-sensor.h"
 #include <glib-object.h>
@@ -39,5 +38,3 @@ G_DECLARE_FINAL_TYPE(BarBarTemperature, g_barbar_temperature, BARBAR,
 char *g_barbar_temperature_format(BarBarTemperature *self, const char *format,
                                   ...);
 G_END_DECLS
-
-#endif /* _BARBAR_TEMPERATURE_H_ */

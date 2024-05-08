@@ -22,8 +22,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef _BARBAR_BATTERY_H_
-#define _BARBAR_BATTERY_H_
+#pragma once
 
 #include "barbar-sensor.h"
 #include <glib-object.h>
@@ -37,5 +36,3 @@ G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
                      BarBarSensor)
 
 G_END_DECLS
-
-#endif /* _BARBAR_BATTERY_H_ */
