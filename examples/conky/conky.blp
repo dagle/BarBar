@@ -125,7 +125,8 @@ BarBar.Background background {
 
       [child]
       Gtk.Label {
-        label: "1h 37m 56s";
+        // label: "1h 37m 56s";
+        label: bind uptime.time;
         xalign: 1;
 
         layout {
@@ -465,4 +466,8 @@ BarBar.Cmd kernel {
   cmd: "uname -r";
 }
 
-BarBar.Uptime {}
+BarBar.Uptime uptime {
+  // label: "1h 37m 56s";
+  // format: "%H%(h) %M%(m) %ss";
+  format: "%Y%(years) %H%(hours) %pm %ps";
+}

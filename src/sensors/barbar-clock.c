@@ -21,7 +21,7 @@ struct _BarBarClock {
   guint source_id;
 };
 
-#define DEFAULT_INTERVAL 60000
+#define DEFAULT_INTERVAL 1000
 #define DEFAULT_FORMAT "%F %k:%M:%S"
 
 enum {

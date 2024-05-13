@@ -21,6 +21,8 @@ Bar-graph
 
 - [ ] make a conky layout, it's currently way to hard to make a conky setup
 
+# cheat sheet example
+
 # libgtop
 - [ ] add device name or identifier to disks
 - [ ] add support for darwin, freebsd, openbsd and bsd

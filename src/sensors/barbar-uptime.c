@@ -22,8 +22,8 @@ struct _BarBarUptime {
   guint source_id;
 };
 
-#define DEFAULT_INTERVAL 60000
-#define DEFAULT_FORMAT "%d days, %h:%m"
+#define DEFAULT_INTERVAL 1000
+#define DEFAULT_FORMAT "%D%( days), %h:%m" // kinda like the uptime tool works
 
 enum {
   PROP_0,
@@ -192,6 +192,12 @@ static void g_barbar_uptime_init(BarBarUptime *uptime) {
   uptime->interval = DEFAULT_INTERVAL;
 }
 
+enum prefix {
+  NO_PREFIX,
+  SHORT_PREFIX,
+  LONG_PREFIX,
+};
+
 #define USEC_PER_SECOND (G_GINT64_CONSTANT(1000000))
 #define USEC_PER_MINUTE (G_GINT64_CONSTANT(60000000))
 #define USEC_PER_HOUR (G_GINT64_CONSTANT(3600000000))
@@ -203,6 +209,157 @@ static void g_barbar_uptime_init(BarBarUptime *uptime) {
 #define SECS_PER_HOUR (60 * SECS_PER_MINUTE)
 #define SECS_PER_DAY (24 * SECS_PER_HOUR)
 #define SECS_PER_YEAR (365 * SECS_PER_DAY)
+
+static void format_number(GString *str, const gchar pad, gint width,
+                          const char *prefix, guint32 number) {
+
+  const gchar ascii_digits[10] = {'0', '1', '2', '3', '4',
+                                  '5', '6', '7', '8', '9'};
+  gchar tmp[10];
+  gint i = 0;
+
+  g_return_if_fail(width <= 10);
+
+  do {
+    tmp[i++] = ascii_digits[number % 10];
+    number /= 10;
+  } while (number);
+
+  while (pad && i < width) {
+    tmp[i++] = pad;
+  }
+
+  g_assert(i <= 10);
+
+  while (i) {
+    g_string_append_c(str, tmp[--i]);
+  }
+  if (prefix) {
+    g_string_append(str, prefix);
+  }
+}
+
+static inline const char *set_prefix(enum prefix prefix, const char *long_name,
+                                     const char *short_name) {
+  switch (prefix) {
+  case NO_PREFIX:
+    return NULL;
+  case SHORT_PREFIX:
+    return short_name;
+  case LONG_PREFIX:
+    return long_name;
+  }
+}
+
+struct units {
+  gint64 seconds;
+  gint64 minutes;
+  gint64 hours;
+  gint64 days;
+  gint64 weeks;
+  gint64 months;
+  gint64 years;
+};
+
+static gsize skip_modifier(const char *format) {
+  int c;
+  gsize len = 0;
+  while (format) {
+    c = g_utf8_get_char(format);
+    switch (c) {
+    case 'c':
+    case 'p':
+    case 'a':
+      len++;
+    }
+  }
+  return len;
+}
+
+static void get_parts(struct units *units, GTimeSpan span, const char *format) {
+  guint len;
+  int c;
+
+  gboolean minutes = FALSE;
+  gboolean hours = FALSE;
+  gboolean weeks = FALSE;
+  gboolean months = FALSE;
+  gboolean days = FALSE;
+  gboolean years = FALSE;
+
+  while (*format) {
+    len = strcspn(format, "%");
+
+    format += len;
+    if (!*format)
+      break;
+
+    format++;
+
+    c = g_utf8_get_char(format);
+
+    format += skip_modifier(format);
+
+    switch (c) {
+    case 'y':
+      years = TRUE;
+      break;
+    case 'm':
+      minutes = TRUE;
+      break;
+    case 'b':
+      months = TRUE;
+      break;
+    case 'w':
+      weeks = TRUE;
+      break;
+    case 'd':
+      days = TRUE;
+      break;
+    case 'h':
+      hours = TRUE;
+      break;
+    }
+    format++;
+  }
+
+  // TODO: optimize
+  if (years) {
+    units->years = (span / (365 * 24 * 3600));
+    span -= units->years * (365 * 24 * 3600);
+  }
+
+  if (months) {
+    units->months = span / (30 * 24 * 3600);
+    span -= units->months * (30 * 24 * 3600);
+  }
+
+  if (weeks) {
+    units->weeks = (span / (7 * 24 * 3600));
+    span -= units->weeks * (7 * 24 * 3600);
+  }
+
+  if (days) {
+    units->days = (span / (24 * 3600));
+    span -= units->days * (24 * 3600);
+  }
+
+  if (hours) {
+    units->hours = (span / (3600));
+    span -= units->hours * (3600);
+  }
+
+  if (minutes) {
+    units->minutes = (span / 60);
+    span -= units->minutes * 60;
+  }
+
+  units->seconds = span;
+}
+
+// this makes %ah print 61 min instead of 1 min (because it would be 1 hour
+// and 1 min) Upper case only prints if the value isn't 0 gboolean absolute;
+// TODO: DOCUMENATION
 /**
  * g_barbar_format_time_span
  * @span: time spane
@@ -213,6 +370,7 @@ static void g_barbar_uptime_init(BarBarUptime *uptime) {
  */
 char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
   g_return_val_if_fail(format != NULL, NULL);
+  gboolean last_success = TRUE;
 
   guint len;
   GString *outstr = g_string_sized_new(strlen(format) * 2);
@@ -220,13 +378,18 @@ char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
 
   // convert to seconds, we don't care about miliseconds
   span = span / USEC_PER_SECOND;
-  gint64 minutes = (span / 60) % 60;
-  gint64 hours = (span / (60 * 60)) % 24;
-  gint64 month_days = (span / (24 * 60 * 60)) % 30;
-  gint64 days = (span / (24 * 60 * 60)) % 365;
-  gint64 months =
-      (span / (30 * 24 * 3600)) % 12; // average month being 30 months
-  gint64 years = (span / (365 * 24 * 3600));
+
+  struct units units;
+
+  get_parts(&units, span, format);
+
+  // gint64 minutes = (span / 60) % 60;
+  // gint64 hours = (span / (60 * 60)) % 24;
+  // gint64 month_days = (span / (24 * 60 * 60)) % 30;
+  // gint64 days = (span / (24 * 60 * 60)) % 365;
+  // gint64 months =
+  //     (span / (30 * 24 * 3600)) % 12; // average month being 30 months
+  // gint64 years = (span / (365 * 24 * 3600));
   while (*format) {
 
     len = strcspn(format, "%");
@@ -243,42 +406,113 @@ char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
     if (!format)
       break;
 
+    enum prefix prefix = NO_PREFIX;
+    gboolean absolute = FALSE;
+    // gboolean conditional = FALSE;
+    uint pad = 0;
+
+  modifier:
     c = g_utf8_get_char(format);
 
-    // this makes %h print 61 min instead of 1 min (because it would be 1 hour
-    // and 1 min) Upper case only prints if the value isn't 0 gboolean absolute;
     switch (c) {
+    case '(': {
+      const char *end = strchr(format, ')');
+      if (!end) {
+        g_printerr("( and ) are not matching in format string.");
+        g_string_free(outstr, TRUE);
+        return NULL;
+      }
+      format++;
+      guint paran_len = end - format;
+      if (last_success) {
+        g_string_append_len(outstr, format, paran_len - 1);
+      }
+      format = format + paran_len;
+      break;
+    }
+    case 'a':
+      absolute = TRUE;
+      format++;
+      goto modifier;
+      break;
+    case 'p':
+      prefix = SHORT_PREFIX;
+      format++;
+      goto modifier;
+      break;
+    case 'P':
+      prefix = LONG_PREFIX;
+      format++;
+      goto modifier;
+      break;
     case 'y':
-      g_string_append_printf(outstr, "%ld", years);
+      format_number(outstr, '0', 0, set_prefix(prefix, "year", "y"), years);
+      last_success = TRUE;
       break;
     case 'Y':
+      if (years > 0) {
+        format_number(outstr, '0', 0, set_prefix(prefix, "year", "y"), years);
+        last_success = TRUE;
+      } else {
+        last_success = FALSE;
+      }
       break;
     case 'm':
-      g_string_append_printf(outstr, "%02ld", minutes);
+      format_number(outstr, '0', 0, set_prefix(prefix, "minutes", "m"),
+                    minutes);
+      last_success = TRUE;
       break;
     case 'M':
+      if (minutes > 0) {
+        format_number(outstr, '0', 0, set_prefix(prefix, "minutes", "m"),
+                      minutes);
+        last_success = TRUE;
+      } else {
+        last_success = FALSE;
+      }
       break;
+    // b as in months, seems to be the norm.
     case 'b':
       break;
     case 'B':
       break;
+    case 'w':
+      break;
+    case 'W':
+      break;
     case 'd':
-      g_string_append_printf(outstr, "%ld", days);
+      format_number(outstr, '0', 0, set_prefix(prefix, "days", "d"), days);
+      last_success = TRUE;
       break;
     case 'D':
+      if (days > 0) {
+        format_number(outstr, '0', 0, set_prefix(prefix, "days", "d"), days);
+      } else {
+        last_success = FALSE;
+      }
       break;
     case 'h':
-      g_string_append_printf(outstr, "%ld", hours);
+      format_number(outstr, '0', 0, set_prefix(prefix, "hours", "h"), hours);
       break;
     case 'H':
+      if (hours > 0) {
+        format_number(outstr, '0', 0, set_prefix(prefix, "hours", "h"), hours);
+        last_success = TRUE;
+      } else {
+        printf("bug!\n");
+        last_success = FALSE;
+      }
       break;
     case 's':
-      g_string_append_printf(outstr, "%ld", span % 60);
+      format_number(outstr, '0', 0, set_prefix(prefix, "seconds", "s"),
+                    span % 60);
+      last_success = TRUE;
       break;
     default:
       g_string_free(outstr, TRUE);
       return NULL;
     }
+    format++;
   }
 
   return g_string_free_and_steal(outstr);
@@ -290,31 +524,9 @@ static gboolean g_barbar_uptime_update(gpointer data) {
   GDateTime *local = g_date_time_new_now_local();
   GTimeSpan span = g_date_time_difference(local, uptime->boot);
 
-  // GDateTime *start_date = g_date_time_new_from_unix_utc(
-  //     1620630000); // Unix timestamp for May 10, 2021
-  // GDateTime *end_date = g_date_time_new_from_unix_utc(
-  //     1672494000); // Unix timestamp for May 10, 2022
-  guint64 start = 1620630000;
-  guint64 stop = 1652168361;
-  guint64 diff = stop - start;
-
-  // Calculate the difference between the two dates
-  // gint64 difference_seconds = g_date_time_difference(end_date, start_date);
-  // gint difference_days = difference_seconds / (60 * 60 * 24);
-  gint64 difference_days = span / (USEC_PER_DAY);
-
-  // Print the difference in days
-  printf("Number of days difference: %ld\n", difference_days);
-
   g_clear_pointer(&uptime->time, g_free);
 
   uptime->time = g_barbar_format_time_span(span, uptime->format);
-  char *str = g_date_time_format(uptime->boot, "%F %k:%M:%S");
-  char *str2 = g_date_time_format(local, "%F %k:%M:%S");
-  // printf("span: %ld\n", span);
-  // printf("boot: %s\n", str);
-  // printf("local: %s\n", str2);
-  printf("uptime: %s\n", uptime->time);
 
   g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_TIME]);
 
@@ -332,8 +544,6 @@ static void g_barbar_uptime_start(BarBarSensor *sensor) {
   glibtop_init();
 
   glibtop_get_uptime(&buf);
-
-  printf("boot-time: %ld\n", buf.boot_time);
 
   uptime->boot = g_date_time_new_from_unix_local(buf.boot_time);
 
