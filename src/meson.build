@@ -25,6 +25,7 @@ libbarbar_src = files(
   'sensors/barbar-gamemode.c',
   'sensors/barbar-weather.c',
   'sensors/barbar-filesystem.c',
+  'sensors/barbar-uptime.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -88,6 +89,7 @@ libbarbar_headers = [
   'sensors/barbar-gamemode.h',
   'sensors/barbar-weather.h',
   'sensors/barbar-filesystem.h',
+  'sensors/barbar-uptime.h',
 
   'sensors/barbar-mpris.h',
 

@@ -20,6 +20,7 @@ void g_barbar_init(void) {
   g_barbar_game_mode_get_type();
   g_barbar_weather_get_type();
   g_barbar_filesystem_get_type();
+  g_barbar_uptime_get_type();
 
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();

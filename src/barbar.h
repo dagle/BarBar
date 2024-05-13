@@ -21,6 +21,7 @@
 #include "sensors/barbar-sensorcontext.h"
 #include "sensors/barbar-systemd-units.h"
 #include "sensors/barbar-temperature.h"
+#include "sensors/barbar-uptime.h"
 #include "sensors/barbar-weather.h"
 #include "sensors/barbar-wireplumber.h"
 

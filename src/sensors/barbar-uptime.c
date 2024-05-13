@@ -23,7 +23,7 @@ struct _BarBarUptime {
 };
 
 #define DEFAULT_INTERVAL 60000
-#define DEFAULT_FORMAT "%F %k:%M:%S"
+#define DEFAULT_FORMAT "%d days, %h:%m"
 
 enum {
   PROP_0,
@@ -123,7 +123,6 @@ static void g_barbar_uptime_get_property(GObject *object, guint property_id,
 }
 
 void g_barbar_uptime_dispose(GObject *object) {
-  // BarBarClock *self = BARBAR_CLOCK(object);
 
   G_OBJECT_CLASS(g_barbar_uptime_parent_class)->dispose(object);
 }
@@ -145,7 +144,7 @@ static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
    * The format the uptime should use, uses g_date_time_format.
    */
   uptime_props[PROP_FORMAT] = g_param_spec_string(
-      "format", "Format", "date time format string", DEFAULT_FORMAT,
+      "format", "Format", "uptime format string", DEFAULT_FORMAT,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
@@ -171,8 +170,7 @@ static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
    * BarBarUptime::tick:
    * @sensor: This sensor
    *
-   * Emit that the uptime has ticked. This means that we want to refetch
-   * the uptime clock.
+   * Emit that the uptime has ticked.
    */
   signals[TICK] =
       g_signal_new("tick",                                 /* signal_name */
@@ -194,6 +192,17 @@ static void g_barbar_uptime_init(BarBarUptime *uptime) {
   uptime->interval = DEFAULT_INTERVAL;
 }
 
+#define USEC_PER_SECOND (G_GINT64_CONSTANT(1000000))
+#define USEC_PER_MINUTE (G_GINT64_CONSTANT(60000000))
+#define USEC_PER_HOUR (G_GINT64_CONSTANT(3600000000))
+#define USEC_PER_MILLISECOND (G_GINT64_CONSTANT(1000))
+#define USEC_PER_DAY (G_GINT64_CONSTANT(86400000000))
+#define SEC_PER_DAY (G_GINT64_CONSTANT(86400))
+
+#define SECS_PER_MINUTE (60)
+#define SECS_PER_HOUR (60 * SECS_PER_MINUTE)
+#define SECS_PER_DAY (24 * SECS_PER_HOUR)
+#define SECS_PER_YEAR (365 * SECS_PER_DAY)
 /**
  * g_barbar_format_time_span
  * @span: time spane
@@ -203,18 +212,21 @@ static void g_barbar_uptime_init(BarBarUptime *uptime) {
  * Returns: (transfer full): a new string
  */
 char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
+  g_return_val_if_fail(format != NULL, NULL);
+
   guint len;
   GString *outstr = g_string_sized_new(strlen(format) * 2);
   int c;
 
   // convert to seconds, we don't care about miliseconds
-  span = span / 1000;
-  uint minutes = (span / 60) % 60;
-  uint hours = (span / (60 * 60)) % 24;
-  uint month_days = (span / (24 * 60 * 60)) % 30;
-  uint days = (span / (24 * 60 * 60)) % 365;
-  uint months = (span / (30 * 24 * 3600)) % 12; // average month being 30 months
-  uint years = (span / (365 * 24 * 3600));
+  span = span / USEC_PER_SECOND;
+  gint64 minutes = (span / 60) % 60;
+  gint64 hours = (span / (60 * 60)) % 24;
+  gint64 month_days = (span / (24 * 60 * 60)) % 30;
+  gint64 days = (span / (24 * 60 * 60)) % 365;
+  gint64 months =
+      (span / (30 * 24 * 3600)) % 12; // average month being 30 months
+  gint64 years = (span / (365 * 24 * 3600));
   while (*format) {
 
     len = strcspn(format, "%");
@@ -237,24 +249,31 @@ char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
     // and 1 min) Upper case only prints if the value isn't 0 gboolean absolute;
     switch (c) {
     case 'y':
-      g_string_printf(outstr, "%d", years);
+      g_string_append_printf(outstr, "%ld", years);
       break;
     case 'Y':
       break;
     case 'm':
+      g_string_append_printf(outstr, "%02ld", minutes);
       break;
     case 'M':
       break;
+    case 'b':
+      break;
+    case 'B':
+      break;
     case 'd':
-      g_string_printf(outstr, "%d", days);
+      g_string_append_printf(outstr, "%ld", days);
       break;
     case 'D':
       break;
     case 'h':
+      g_string_append_printf(outstr, "%ld", hours);
       break;
     case 'H':
       break;
     case 's':
+      g_string_append_printf(outstr, "%ld", span % 60);
       break;
     default:
       g_string_free(outstr, TRUE);
@@ -262,7 +281,7 @@ char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
     }
   }
 
-  return g_string_free(outstr, FALSE);
+  return g_string_free_and_steal(outstr);
 }
 
 static gboolean g_barbar_uptime_update(gpointer data) {
@@ -271,19 +290,41 @@ static gboolean g_barbar_uptime_update(gpointer data) {
   GDateTime *local = g_date_time_new_now_local();
   GTimeSpan span = g_date_time_difference(local, uptime->boot);
 
-  g_date_time_unref(local);
+  // GDateTime *start_date = g_date_time_new_from_unix_utc(
+  //     1620630000); // Unix timestamp for May 10, 2021
+  // GDateTime *end_date = g_date_time_new_from_unix_utc(
+  //     1672494000); // Unix timestamp for May 10, 2022
+  guint64 start = 1620630000;
+  guint64 stop = 1652168361;
+  guint64 diff = stop - start;
+
+  // Calculate the difference between the two dates
+  // gint64 difference_seconds = g_date_time_difference(end_date, start_date);
+  // gint difference_days = difference_seconds / (60 * 60 * 24);
+  gint64 difference_days = span / (USEC_PER_DAY);
+
+  // Print the difference in days
+  printf("Number of days difference: %ld\n", difference_days);
 
   g_clear_pointer(&uptime->time, g_free);
 
   uptime->time = g_barbar_format_time_span(span, uptime->format);
+  char *str = g_date_time_format(uptime->boot, "%F %k:%M:%S");
+  char *str2 = g_date_time_format(local, "%F %k:%M:%S");
+  // printf("span: %ld\n", span);
+  // printf("boot: %s\n", str);
+  // printf("local: %s\n", str2);
+  printf("uptime: %s\n", uptime->time);
 
-  // g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_TIME]);
-  //
-  // g_signal_emit(uptime, signals[TICK], 0);
+  g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_TIME]);
+
+  g_signal_emit(uptime, signals[TICK], 0);
+  g_date_time_unref(local);
 
   return G_SOURCE_CONTINUE;
 }
 
+// #define DEFAULT_FORMAT "%F %k:%M:%S"
 static void g_barbar_uptime_start(BarBarSensor *sensor) {
   glibtop_uptime buf;
   BarBarUptime *uptime = BARBAR_UPTIME(sensor);
@@ -291,6 +332,8 @@ static void g_barbar_uptime_start(BarBarSensor *sensor) {
   glibtop_init();
 
   glibtop_get_uptime(&buf);
+
+  printf("boot-time: %ld\n", buf.boot_time);
 
   uptime->boot = g_date_time_new_from_unix_local(buf.boot_time);
 
