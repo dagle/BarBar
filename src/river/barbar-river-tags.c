@@ -10,6 +10,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+// TODO: change number of tags we check against 9->32?
 /**
  * BarBarRiverTag:
  *
@@ -24,6 +25,10 @@ struct _BarBarRiverTag {
   struct zriver_output_status_v1 *output_status;
   struct wl_seat *seat;
 
+  uint nums;
+  gboolean fill;
+
+  GList *buttonss;
   GtkWidget *buttons[9];
 };
 
@@ -31,27 +36,106 @@ enum {
   PROP_0,
 
   PROP_TAGNUMS,
+  PROP_FILL,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET)
+static void
+g_barbar_river_tag_buildable_interface_init(GtkBuildableIface *iface);
+
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET,
+    G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+                          g_barbar_river_tag_buildable_interface_init))
 
 static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
     NULL,
 };
+
+static GtkBuildableIface *parent_buildable_iface;
+
+static void g_barbar_river_tag_add_child(GtkBuildable *buildable,
+                                         GtkBuilder *builder, GObject *child,
+                                         const char *type) {
+  BarBarRiverTag *self = BARBAR_RIVER_TAG(buildable);
+  static int idx = 0;
+
+  if (g_strcmp0(type, "tag") == 0) {
+    printf("buildable!\n");
+    idx++;
+  }
+}
+
+static void
+g_barbar_river_tag_buildable_interface_init(GtkBuildableIface *iface) {
+  parent_buildable_iface = g_type_interface_peek_parent(iface);
+  iface->add_child = g_barbar_river_tag_add_child;
+}
 
 static void g_barbar_river_tag_root(GtkWidget *widget);
 static void g_barbar_river_tag_constructed(GObject *object);
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data);
 
+static void g_barbar_river_tag_set_tagnums(BarBarRiverTag *river,
+                                           guint tagnums) {
+  g_return_if_fail(BARBAR_IS_RIVER_TAG(river));
+
+  if (river->nums == tagnums) {
+    return;
+  }
+
+  river->nums = tagnums;
+
+  g_object_notify_by_pspec(G_OBJECT(river), river_tags_props[PROP_TAGNUMS]);
+}
+
+static void g_barbar_river_tag_set_fill(BarBarRiverTag *river, gboolean fill) {
+  g_return_if_fail(BARBAR_IS_RIVER_TAG(river));
+
+  if (river->fill == fill) {
+    return;
+  }
+
+  river->fill = fill;
+
+  g_object_notify_by_pspec(G_OBJECT(river), river_tags_props[PROP_FILL]);
+}
+
 static void g_barbar_river_tag_set_property(GObject *object, guint property_id,
                                             const GValue *value,
-                                            GParamSpec *pspec) {}
+                                            GParamSpec *pspec) {
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
+
+  switch (property_id) {
+  case PROP_TAGNUMS:
+    g_barbar_river_tag_set_tagnums(river, g_value_get_uint(value));
+    break;
+  case PROP_FILL:
+    g_barbar_river_tag_set_fill(river, g_value_get_boolean(value));
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static void g_barbar_river_tag_get_property(GObject *object, guint property_id,
-                                            GValue *value, GParamSpec *pspec) {}
+                                            GValue *value, GParamSpec *pspec) {
+
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
+
+  switch (property_id) {
+  case PROP_TAGNUMS:
+    g_value_set_uint(value, river->nums);
+    break;
+  case PROP_FILL:
+    g_value_set_boolean(value, river->fill);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
 
 static guint click_signal;
 
@@ -65,9 +149,23 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
 
   widget_class->root = g_barbar_river_tag_root;
 
+  /**
+   * BarBarRiverTag:tagnums:
+   *
+   * How often the cpu should be pulled for info
+   */
   river_tags_props[PROP_TAGNUMS] = g_param_spec_uint(
       "tagnums", NULL, NULL, 0, 9, 9,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * BarBarRiverTag:fill:
+   *
+   * Should we fill all the tags
+   */
+  river_tags_props[PROP_FILL] = g_param_spec_boolean(
+      "fill", NULL, NULL, TRUE,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_tags_props);
 
@@ -170,9 +268,11 @@ listen_urgent_tags(void *data,
   BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
   for (size_t i = 0; i < 9; ++i) {
     if ((1 << i) & tags) {
-      gtk_widget_add_css_class(river->buttons[i], "urgent");
+      if (river->buttons[i])
+        gtk_widget_add_css_class(river->buttons[i], "urgent");
     } else {
-      gtk_widget_remove_css_class(river->buttons[i], "urgent");
+      if (river->buttons[i])
+        gtk_widget_remove_css_class(river->buttons[i], "urgent");
     }
   }
 }
@@ -220,8 +320,22 @@ static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                           NULL);
 }
 
+static void g_barbar_river_tag_add_button(BarBarRiverTag *self,
+                                          GtkWidget *child) {}
+
+static void g_barbar_river_tag_add_label(BarBarRiverTag *self,
+                                         const char *label) {
+  // GtkWidget *btn;
+  // btn = gtk_button_new_with_label(label);
+
+  // gtk_widget_set_parent(btn, GTK_WIDGET(river));
+  // g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
+  // river->buttons[i] = btn;
+}
+
 static void g_barbar_river_tag_init(BarBarRiverTag *self) {}
 static void g_barbar_river_tag_constructed(GObject *object) {
+  printf("constructed!\n");
   GtkWidget *btn;
   BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
   char str[2];
@@ -236,12 +350,29 @@ static void g_barbar_river_tag_constructed(GObject *object) {
   G_OBJECT_CLASS(g_barbar_river_tag_parent_class)->constructed(object);
 }
 
+static void g_barbar_river_tag_defaults(BarBarRiverTag *self) {
+  GtkWidget *btn;
+  char str[2];
+  for (uint32_t i = 0; i < 9; i++) {
+    if (self->buttons[i]) {
+      continue;
+    }
+    sprintf(str, "%d", i + 1);
+    btn = gtk_button_new_with_label(str);
+    gtk_widget_set_parent(btn, GTK_WIDGET(self));
+    g_signal_connect(btn, "clicked", G_CALLBACK(clicked), self);
+    self->buttons[i] = btn;
+  }
+}
+
 static void g_barbar_river_tag_root(GtkWidget *widget) {
   GdkDisplay *gdk_display;
   GdkMonitor *monitor;
   struct wl_registry *wl_registry;
   struct wl_output *output;
   struct wl_display *wl_display;
+
+  printf("root!\n");
 
   GTK_WIDGET_CLASS(g_barbar_river_tag_parent_class)->root(widget);
 

@@ -21,6 +21,7 @@ struct _BarBarCpuProcesses {
   // double prev_stime;
   GList *lines;
 
+  guint number;
   GtkWidget *label;
 
   guint interval;
@@ -57,6 +58,19 @@ static GParamSpec *processes_props[NUM_PROPERTIES] = {
 
 static void g_barbar_cpu_processes_root(GtkWidget *widget);
 
+static void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu,
+                                              guint number) {
+  g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
+
+  if (cpu->number == number) {
+    return;
+  }
+
+  cpu->number = number;
+
+  g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_NUMBER]);
+}
+
 static void g_barbar_cpu_processes_set_delta(BarBarCpuProcesses *cpu,
                                              guint delta) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
@@ -90,6 +104,9 @@ static void g_barbar_cpu_processes_set_property(GObject *object,
 
   BarBarCpuProcesses *cpu = BARBAR_CPU_PROCESSES(object);
   switch (property_id) {
+  case PROP_NUMBER:
+    g_barbar_cpu_processes_set_number(cpu, g_value_get_uint(value));
+    break;
   case PROP_DELTA:
     g_barbar_cpu_processes_set_delta(cpu, g_value_get_uint(value));
     break;
@@ -123,6 +140,7 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
 
   gobject_class->set_property = g_barbar_cpu_processes_set_property;
   gobject_class->get_property = g_barbar_cpu_processes_get_property;
+  widget_class->root = g_barbar_cpu_processes_root;
 
   /**
    * BarBarCpuProcesses:interval:
@@ -151,7 +169,8 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
       g_param_spec_uint("number", NULL, NULL, 0, G_MAXUINT32, DEFAULT_INTERVAL,
                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
-  widget_class->root = g_barbar_cpu_processes_root;
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
+                                    processes_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "process-list");

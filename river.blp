@@ -10,16 +10,18 @@ BarBar.Bar {
     // We have custom widgets for river, hyprland, dwl etc
 
     [start]
-    BarBar.RiverTag {}
+    BarBar.RiverTag {
+      [tag]
+      Gtk.Label {
+        label: "apa";
+      }
+    }
 
     [start]
     BarBar.StatusWatcher {}
 
     [start]
     BarBar.RiverLayout {}
-
-    [start]
-    BarBar.RiverMode {}
 
     [center]
     BarBar.RiverView {}
@@ -85,6 +87,9 @@ BarBar.Bar {
     BarBar.Label network_label {
       sensor: network;
       templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
+
+      [child]
+      Gtk.Label {}
     }
 
     [end]
@@ -92,6 +97,9 @@ BarBar.Bar {
       sensor: temperature;
       // Here we don't care about floats, so we cast it to a i32.
       templ: "{{i32(BarBarTemperature.temperature)}} ";
+
+      [child]
+      Gtk.Label {}
     }
 
     [end]
@@ -151,28 +159,26 @@ BarBar.Bar {
 // Well, barbar is a really bad name.
 // We can do even more! Lets draw some widgets on
 // the background!
-BarBar.Background background {
-  top-margin: 50;
-  bottom-margin: 50;
-  right-margin: 200;
-  left-margin: 200;
-  // Gtk.LevelBar {
-  //   orientation: vertical;
-  //   value: bind cpu.percent;
-  // }
-  // BarBar.Rotary {
-  //   value: bind cpu.percent;
-  // }
-  BarBar.Graph {
-    value: bind cpu.percent;
-  }
-}
-
+// BarBar.Background background {
+//   top-margin: 50;
+//   bottom-margin: 50;
+//  right-margin: 200;
+//   left-margin: 200;
+// Gtk.LevelBar {
+//   orientation: vertical;
+//   value: bind cpu.percent;
+// }
+// BarBar.Rotary {
+//   value: bind cpu.percent;
+// }
+//   BarBar.Graph {
+//     value: bind cpu.percent;
+//   }
+// }
 // Here we define some sensors.
 BarBar.Clock clock {
   interval: 1000;
   format: "%H:%M:%S";
-  // tick => $label_update(clock_label);
 }
 
 BarBar.Mem mem {}
@@ -205,5 +211,7 @@ BarBar.PowerProfile profile {}
 BarBar.SystemdUnits units {
   bus-type: session;
 }
+
+BarBar.RiverMode mode {}
 
 BarBar.Weather weater {}

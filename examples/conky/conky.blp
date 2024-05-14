@@ -415,7 +415,9 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.CpuProcesses {}
+    BarBar.CpuProcesses {
+      number: 3;
+    }
   }
 
   // Gtk.LevelBar {
@@ -467,7 +469,5 @@ BarBar.Cmd kernel {
 }
 
 BarBar.Uptime uptime {
-  // label: "1h 37m 56s";
-  // format: "%H%(h) %M%(m) %ss";
-  format: "%Y%(years) %H%(hours) %pm %ps";
+  format: "%cy%(years )%ch%(hours )%02mm %02ss";
 }

@@ -3,6 +3,7 @@ libbarbar_src = files(
   'barbar-bar.c',
   'barbar-background.c',
   'barbar-util.c',
+  'barbar-timespan.c',
   'barbar-error.c',
 
   'sensors/barbar-battery.c',
@@ -68,6 +69,7 @@ libbarbar_headers = [
   'barbar-bar.h',
   'barbar-background.h',
   'barbar-util.h',
+  'barbar-timespan.h',
   'barbar-error.h',
 
   'sensors/barbar-battery.h',
