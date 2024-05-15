@@ -1,4 +1,4 @@
-#include "dwl/barbar-dwl-service.h"
+#include "barbar-dwl-service.h"
 #include "barbar-error.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 struct _BarBarDwlService {
-  GObject parent_instance;
+  BarBarSensor parent_instance;
 
   GDataInputStream *input;
   GInputStream *stream;
@@ -164,7 +164,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   }
 }
 
-G_DEFINE_TYPE(BarBarDwlService, g_barbar_dwl_service, G_TYPE_OBJECT)
+G_DEFINE_TYPE(BarBarDwlService, g_barbar_dwl_service, BARBAR_TYPE_SENSOR)
 
 enum {
   PROP_0,
@@ -316,8 +316,24 @@ static void g_barbar_dwl_service_file_changed(GFileMonitor *self, GFile *file,
   g_barbar_dwl_service_read_file(service);
 }
 
-static void g_barbar_dwl_service_constructed(GObject *self) {
-  BarBarDwlService *service = BARBAR_DWL_SERVICE(self);
+static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
+  static GMutex __BarBarDwlService_started;
+  static volatile gsize __BarBarDwlService_once = 0;
+  static gboolean started = FALSE;
+
+  if (g_once_init_enter(&__BarBarDwlService_once) == TRUE) {
+    g_mutex_init(&__BarBarDwlService_started);
+    g_once_init_leave(&__BarBarDwlService_once, 42);
+  }
+  g_mutex_lock(&__BarBarDwlService_started);
+  if (started) {
+    g_mutex_unlock(&__BarBarDwlService_started);
+    return;
+  }
+  started = TRUE;
+  g_mutex_unlock(&__BarBarDwlService_started);
+
+  BarBarDwlService *service = BARBAR_DWL_SERVICE(sensor);
   GError *error = NULL;
 
   if (service->file_path) {
@@ -367,12 +383,13 @@ static void g_barbar_dwl_service_constructed(GObject *self) {
 
 static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_dwl_service_set_property;
   gobject_class->get_property = g_barbar_dwl_service_get_property;
 
   gobject_class->constructor = g_barbar_dwl_service_constructor;
-  gobject_class->constructed = g_barbar_dwl_service_constructed;
+  sensor_class->start = g_barbar_dwl_service_start;
 
   dwl_service_props[PROP_FILEPATH] = g_param_spec_string(
       "file_path", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);

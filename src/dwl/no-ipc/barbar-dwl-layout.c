@@ -1,5 +1,5 @@
-#include "dwl/barbar-dwl-layout.h"
-#include "dwl/barbar-dwl-service.h"
+#include "barbar-dwl-layout.h"
+#include "barbar-dwl-service.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -109,5 +109,6 @@ static void g_barbar_dwl_layout_start(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_dwl_layout_parent_class)->root(widget);
 
   dwl->service = g_barbar_dwl_service_new(NULL);
+  g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "layout", G_CALLBACK(g_dwl_listen_cb), dwl);
 }

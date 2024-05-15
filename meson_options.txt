@@ -10,4 +10,5 @@ option('libgtop', type : 'boolean', value: true, description: 'Enable top suppor
 option('wireplumber', type : 'boolean', value: true, description: 'Enable top support')
 option('introspection', type : 'boolean', value : true)
 option('vala', type : 'boolean', value : true)
-option('doc', type : 'boolean', value : true, description: 'Build documentation')
+option('docs', type : 'boolean', value : false, description: 'Build documentation')
+option('dwl-method', type : 'combo', choices : ['no-ipc', 'ipc', 'both'], value : 'both', description: 'How we should communicate with dwl')

@@ -1,18 +1,24 @@
 using Gtk 4.0;
 using BarBar 1.0;
-
 // Check the river.blp for a full example
 BarBar.Bar {
   bar-pos: bot;
+
   Gtk.ActionBar {
     [start]
     BarBar.DwlTags {
+      tagnums: 6;
+
+      [tag]
+      Gtk.Label {
+        label: "apa";
+      }
     }
+
     [start]
-    BarBar.DwlLayout {
-    }
+    BarBar.DwlLayout {}
+
     [start]
-    BarBar.DwlTitle {
-    }
+    BarBar.DwlTitle {}
   }
 }

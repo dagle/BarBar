@@ -26,14 +26,13 @@
 
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_DWL_SERVICE (g_barbar_dwl_service_get_type())
+#define BARBAR_TYPE_DWL_TAGS_IPC (g_barbar_dwl_tags_ipc_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarDwlService, g_barbar_dwl_service, BARBAR,
-                     DWL_SERVICE, GObject)
-
-BarBarDwlService *g_barbar_dwl_service_new(const char *pipe);
+G_DECLARE_FINAL_TYPE(BarBarDwlTagsIpc, g_barbar_dwl_tags_ipc, BARBAR,
+                     DWL_TAGS_IPC, GtkWidget)
 
 G_END_DECLS

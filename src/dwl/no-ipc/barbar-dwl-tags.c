@@ -1,5 +1,5 @@
-#include "dwl/barbar-dwl-tags.h"
-#include "dwl/barbar-dwl-service.h"
+#include "barbar-dwl-tags.h"
+#include "barbar-dwl-service.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -8,6 +8,11 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+/**
+ * BarBarDwlTags:
+ * A widget to display the title for current application for the
+ * associated screen.
+ */
 struct _BarBarDwlTags {
   GtkWidget parent_instance;
 
@@ -144,11 +149,9 @@ static void g_barbar_dwl_tags_class_init(BarBarDwlTagsClass *class) {
       "tagnums", NULL, NULL, 0, 32, 9,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
-  click_signal = g_signal_new_class_handler(
-      "clicked", G_TYPE_FROM_CLASS(class),
-      G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-      G_CALLBACK(default_clicked_handler), NULL, NULL, NULL, G_TYPE_NONE, 1,
-      G_TYPE_UINT);
+  click_signal = g_signal_new("clicked", BARBAR_TYPE_DWL_TAGS,
+                              G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED, 0, NULL,
+                              NULL, NULL, G_TYPE_NONE, 1, G_TYPE_UINT);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     dwl_tags_props);
@@ -176,10 +179,11 @@ static void default_clicked_handler(BarBarDwlTags *dwl, guint tag,
   char buf[4];
 
   snprintf(buf, 4, "%d", tag);
+  // TODO: change to the tag on send
 }
 
 static void handle_occupied(BarBarDwlTags *dwl, uint32_t occupied) {
-  for (size_t id = 0; id < 9; ++id) {
+  for (size_t id = 0; id < dwl->nums; ++id) {
     uint32_t mask = 1 << id;
 
     if (mask & occupied) {
@@ -190,7 +194,7 @@ static void handle_occupied(BarBarDwlTags *dwl, uint32_t occupied) {
   }
 }
 static void handle_selected(BarBarDwlTags *dwl, uint32_t selected) {
-  for (size_t id = 0; id < 9; ++id) {
+  for (size_t id = 0; id < dwl->nums; ++id) {
     uint32_t mask = 1 << id;
 
     if (mask & selected) {
@@ -202,7 +206,7 @@ static void handle_selected(BarBarDwlTags *dwl, uint32_t selected) {
 }
 
 static void handle_urgent(BarBarDwlTags *dwl, uint32_t urgent) {
-  for (size_t id = 0; id < 9; ++id) {
+  for (size_t id = 0; id < dwl->nums; ++id) {
     uint32_t mask = 1 << id;
 
     if (mask & urgent) {
@@ -271,5 +275,6 @@ static void g_barbar_dwl_tag_root(GtkWidget *widget) {
   g_barbar_dwl_tags_defaults(dwl);
 
   dwl->service = g_barbar_dwl_service_new(NULL);
+  g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "tags", G_CALLBACK(g_dwl_listen_cb), dwl);
 }

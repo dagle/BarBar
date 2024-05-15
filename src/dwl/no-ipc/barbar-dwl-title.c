@@ -1,5 +1,5 @@
-#include "dwl/barbar-dwl-title.h"
-#include "dwl/barbar-dwl-service.h"
+#include "barbar-dwl-title.h"
+#include "barbar-dwl-service.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -80,6 +80,13 @@ static void g_barbar_dwl_title_class_init(BarBarDwlTitleClass *class) {
 
   widget_class->root = g_barbar_dwl_title_start;
 
+  /**
+   * BarBarDwlTitle:output:
+   *
+   * What screen we want this be connected to.
+   * This is because gtk4 not having support for
+   * wl_output interface v4
+   */
   dwl_title_props[PROP_OUTPUT] = g_param_spec_string(
       "output", NULL, NULL, "WL-1", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
@@ -110,5 +117,6 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_dwl_title_parent_class)->root(widget);
 
   dwl->service = g_barbar_dwl_service_new(NULL);
+  g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "title", G_CALLBACK(g_dwl_listen_cb), dwl);
 }

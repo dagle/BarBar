@@ -1,4 +1,8 @@
-libbarbar_src = files(
+wl_mod = import('unstable-wayland')
+gnome = import('gnome')
+pkg = import('pkgconfig')
+
+libbarbar_src = [
   'barbar.c',
   'barbar-bar.c',
   'barbar-background.c',
@@ -46,11 +50,6 @@ libbarbar_src = files(
   'hyprland/barbar-hyprland-workspace.c',
   'hyprland/barbar-hyprland-window.c',
 
-  'dwl/barbar-dwl-service.c',
-  'dwl/barbar-dwl-tags.c',
-  'dwl/barbar-dwl-layout.c',
-  'dwl/barbar-dwl-title.c',
-
   'widgets/barbar-label.c',
   'widgets/barbar-sensorwidget.c',
   'widgets/barbar-rotary.c',
@@ -62,7 +61,7 @@ libbarbar_src = files(
   'tray/barbar-watcher.c',
   'tray/barbar-tray-item.c',
   'tray/barbar-dbusmenu.c',
-)
+]
 
 libbarbar_headers = [
   'barbar.h',
@@ -115,10 +114,10 @@ libbarbar_headers = [
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
 
-  'dwl/barbar-dwl-service.h',
-  'dwl/barbar-dwl-tags.h',
-  'dwl/barbar-dwl-layout.h',
-  'dwl/barbar-dwl-title.h',
+  # 'dwl/barbar-dwl-service.h',
+  # 'dwl/barbar-dwl-tags.h',
+  # 'dwl/barbar-dwl-layout.h',
+  # 'dwl/barbar-dwl-title.h',
  
   'sway/barbar-sway-ipc.h',
   'sway/barbar-sway-subscribe.h',
@@ -132,9 +131,9 @@ libbarbar_headers = [
   # 'tray/barbar-dbusmenu.h',
 ]
 
-wl_mod = import('unstable-wayland')
-
 wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
+
+wayland_src = []
 
 wayland_prots = [
 	wl_protocol_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml',
@@ -142,11 +141,49 @@ wayland_prots = [
   '../protocol/river-control-unstable-v1.xml',
 ]
 
-wayland_src = []
-
 foreach w : wayland_prots
   wayland_src += wl_mod.scan_xml(w)
 endforeach
+
+dwl_opt = get_option('dwl-method')
+
+if dwl_opt in ['both', 'no-ipc']
+  dwl_no_ipc_c = [
+    'dwl/no-ipc/barbar-dwl-service.c',
+    'dwl/no-ipc/barbar-dwl-tags.c',
+    'dwl/no-ipc/barbar-dwl-layout.c',
+    'dwl/no-ipc/barbar-dwl-title.c',
+  ]
+
+  libbarbar_src += dwl_no_ipc_c
+
+  dwl_no_ipc_h = [
+    'dwl/no-ipc/barbar-dwl-service.h',
+    'dwl/no-ipc/barbar-dwl-tags.h',
+    'dwl/no-ipc/barbar-dwl-layout.h',
+    'dwl/no-ipc/barbar-dwl-title.h',
+  ]
+
+  libbarbar_headers += dwl_no_ipc_h
+endif
+
+if dwl_opt in ['both', 'ipc']
+dwl_ipc_c = [
+  'dwl/ipc/barbar-dwl-tags-ipc.c',
+  'dwl/ipc/barbar-dwl-layout-ipc.c',
+  'dwl/ipc/barbar-dwl-title-ipc.c',
+]
+  libbarbar_src += dwl_ipc_c
+
+dwl_ipc_h = [
+  'dwl/ipc/barbar-dwl-tags-ipc.h',
+  'dwl/ipc/barbar-dwl-layout-ipc.h',
+  'dwl/ipc/barbar-dwl-title-ipc.h',
+]
+  libbarbar_headers += dwl_ipc_h
+  wayland_src += wl_mod.scan_xml('../protocol/dwl-ipc-unstable-v2.xml')
+endif
+
 
 power_profile_names = {
   'org.freedesktop.UPower.PowerProfiles': '/org/freedesktop/UPower/PowerProfiles',
@@ -175,7 +212,6 @@ status_notifier_prots = [
 
 mpris_prots = ['../protocol/mpris-dbus-interface.xml']
 
-gnome = import('gnome')
 
 status_notifier_src = gnome.gdbus_codegen('status-notifier',
   sources: status_notifier_prots,
@@ -206,7 +242,6 @@ libbarbar = library(barbar_package, libbarbar_src, wayland_src,
   status_notifier_src, power_profiles_src, mpris_src,
   dependencies : deps, install: true)
 
-pkg = import('pkgconfig')
 
 pkg.generate(libbarbar,
   name: meson.project_name(),

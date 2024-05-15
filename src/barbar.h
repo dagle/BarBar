@@ -40,10 +40,10 @@
 #include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"
 
-#include "dwl/barbar-dwl-layout.h"
-#include "dwl/barbar-dwl-service.h"
-#include "dwl/barbar-dwl-tags.h"
-#include "dwl/barbar-dwl-title.h"
+#include "dwl/no-ipc/barbar-dwl-layout.h"
+#include "dwl/no-ipc/barbar-dwl-service.h"
+#include "dwl/no-ipc/barbar-dwl-tags.h"
+#include "dwl/no-ipc/barbar-dwl-title.h"
 
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"

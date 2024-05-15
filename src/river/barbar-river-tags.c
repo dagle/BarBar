@@ -151,7 +151,7 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
                                     river_tags_props);
 
   click_signal = g_signal_new_class_handler(
-      "clicked", G_TYPE_FROM_CLASS(class),
+      "clicked", BARBAR_TYPE_RIVER_TAG,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
       G_CALLBACK(default_clicked_handler), NULL, NULL, NULL, G_TYPE_NONE, 1,
       G_TYPE_UINT);
