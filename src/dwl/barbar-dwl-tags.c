@@ -13,26 +13,55 @@ struct _BarBarDwlTags {
 
   char *output_name;
   BarBarDwlService *service;
+  uint nums;
 
-  GtkWidget *buttons[9];
+  GtkWidget *buttons[32];
 };
 
 enum {
   PROP_0,
 
   PROP_OUTPUT,
-  // PROP_TAGNUMS,
+  PROP_TAGNUMS,
 
   NUM_PROPERTIES,
 };
 
-G_DEFINE_TYPE(BarBarDwlTags, g_barbar_dwl_tags, GTK_TYPE_WIDGET)
+static GtkBuildableIface *parent_buildable_iface;
+
+static void
+g_barbar_dwl_tags_buildable_interface_init(GtkBuildableIface *iface);
+static void g_barbar_dwl_tags_add_button(BarBarDwlTags *self, GtkWidget *child);
+static void g_barbar_dwl_tag_root(GtkWidget *widget);
+static void default_clicked_handler(BarBarDwlTags *dwl, guint tag,
+                                    gpointer user_data);
+
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarDwlTags, g_barbar_dwl_tags, GTK_TYPE_WIDGET,
+    G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+                          g_barbar_dwl_tags_buildable_interface_init))
 
 static GParamSpec *dwl_tags_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_dwl_tag_start(GtkWidget *widget);
+static void g_barbar_dwl_tags_add_child(GtkBuildable *buildable,
+                                        GtkBuilder *builder, GObject *child,
+                                        const char *type) {
+  g_return_if_fail(GTK_IS_WIDGET(child));
+
+  BarBarDwlTags *self = BARBAR_DWL_TAGS(buildable);
+
+  if (g_strcmp0(type, "tag") == 0) {
+    g_barbar_dwl_tags_add_button(self, GTK_WIDGET(child));
+  }
+}
+
+static void
+g_barbar_dwl_tags_buildable_interface_init(GtkBuildableIface *iface) {
+  parent_buildable_iface = g_type_interface_peek_parent(iface);
+  iface->add_child = g_barbar_dwl_tags_add_child;
+}
 
 static void g_barbar_dwl_tags_set_output(BarBarDwlTags *dwl,
                                          const gchar *output) {
@@ -44,8 +73,17 @@ static void g_barbar_dwl_tags_set_output(BarBarDwlTags *dwl,
   g_object_notify_by_pspec(G_OBJECT(dwl), dwl_tags_props[PROP_OUTPUT]);
 }
 
-static void default_clicked_handler(BarBarDwlTags *dwl, guint tag,
-                                    gpointer user_data);
+static void g_barbar_dwl_tags_set_tagnums(BarBarDwlTags *dwl, guint tagnums) {
+  g_return_if_fail(BARBAR_IS_DWL_TAGS(dwl));
+
+  if (dwl->nums == tagnums) {
+    return;
+  }
+
+  dwl->nums = tagnums;
+
+  g_object_notify_by_pspec(G_OBJECT(dwl), dwl_tags_props[PROP_TAGNUMS]);
+}
 
 static void g_barbar_dwl_tag_set_property(GObject *object, guint property_id,
                                           const GValue *value,
@@ -55,9 +93,9 @@ static void g_barbar_dwl_tag_set_property(GObject *object, guint property_id,
   case PROP_OUTPUT:
     g_barbar_dwl_tags_set_output(dwl, g_value_get_string(value));
     break;
-  // case PROP_TAGNUMS:
-  // g_barbar_sway_workspace_set_output(sway, g_value_get_string(value));
-  // break;
+  case PROP_TAGNUMS:
+    g_barbar_dwl_tags_set_tagnums(dwl, g_value_get_uint(value));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -67,7 +105,13 @@ static void g_barbar_dwl_tag_get_property(GObject *object, guint property_id,
                                           GValue *value, GParamSpec *pspec) {
   BarBarDwlTags *dwl = BARBAR_DWL_TAGS(object);
 
-  switch (property_id) {}
+  switch (property_id) {
+  case PROP_TAGNUMS:
+    g_value_set_uint(value, dwl->nums);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
 }
 
 static guint click_signal;
@@ -79,12 +123,26 @@ static void g_barbar_dwl_tags_class_init(BarBarDwlTagsClass *class) {
   gobject_class->set_property = g_barbar_dwl_tag_set_property;
   gobject_class->get_property = g_barbar_dwl_tag_get_property;
 
-  widget_class->root = g_barbar_dwl_tag_start;
+  widget_class->root = g_barbar_dwl_tag_root;
 
-  // dwl_tags_props[PROP_TAGNUMS] =
-  //     g_param_spec_uint("tagnums", NULL, NULL, 0, 9, 9, G_PARAM_READWRITE);
+  /**
+   * BarBarDwlTags:output:
+   *
+   * What screen we want this be connected to.
+   * This is because gtk4 not having support for
+   * wl_output interface v4
+   */
   dwl_tags_props[PROP_OUTPUT] = g_param_spec_string(
       "output", NULL, NULL, "WL-1", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
+   * BarBarDwlTags:tagnums:
+   *
+   * How many tags we should show
+   */
+  dwl_tags_props[PROP_TAGNUMS] = g_param_spec_uint(
+      "tagnums", NULL, NULL, 0, 32, 9,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   click_signal = g_signal_new_class_handler(
       "clicked", G_TYPE_FROM_CLASS(class),
@@ -166,23 +224,51 @@ static void g_dwl_listen_cb(BarBarDwlService *service, char *output_name,
     handle_urgent(dwl, urgent);
   }
 }
+static void g_barbar_dwl_tags_add_button(BarBarDwlTags *self,
+                                         GtkWidget *child) {
+  GtkWidget *btn;
 
-static void g_barbar_dwl_tags_init(BarBarDwlTags *self) {
+  uint32_t i = 0;
+  for (; i < 32; i++) {
+    if (self->buttons[i]) {
+      continue;
+    }
+    btn = gtk_button_new();
+    gtk_button_set_child(GTK_BUTTON(btn), child);
+    gtk_widget_set_parent(btn, GTK_WIDGET(self));
+    g_signal_connect(btn, "clicked", G_CALLBACK(clicked), self);
+    self->buttons[i] = btn;
+    break;
+  }
+  i++;
+  if (self->nums < i) {
+    self->nums = i;
+    g_object_notify_by_pspec(G_OBJECT(self), dwl_tags_props[PROP_TAGNUMS]);
+  }
+}
+
+static void g_barbar_dwl_tags_init(BarBarDwlTags *self) {}
+
+static void g_barbar_dwl_tags_defaults(BarBarDwlTags *self) {
   GtkWidget *btn;
   char str[2];
-  for (uint32_t i = 0; i < 9; i++) {
+  for (uint32_t i = 0; i < self->nums; i++) {
+    if (self->buttons[i]) {
+      continue;
+    }
     sprintf(str, "%d", i + 1);
     btn = gtk_button_new_with_label(str);
     gtk_widget_set_parent(btn, GTK_WIDGET(self));
+    g_signal_connect(btn, "clicked", G_CALLBACK(clicked), self);
     self->buttons[i] = btn;
   }
-  handle_selected(self, 1);
 }
 
-static void g_barbar_dwl_tag_start(GtkWidget *widget) {
+static void g_barbar_dwl_tag_root(GtkWidget *widget) {
   BarBarDwlTags *dwl = BARBAR_DWL_TAGS(widget);
 
   GTK_WIDGET_CLASS(g_barbar_dwl_tags_parent_class)->root(widget);
+  g_barbar_dwl_tags_defaults(dwl);
 
   dwl->service = g_barbar_dwl_service_new(NULL);
   g_signal_connect(dwl->service, "tags", G_CALLBACK(g_dwl_listen_cb), dwl);

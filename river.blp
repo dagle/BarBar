@@ -11,6 +11,13 @@ BarBar.Bar {
 
     [start]
     BarBar.RiverTag {
+      // by default, we have tags 1-9
+      tagnums: 9;
+      // we can add any widget, it will be added to the button, some widgets
+      // doesn't work well inside buttons, if you add more widgets than tagnums,
+      // tagnums will be increased. If you add less, it will be filled with
+      // labels only displaying the tag number.
+
       [tag]
       Gtk.Label {
         label: "apa";
