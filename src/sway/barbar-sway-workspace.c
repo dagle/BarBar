@@ -44,8 +44,8 @@ struct workspace {
 };
 
 struct entry {
-  int id;
   int num;
+  int id;
 
   GtkWidget *button;
 };
@@ -143,13 +143,21 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
 static void g_barbar_sway_workspace_init(BarBarSwayWorkspace *self) {}
 
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
-                                    gpointer user_data) {}
+                                    gpointer user_data) {
 
-void print_workspace(char *name, struct workspace *workspace) {
-  printf("%s: %d %s %d %d %d %s\n", name, workspace->num, workspace->name,
-         workspace->visible, workspace->urgent, workspace->focused,
-         workspace->output);
+  // g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
+  // ipc_.sendCmd(SWAY_RUN_COMMAND, fmt::format("workspace {} \"{}\"",
+  //                                       config_["disable-auto-back-and-forth"].asBool()
+  //                                           ? "--no-auto-back-and-forth"
+  //                                           : "",
+  //                                       node["name"].asString()));
 }
+
+// void print_workspace(char *name, struct workspace *workspace) {
+//   printf("%s: %d %s %d %d %d %s\n", name, workspace->num, workspace->name,
+//          workspace->visible, workspace->urgent, workspace->focused,
+//          workspace->output);
+// }
 
 void g_barbar_sway_read_workspace(JsonReader *reader,
                                   struct workspace *workspace) {
@@ -205,7 +213,7 @@ void g_barbar_sway_workspace_empty(BarBarSwayWorkspace *sway,
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
-    if (e->num == current.num) {
+    if (e->id == current.id) {
       break;
     }
   }
@@ -233,7 +241,7 @@ void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
-    if (e->num == old.num) {
+    if (e->id == old.id) {
       break;
     }
   }
@@ -252,7 +260,7 @@ void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
-    if (e->num == current.num) {
+    if (e->id == current.id) {
       break;
     }
   }
@@ -281,7 +289,7 @@ void g_barbar_sway_workspace_move(BarBarSwayWorkspace *sway,
   if (!g_strcmp0(old.output, sway->output_name)) {
     for (list = sway->workspaces; list; list = list->next) {
       struct entry *e = list->data;
-      if (e->num == current.num) {
+      if (e->id == current.id) {
         break;
       }
     }
@@ -319,7 +327,7 @@ void g_barbar_sway_workspace_urgent(BarBarSwayWorkspace *sway,
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
-    if (e->num == current.num) {
+    if (e->id == current.id) {
       break;
     }
   }
@@ -400,8 +408,8 @@ GtkWidget *g_barbar_sway_add_button(BarBarSwayWorkspace *sway,
   GList *list;
 
   struct entry *entry = g_malloc0(sizeof(struct entry));
-  entry->num = workspace->num;
   entry->id = workspace->id;
+  entry->num = workspace->num;
   sway->workspaces =
       g_list_insert_sorted(sway->workspaces, entry, compare_func);
 

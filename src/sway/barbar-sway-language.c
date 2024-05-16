@@ -206,7 +206,6 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
   gboolean ret;
   GError *err = NULL;
 
-  printf("payload: %s\n", payload);
   parser = json_parser_new();
   ret = json_parser_load_from_data(parser, payload, len, &err);
 

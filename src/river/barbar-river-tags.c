@@ -274,10 +274,11 @@ static const struct zriver_output_status_v1_listener output_status_listener = {
 static void clicked(GtkButton *self, gpointer user_data) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(user_data);
 
-  guint tag;
-  for (int i = 0; i < 9; i++) {
+  guint tag = 0;
+  for (int i = 0; i < river->nums; i++) {
     if (self == GTK_BUTTON(river->buttons[i])) {
       tag = i;
+      break;
     }
   }
   tag = 1 << tag;

@@ -19,6 +19,7 @@ struct _BarBarDwlTitleIpc {
   char *output_name;
   struct zdwl_ipc_manager_v2 *ipc_manager;
   struct zdwl_ipc_output_v2 *ipc_output;
+  struct wl_output *output;
 
   GtkWidget *label;
 };
@@ -62,6 +63,7 @@ static void g_barbar_dwl_title_set_property(GObject *object, guint property_id,
   }
 }
 
+// zdwl_ipc_output_v2_set_tags
 static void g_barbar_dwl_title_get_property(GObject *object, guint property_id,
                                             GValue *value, GParamSpec *pspec) {
   BarBarDwlTitleIpc *dwl = BARBAR_DWL_TITLE_IPC(object);
@@ -122,19 +124,10 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     dwl->ipc_manager = wl_registry_bind(
         registry, name, &zdwl_ipc_manager_v2_interface, version);
   }
-  if (strcmp(interface, zdwl_ipc_output_v2_interface.name) == 0) {
-    dwl->ipc_manager = wl_registry_bind(registry, name,
-                                        &zdwl_ipc_output_v2_interface, version);
-  }
-  // if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
-  //   if (version >= ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
-  //     river->status_manager = wl_registry_bind(
-  //         registry, name, &zriver_status_manager_v1_interface, version);
-  //   }
-  // }
-  // if (strcmp(interface, wl_seat_interface.name) == 0) {
-  //   river->seat = wl_registry_bind(registry, name, &wl_seat_interface,
-  //   version);
+  // if (strcmp(interface, zdwl_ipc_output_v2_interface.name) == 0) {
+  //   dwl->ipc_manager = wl_registry_bind(registry, name,
+  //                                       &zdwl_ipc_output_v2_interface,
+  //                                       version);
   // }
 }
 
@@ -149,6 +142,54 @@ static void registry_handle_global_remove(void *_data,
 static const struct wl_registry_listener wl_registry_listener = {
     .global = registry_handle_global,
     .global_remove = registry_handle_global_remove,
+};
+
+static void toggle_visibility(void *data,
+                              struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2) {}
+
+static void active(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                   uint32_t active) {}
+
+static void tag(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                uint32_t tag, uint32_t state, uint32_t clients,
+                uint32_t focused) {}
+
+static void layout(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                   uint32_t layout) {}
+
+static void title(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                  const char *title) {
+  BarBarDwlTitleIpc *dwl = BARBAR_DWL_TITLE_IPC(data);
+  gtk_label_set_label(GTK_LABEL(dwl->label), title);
+}
+
+static void appid(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                  const char *appid) {}
+
+static void layout_symbol(void *data,
+                          struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                          const char *layout) {}
+
+static void frame(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2) {}
+
+static void fullscreen(void *data,
+                       struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                       uint32_t is_fullscreen) {}
+
+static void floating(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
+                     uint32_t is_floating) {}
+
+static const struct zdwl_ipc_output_v2_listener ipc_output_listener = {
+    .toggle_visibility = toggle_visibility,
+    .active = active,
+    .tag = tag,
+    .layout = layout,
+    .title = title,
+    .appid = appid,
+    .layout_symbol = layout_symbol,
+    .frame = frame,
+    .fullscreen = fullscreen,
+    .floating = floating,
 };
 
 static void g_barbar_dwl_title_start(GtkWidget *widget) {
@@ -176,11 +217,18 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
     return;
   }
   monitor = gtk_layer_get_monitor(window);
-  // river->output = gdk_wayland_monitor_get_wl_output(monitor);
+  dwl->output = gdk_wayland_monitor_get_wl_output(monitor);
 
   wl_display = gdk_wayland_display_get_wl_display(gdk_display);
   wl_registry = wl_display_get_registry(wl_display);
 
   wl_registry_add_listener(wl_registry, &wl_registry_listener, dwl);
+  wl_display_roundtrip(wl_display);
+
+  dwl->ipc_output =
+      zdwl_ipc_manager_v2_get_output(dwl->ipc_manager, dwl->output);
+
+  zdwl_ipc_output_v2_add_listener(dwl->ipc_output, &ipc_output_listener, dwl);
+
   wl_display_roundtrip(wl_display);
 }
