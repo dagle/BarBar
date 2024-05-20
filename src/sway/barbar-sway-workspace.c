@@ -145,6 +145,7 @@ static void g_barbar_sway_workspace_init(BarBarSwayWorkspace *self) {}
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
                                     gpointer user_data) {
 
+  g_barbar_sway_ipc_command("workspace %d", tag);
   // g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
   // ipc_.sendCmd(SWAY_RUN_COMMAND, fmt::format("workspace {} \"{}\"",
   //                                       config_["disable-auto-back-and-forth"].asBool()

@@ -86,4 +86,6 @@ gboolean g_barbar_sway_ipc_read_finish(GInputStream *stream,
 
 gboolean g_barbar_sway_message_is_success(const char *buf, gssize len);
 
+void g_barbar_sway_ipc_command(const char *format, ...);
+
 G_END_DECLS

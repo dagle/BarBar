@@ -323,3 +323,22 @@ gboolean g_barbar_sway_message_is_success(const char *buf, gssize len) {
 
   return success;
 }
+
+void g_barbar_sway_ipc_command(const char *format, ...) {
+
+  gchar *buffer;
+  va_list args;
+  GError *error = NULL;
+  GSocketConnection *ipc;
+
+  ipc = g_barbar_sway_ipc_connect(&error);
+  if (error != NULL) {
+    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
+               error->message);
+    return;
+  }
+
+  va_start(args, format);
+  buffer = g_strdup_vprintf(format, args);
+  va_end(args);
+}

@@ -84,8 +84,6 @@ G_MODULE_EXPORT char *barbar_header_dynamic(GtkWidget *label,
   va_end(args);
 
   return buffer;
-
-  return buffer;
 }
 
 static void activate(GtkApplication *app, void *data) {
@@ -112,13 +110,11 @@ static void activate(GtkApplication *app, void *data) {
 
   GSList *list = gtk_builder_get_objects(builder);
 
-  GObject *win;
   for (GSList *it = list; it; it = it->next) {
     GObject *object = it->data;
 
     if (GTK_IS_WINDOW(object)) {
       GtkWindow *window = GTK_WINDOW(object);
-      win = object;
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
       gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
     } else if (BARBAR_IS_SENSOR(object)) {
