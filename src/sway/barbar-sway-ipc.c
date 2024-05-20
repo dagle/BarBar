@@ -1,5 +1,8 @@
 #include "sway/barbar-sway-ipc.h"
 #include "barbar-error.h"
+#include "gio/gio.h"
+#include "glib-object.h"
+#include "glib.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -10,8 +13,35 @@ typedef struct SwayIpc {
   gssize length;
 } SwayIpc;
 
-void g_sway_ipc_free(SwayIpc *ipc) {
+static void g_sway_ipc_free(SwayIpc *ipc) {
   g_free(ipc->payload);
+  g_free(ipc);
+}
+
+typedef struct SwaySendIpc {
+  gsize bytes;
+  char *message;
+} SwaySendIpc;
+
+void g_sway_async_send_free(SwaySendIpc *send) {
+  g_free(send->message);
+  g_free(send);
+}
+
+typedef struct SwayIpcCmd {
+  GSocketClient *socket_client;
+  char *message;
+  GSocketConnection *connection;
+} SwayIpcCmd;
+
+static void g_sway_ipc_cmd_free(SwayIpcCmd *ipc) {
+  if (ipc->socket_client) {
+    g_object_unref((ipc->socket_client));
+  }
+  if (ipc->connection) {
+    g_object_unref((ipc->socket_client));
+  }
+  g_free(ipc->message);
   g_free(ipc);
 }
 
@@ -94,6 +124,133 @@ gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream, guint type,
   g_free(message);
 
   return ret;
+}
+
+void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
+  GOutputStream *stream = G_OUTPUT_STREAM(source);
+  gsize bytes;
+  GError *error = NULL;
+  GTask *task = data;
+
+  g_output_stream_write_all_finish(stream, res, &bytes, &error);
+  SwaySendIpc *send = g_task_get_task_data(task);
+
+  if (error) {
+    g_task_return_error(task, error);
+    g_object_unref(task);
+    return;
+  }
+
+  if (bytes < send->bytes) {
+    g_task_return_new_error(task, BARBAR_ERROR, BARBAR_ERROR_BAD_SWAY_IPC,
+                            "Not all bytes written");
+    g_object_unref(task);
+    return;
+  }
+
+  g_task_return_boolean(task, TRUE);
+  g_object_unref(task);
+}
+
+gboolean g_barbar_sway_ipc_send_finish(GOutputStream *stream,
+                                       GAsyncResult *result, GError **error) {
+  GTask *task;
+  // SwaySendIpc *ipc;
+
+  g_return_val_if_fail(G_IS_OUTPUT_STREAM(stream), FALSE);
+  g_return_val_if_fail(g_task_is_valid(result, stream), FALSE);
+
+  task = G_TASK(result);
+  return g_task_propagate_boolean(task, error);
+}
+
+void g_barbar_sway_ipc_send_async(GOutputStream *output_stream, guint type,
+                                  const char *payload,
+                                  GCancellable *cancellable,
+                                  GAsyncReadyCallback callback, gpointer data) {
+  GTask *task;
+
+  uint32_t paylen;
+  uint32_t length;
+  char *message;
+
+  SwaySendIpc *ipc = g_malloc0(sizeof(SwaySendIpc));
+  task = g_task_new(output_stream, cancellable, callback, data);
+  g_task_set_task_data(task, ipc, (GDestroyNotify)g_sway_async_send_free);
+
+  paylen = strlen(payload);
+  // magic-string + 4bytes payload length + 4bytes type
+  length = 6 + 4 + 4 + paylen;
+  message = calloc(length, sizeof(char));
+
+  memcpy(message, "i3-ipc", 6);
+  memcpy(message + 6, &paylen, sizeof(paylen));
+  memcpy(message + 10, &type, sizeof(type));
+  memcpy(message + 14, payload, paylen);
+  ipc->bytes = paylen;
+  ipc->message = message;
+
+  g_output_stream_write_all_async(output_stream, message, length, 0,
+                                  cancellable, callback, task);
+}
+
+void printf_cb(GObject *source, GAsyncResult *res, gpointer data) {
+  GOutputStream *stream = G_OUTPUT_STREAM(source);
+  GError *error = NULL;
+  GTask *task = data;
+
+  g_barbar_sway_ipc_send_finish(stream, res, &error);
+
+  if (error) {
+    g_task_return_error(task, error);
+    g_object_unref(task);
+    return;
+  }
+
+  char *str = g_task_get_task_data(task);
+
+  g_task_return_int(task, strlen(str));
+  g_object_unref(task);
+}
+
+gsize g_barbar_sway_ipc_send_printf_finish(GOutputStream *stream,
+                                           GAsyncResult *result,
+                                           GError **error) {
+  GTask *task;
+
+  g_return_val_if_fail(G_IS_OUTPUT_STREAM(stream), FALSE);
+  g_return_val_if_fail(g_task_is_valid(result, stream), FALSE);
+
+  task = G_TASK(result);
+  return g_task_propagate_int(task, error);
+}
+void g_barbar_sway_ipc_send_vprintf_async(GOutputStream *output_stream,
+                                          guint type, GCancellable *cancellable,
+                                          GAsyncReadyCallback callback,
+                                          gpointer data, const char *format,
+                                          va_list args) {
+  GTask *task;
+  task = g_task_new(output_stream, cancellable, callback, data);
+
+  char *buffer;
+  buffer = g_strdup_vprintf(format, args);
+
+  g_task_set_task_data(task, buffer, (GDestroyNotify)g_free);
+  g_barbar_sway_ipc_send_async(output_stream, type, buffer, cancellable,
+                               printf_cb, task);
+}
+
+void g_barbar_sway_ipc_send_printf_async(GOutputStream *output_stream,
+                                         guint type, GCancellable *cancellable,
+                                         GAsyncReadyCallback callback,
+                                         gpointer data, const char *format,
+                                         ...) {
+  va_list args;
+
+  va_start(args, format);
+  g_barbar_sway_ipc_send_vprintf_async(output_stream, type, cancellable,
+                                       callback, data, format, args);
+  va_end(args);
 }
 
 /**
@@ -324,21 +481,74 @@ gboolean g_barbar_sway_message_is_success(const char *buf, gssize len) {
   return success;
 }
 
-void g_barbar_sway_ipc_command(const char *format, ...) {
-
-  gchar *buffer;
-  va_list args;
+static void cmd_close(GObject *source, GAsyncResult *res, gpointer data) {
   GError *error = NULL;
-  GSocketConnection *ipc;
+  SwayIpcCmd *ipc = data;
+  g_io_stream_close_finish(G_IO_STREAM(source), res, &error);
 
-  ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
+  if (error) {
+    g_printerr("Couldn't close socket: %s\n", error->message);
+    g_error_free(error);
+  }
+  g_sway_ipc_cmd_free(ipc);
+}
+
+static void cmd_cb(GObject *source, GAsyncResult *res, gpointer data) {
+  GOutputStream *stream = G_OUTPUT_STREAM(source);
+  SwayIpcCmd *ipc = data;
+  GError *error = NULL;
+
+  g_barbar_sway_ipc_send_finish(stream, res, &error);
+
+  if (error) {
+    g_printerr("Couldn't send message: %s\n", error->message);
+    g_error_free(error);
+  }
+
+  g_io_stream_close_async(G_IO_STREAM(ipc->socket_client), 0, NULL, cmd_close,
+                          ipc);
+  g_sway_ipc_cmd_free(ipc);
+}
+
+static void cmd_connect(GObject *source, GAsyncResult *res, gpointer data) {
+  SwayIpcCmd *ipc = data;
+  GError *error = NULL;
+  GSocketClient *socket_client = G_SOCKET_CLIENT(source);
+  GOutputStream *output_stream;
+
+  ipc->connection = g_socket_client_connect_finish(socket_client, res, &error);
+
+  if (error) {
+    g_sway_ipc_cmd_free(ipc);
+    g_error_free(error);
+    return;
+  }
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(socket_client));
+
+  g_barbar_sway_ipc_send_async(output_stream, SWAY_RUN_COMMAND, ipc->message,
+                               NULL, cmd_cb, ipc);
+}
+
+void g_barbar_sway_ipc_command(const char *format, ...) {
+  va_list args;
+  // GTask *task;
+  SwayIpcCmd *ipc = g_malloc0(sizeof(SwayIpcCmd));
+
+  const char *socket_path = getenv("SWAYSOCK");
+
+  if (!socket_path) {
+    // TODO: Error stuff
     return;
   }
 
+  ipc->socket_client = g_socket_client_new();
+  GSocketAddress *address = g_unix_socket_address_new(socket_path);
+
   va_start(args, format);
-  buffer = g_strdup_vprintf(format, args);
+  ipc->message = g_strdup_vprintf(format, args);
   va_end(args);
+
+  g_socket_client_connect_async(ipc->socket_client,
+                                G_SOCKET_CONNECTABLE(address), NULL,
+                                cmd_connect, ipc);
 }

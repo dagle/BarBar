@@ -75,6 +75,30 @@ gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream, guint type,
 gssize g_barbar_sway_ipc_read(GInputStream *input_stream, guint32 *type,
                               gchar **payload, gsize *length, GError **error);
 
+void g_barbar_sway_ipc_send_async(GOutputStream *output_stream, guint type,
+                                  const char *payload,
+                                  GCancellable *cancellable,
+                                  GAsyncReadyCallback callback, gpointer data);
+
+gboolean g_barbar_sway_ipc_send_finish(GOutputStream *stream,
+                                       GAsyncResult *result, GError **error);
+
+gsize g_barbar_sway_ipc_send_printf_finish(GOutputStream *stream,
+                                           GAsyncResult *result,
+                                           GError **error);
+
+void g_barbar_sway_ipc_send_vprintf_async(GOutputStream *output_stream,
+                                          guint type, GCancellable *cancellable,
+                                          GAsyncReadyCallback callback,
+                                          gpointer data, const char *format,
+                                          va_list args);
+
+void g_barbar_sway_ipc_send_printf_async(GOutputStream *output_stream,
+                                         guint type, GCancellable *cancellable,
+                                         GAsyncReadyCallback callback,
+                                         gpointer data, const char *format,
+                                         ...);
+
 void g_barbar_sway_ipc_read_async(GInputStream *input_stream,
                                   GCancellable *cancellable,
                                   GAsyncReadyCallback callback, gpointer data);

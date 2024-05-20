@@ -11,7 +11,7 @@ Finish up:
 -- [ ] Being able to display multiple trays by having a try service
 -- [ ] Make menus feel nicer
 
-- [ ] River-tags, make it buildable, so you can use widget
+- [x] River-tags, make it buildable, so you can use widget
 
 
 
