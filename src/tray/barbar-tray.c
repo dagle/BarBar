@@ -6,21 +6,9 @@
 struct _BarBarTray {
   GtkWidget parent;
 
-  // int icon_size;
-  // int spacing;
-  // gboolean reverse_direction;
-  // gboolean show_passive;
-  // gboolean wild;
-
-  // char *name;
-  // BarBarStatusWatcher *watcher;
-
-  // A list of clients we should listen to
-  GArray clients;
+  GList *items;
+  BarBarStatusWatcher *watcher;
 };
-
-// : bus_name_("org.kde.StatusNotifierHost-" + std::to_string(getpid()) + "-" +
-//             std::to_string(id)),
 
 enum {
   PROP_0,

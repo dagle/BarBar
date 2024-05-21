@@ -127,14 +127,6 @@ static void g_barbar_tray_item_class_init(BarBarTrayItemClass *class) {
   gtk_widget_class_set_css_name(widget_class, "river-tag");
 }
 
-char *safe_strdup(const char *str) {
-  if (!str || !strlen(str)) {
-    return NULL;
-  }
-
-  return strdup(str);
-}
-
 void barbar_tray_item_set_icon_theme(BarBarTrayItem *item, const char *name) {
   g_clear_pointer(&item->icon_theme, g_object_unref);
 
@@ -152,7 +144,7 @@ void barbar_tray_item_set_icon_name(BarBarTrayItem *item, const char *name) {
 
   g_free(item->icon_name);
 
-  item->icon_name = safe_strdup(name);
+  item->icon_name = g_strdup(name);
 }
 
 void barbar_tray_item_set_icon_pixmap(BarBarTrayItem *item, GVariant *var) {
@@ -174,7 +166,7 @@ void barbar_tray_item_set_overlay_icon_name(BarBarTrayItem *item,
 
   g_free(item->overlay_name);
 
-  item->overlay_name = safe_strdup(name);
+  item->overlay_name = g_strdup(name);
 }
 
 void barbar_tray_item_set_overlay_pixmap(BarBarTrayItem *item, GVariant *var) {
@@ -196,7 +188,7 @@ void barbar_tray_item_set_attention_icon_name(BarBarTrayItem *item,
 
   g_free(item->attention_name);
 
-  item->attention_name = safe_strdup(name);
+  item->attention_name = g_strdup(name);
 }
 
 void barbar_tray_item_set_attention_icon_pixmap(BarBarTrayItem *item,
@@ -220,7 +212,7 @@ void barbar_tray_item_set_attention_movie_name(BarBarTrayItem *item,
 
   g_free(item->attention_movie);
 
-  item->attention_movie = safe_strdup(name);
+  item->attention_movie = g_strdup(name);
 }
 
 void barbar_tray_item_set_tooltip(BarBarTrayItem *item, const char *name) {}
