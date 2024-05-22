@@ -124,8 +124,9 @@ g_barbar_hyprland_service_constructor(GType type, guint n_construct_params,
     object = G_OBJECT_CLASS(g_barbar_hyprland_service_parent_class)
                  ->constructor(type, n_construct_params, construct_params);
     the_singleton = BARBAR_HYPRLAND_SERVICE(object);
-  } else
+  } else {
     object = g_object_ref(G_OBJECT(the_singleton));
+  }
 
   return object;
 }
@@ -388,6 +389,7 @@ end:
 }
 
 static void g_barbar_hyprland_service_constructed(GObject *self) {
+  G_OBJECT_CLASS(g_barbar_hyprland_service_parent_class)->constructed(self);
   BarBarHyprlandService *service = BARBAR_HYPRLAND_SERVICE(self);
   GError *error = NULL;
 

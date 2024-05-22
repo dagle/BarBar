@@ -180,7 +180,7 @@ static gboolean g_barbar_cmd_update(gpointer data) {
   GError *err = NULL;
 
   GSubprocess *proc = g_subprocess_newv(
-      self->cmd,
+      (const gchar *const *)self->cmd,
       G_SUBPROCESS_FLAGS_SEARCH_PATH_FROM_ENVP | G_SUBPROCESS_FLAGS_STDOUT_PIPE,
       &err);
 

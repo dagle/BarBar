@@ -501,16 +501,21 @@ static void set_popup(BarBarTrayItem *self) {
                            G_CALLBACK(menu_deactivate_cb), self);
 }
 
-void dump(BarBarTrayItem *self) {
+static void dump(BarBarTrayItem *self) {
   printf("attention-name: %s\n", self->attention_name);
   printf("overlay-name: %s\n", self->overlay_name);
   printf("icon-name: %s\n", self->icon_name);
+}
+gboolean g_barbar_tray_item_equal(BarBarTrayItem *item, const char *bus_name,
+                                  const char *object_path) {
+  return !strcmp(item->bus_name, bus_name) &&
+         !strcmp(item->object_path, object_path);
 }
 
 static void set_icon(BarBarTrayItem *self) {
   GtkWidget *icon = select_icon(self);
 
-  dump(self);
+  // dump(self);
 
   g_clear_pointer(&self->image, gtk_widget_unparent);
 

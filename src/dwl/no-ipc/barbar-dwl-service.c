@@ -105,21 +105,18 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   }
   case DWL_FULLSCREEN: {
     gboolean fullscreen = g_strcmp0(string, "1") == 0;
-    // printf("Fullscreen: %d\n", fullscreen);
     g_signal_emit(service, dwl_service_signals[FULLSCREEN], 0, output_name,
                   fullscreen);
     break;
   }
   case DWL_FLOATING: {
     gboolean floating = g_strcmp0(string, "1") == 0;
-    // printf("Floating: %d\n", floating);
     g_signal_emit(service, dwl_service_signals[FLOATING], 0, output_name,
                   floating);
     break;
   }
   case DWL_SELMON: {
     gboolean selmon = g_strcmp0(string, "1") == 0;
-    // printf("Selmon: %d\n", selmon);
     g_signal_emit(service, dwl_service_signals[SELMON], 0, output_name, selmon);
     break;
   }

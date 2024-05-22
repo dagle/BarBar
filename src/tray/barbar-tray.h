@@ -24,12 +24,27 @@
 
 #pragma once
 
-#include "status-notifier.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
+
+/**
+ * BarBarTrayDefaultRule:
+ * @BARBAR_TRAY_ALLOW: Allow all status icons by default and add block rules.
+ * @BARBAR_TRAY_BLOCK: Block all status icons by default and add allow rules.
+ *
+ * If we should allow or block all status icons by default.
+ */
+typedef enum {
+  BARBAR_TRAY_ALLOW,
+  BARBAR_TRAY_BLOCK,
+} BarBarTrayDefaultRule;
+
+GType g_barbar_default_rule_get_type(void);
+
+#define BARBAR_TYPE_DEFAULT_RULE (g_barbar_default_rule_get_type())
 
 // This module is only called tray, it's really a status-notifier
 // The difference is that you can have multiple status-notifiers for
@@ -38,6 +53,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarTray, g_barbar_tray, BARBAR, TRAY, GtkWidget)
 
-/* void g_barbar_tray_update(BarBarTray *self); */
+GtkWidget *g_barbar_tray_new(void);
 
 G_END_DECLS

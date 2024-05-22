@@ -59,6 +59,7 @@ libbarbar_src = [
   'widgets/barbar-processes.c',
 
   'tray/barbar-watcher.c',
+  'tray/barbar-tray.c',
   'tray/barbar-tray-item.c',
   'tray/barbar-dbusmenu.c',
 ]
@@ -127,6 +128,7 @@ libbarbar_headers = [
   'sway/barbar-sway-mode.h',
 
   'tray/barbar-watcher.h',
+  'tray/barbar-tray.h',
   # 'tray/barbar-tray-item.h',
   # 'tray/barbar-dbusmenu.h',
 ]

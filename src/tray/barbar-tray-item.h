@@ -25,7 +25,6 @@
 #ifndef _BARBAR_TRAY_ITEM_H_
 #define _BARBAR_TRAY_ITEM_H_
 
-#include "status-notifier.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -40,6 +39,8 @@ G_DECLARE_FINAL_TYPE(BarBarTrayItem, g_barbar_tray_item, BARBAR, TRAY_ITEM,
 BarBarTrayItem *g_barbar_tray_item_new(const char *bus_name,
                                        const char *object_path);
 
+gboolean g_barbar_tray_item_equal(BarBarTrayItem *item, const char *bus_name,
+                                  const char *object_path);
 G_END_DECLS
 
 #endif /* _BARBAR_TRAY_ITEM_H_ */

@@ -14,7 +14,6 @@
  *
  */
 struct _BarBarStatusWatcher {
-  // GtkWidget parent_instance;
   GObject parent_instance;
 
   guint id;
@@ -92,10 +91,18 @@ static guint watcher_signals[NUM_SIGNALS];
 
 G_DEFINE_TYPE(BarBarStatusWatcher, g_barbar_status_watcher, GTK_TYPE_WIDGET)
 
+static void on_bus_acquired(GDBusConnection *connection, const gchar *name,
+                            gpointer user_data);
+static void on_name_acquired(GDBusConnection *connection, const gchar *name,
+                             gpointer user_data);
+
+static void on_name_lost(GDBusConnection *connection, const gchar *name,
+                         gpointer user_data);
+
 static void g_barbar_watcher_get_items(BarBarStatusWatcher *watcher,
                                        GValue *value) {
   GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE("as"));
+  g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ss)"));
   for (GList *list = watcher->items; list != NULL; list = list->next) {
     WatcherItem *item = list->data;
     g_variant_builder_add(&builder, "ss", item->bus_name, item->object_path);
@@ -121,21 +128,50 @@ static void g_barbar_watcher_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_tray_root(GtkWidget *widget);
+static BarBarStatusWatcher *the_singleton = NULL;
+
+static GObject *
+g_barbar_watcher_constructor(GType type, guint n_construct_params,
+                             GObjectConstructParam *construct_params) {
+  GObject *object;
+
+  if (!the_singleton) {
+    object = G_OBJECT_CLASS(g_barbar_status_watcher_parent_class)
+                 ->constructor(type, n_construct_params, construct_params);
+    the_singleton = BARBAR_STATUS_WATCHER(object);
+  } else {
+    object = g_object_ref(G_OBJECT(the_singleton));
+  }
+
+  return object;
+}
+
+static void g_barbar_watcher_constructed(GObject *self) {
+  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(self);
+  G_OBJECT_CLASS(g_barbar_status_watcher_parent_class)->constructed(self);
+
+  watcher->id = g_bus_own_name(
+      G_BUS_TYPE_SESSION, "org.kde.StatusNotifierWatcher",
+      G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | G_BUS_NAME_OWNER_FLAGS_REPLACE,
+      on_bus_acquired, on_name_acquired, on_name_lost, self, NULL);
+}
 
 static void
 g_barbar_status_watcher_class_init(BarBarStatusWatcherClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_watcher_set_property;
   gobject_class->get_property = g_barbar_watcher_get_property;
-  // gobject_class->constructed = g_barbar_watcher_constructed;
 
-  widget_class->root = g_barbar_tray_root;
+  gobject_class->constructor = g_barbar_watcher_constructor;
+  gobject_class->constructed = g_barbar_watcher_constructed;
 
-  // gtk_widget_class_set_layout_manager_type(widget_class,
-  // GTK_TYPE_BOX_LAYOUT); gtk_widget_class_set_css_name(widget_class, "tray");
+  watcher_props[PROP_ITEMS] =
+      g_param_spec_variant("items", NULL, NULL, ((const GVariantType *)"a(ss)"),
+                           NULL, G_PARAM_READABLE);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
+                                    watcher_props);
 
   watcher_signals[ITEM_REGISTER] =
       g_signal_new("item-register", BARBAR_TYPE_STATUS_WATCHER,
@@ -164,8 +200,8 @@ void item_vanish(GDBusConnection *connection, const gchar *bus_name,
   while (items) {
     item = items->data;
     if (!strcmp(bus_name, item->bus_name)) {
-      g_signal_emit(watcher, ITEM_UNREGISTER, 0, item->bus_name,
-                    item->object_path);
+      g_signal_emit(watcher, watcher_signals[ITEM_UNREGISTER], 0,
+                    item->bus_name, item->object_path);
       watcher->items = g_list_remove(watcher->items, item);
       // we can do this right?
       free_item(item);
@@ -218,7 +254,8 @@ g_barbar_tray_handle_register_item(StatusNotifierWatcher *skeleton,
 
   watcher->items = g_list_append(watcher->items, item);
 
-  g_signal_emit(watcher, ITEM_REGISTER, 0, bus_name, object_path);
+  g_signal_emit(watcher, watcher_signals[ITEM_REGISTER], 0, bus_name,
+                object_path);
   g_object_notify_by_pspec(G_OBJECT(watcher), watcher_props[PROP_ITEMS]);
 
   return TRUE;
@@ -256,21 +293,10 @@ static void on_name_lost(GDBusConnection *connection, const gchar *name,
   g_print("Lost the name %s\n", name);
 }
 
-static void g_barbar_tray_root(GtkWidget *widget) {
-  GTK_WIDGET_CLASS(g_barbar_status_watcher_parent_class)->root(widget);
-
-  BarBarStatusWatcher *watcher = BARBAR_STATUS_WATCHER(widget);
-
-  watcher->id = g_bus_own_name(
-      G_BUS_TYPE_SESSION, "org.kde.StatusNotifierWatcher",
-      G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | G_BUS_NAME_OWNER_FLAGS_REPLACE,
-      on_bus_acquired, on_name_acquired, on_name_lost, widget, NULL);
-}
-
 static void g_barbar_status_watcher_init(BarBarStatusWatcher *self) {}
 
 BarBarStatusWatcher *g_barbar_status_watcher_new(void) {
   return g_object_new(BARBAR_TYPE_STATUS_WATCHER, NULL);
 }
 
-void g_barbar_status_watcher_update(BarBarStatusWatcher *self) {}
+// void g_barbar_status_watcher_update(BarBarStatusWatcher *self) {}

@@ -21,17 +21,22 @@ BarBar.Bar {
       [tag]
       Gtk.Label {
         label: "apa";
+        tooltip-markup: "bepa";
       }
     }
 
     [start]
-    BarBar.StatusWatcher {}
+    BarBar.Tray {}
 
     [start]
     BarBar.RiverLayout {}
 
     [center]
     BarBar.RiverView {}
+
+
+    [end]
+    BarBar.Tray {}
 
     [end]
     Gtk.ScaleButton volume {
@@ -166,22 +171,28 @@ BarBar.Bar {
 // Well, barbar is a really bad name.
 // We can do even more! Lets draw some widgets on
 // the background!
-// BarBar.Background background {
-//   top-margin: 50;
-//   bottom-margin: 50;
-//  right-margin: 200;
-//   left-margin: 200;
-// Gtk.LevelBar {
-//   orientation: vertical;
-//   value: bind cpu.percent;
-// }
-// BarBar.Rotary {
-//   value: bind cpu.percent;
-// }
-//   BarBar.Graph {
-//     value: bind cpu.percent;
-//   }
-// }
+BarBar.Background background {
+  top-margin: 50;
+  bottom-margin: 50;
+  right-margin: 200;
+  left-margin: 200;
+
+  Gtk.Calendar {
+    show-heading: false;
+  }
+
+  // Gtk.LevelBar {
+  //   orientation: vertical;
+  //   value: bind cpu.percent;
+  // }
+  // BarBar.Rotary {
+  //   value: bind cpu.percent;
+  // }
+  //   BarBar.Graph {
+  //     value: bind cpu.percent;
+  //   }
+}
+
 // Here we define some sensors.
 BarBar.Clock clock {
   interval: 1000;
