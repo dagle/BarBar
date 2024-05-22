@@ -7,7 +7,8 @@
 struct _BarBarTray {
   GtkWidget parent;
 
-  BarBarTrayDefaultRule rule;
+  BarBarTrayDefaultRule default_rule;
+  GList *rules;
   GList *items;
   BarBarStatusWatcher *watcher;
 };
@@ -50,11 +51,11 @@ static void g_barbar_tray_set_rule(BarBarTray *tray,
                                    BarBarTrayDefaultRule rule) {
   g_return_if_fail(BARBAR_IS_TRAY(tray));
 
-  if (tray->rule == rule) {
+  if (tray->default_rule == rule) {
     return;
   }
 
-  tray->rule = rule;
+  tray->default_rule = rule;
   g_object_notify_by_pspec(G_OBJECT(tray), tray_props[PROP_RULE_MODE]);
 }
 
@@ -77,7 +78,7 @@ static void g_barbar_tray_get_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_RULE_MODE:
-    g_value_set_enum(value, tray->rule);
+    g_value_set_enum(value, tray->default_rule);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
