@@ -1,5 +1,4 @@
 #include "river/barbar-river-tags.h"
-#include "barbar-util.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>

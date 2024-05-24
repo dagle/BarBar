@@ -96,6 +96,7 @@ static void g_barbar_bar_constructed(GObject *object);
 
 static void g_barbar_background_class_init(BarBarBackgroundClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_bar_set_property;
   gobject_class->get_property = g_barbar_bar_get_property;
@@ -145,6 +146,8 @@ static void g_barbar_background_class_init(BarBarBackgroundClass *class) {
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     background_props);
+
+  gtk_widget_class_set_css_name(widget_class, "background");
 }
 
 static void g_barbar_background_init(BarBarBackground *self) {

@@ -57,6 +57,8 @@ libbarbar_src = [
   'widgets/barbar-valueicon.c',
   'widgets/barbar-separator.c',
   'widgets/barbar-processes.c',
+  'widgets/barbar-activity-graph.c',
+  'widgets/barbar-box.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray.c',
@@ -106,6 +108,8 @@ libbarbar_headers = [
   'widgets/barbar-graph.h',
   'widgets/barbar-separator.h',
   'widgets/barbar-processes.h',
+  'widgets/barbar-activity-graph.h',
+  'widgets/barbar-box.h',
 
   'widgets/barbar-valueicon.h',
 

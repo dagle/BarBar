@@ -1,8 +1,6 @@
 #include "sway/barbar-sway-language.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
-#include <ctype.h>
-#include <xkbcommon/xkbcommon.h>
 
 /**
  * BarBarSwayLanguage:

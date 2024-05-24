@@ -182,6 +182,7 @@ static void g_barbar_bar_constructed(GObject *object);
 
 static void g_barbar_bar_class_init(BarBarBarClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_bar_set_property;
   gobject_class->get_property = g_barbar_bar_get_property;
@@ -248,6 +249,7 @@ static void g_barbar_bar_class_init(BarBarBarClass *class) {
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, bar_props);
+  gtk_widget_class_set_css_name(widget_class, "bar");
 }
 
 static void g_barbar_bar_init(BarBarBar *self) {

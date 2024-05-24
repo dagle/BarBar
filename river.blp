@@ -34,9 +34,10 @@ BarBar.Bar {
     [center]
     BarBar.RiverView {}
 
-
-    [end]
-    BarBar.Tray {}
+    // [end]
+    // BarBar.ActivityGraph {}
+    // [end]
+    // BarBar.Box {}
 
     [end]
     Gtk.ScaleButton volume {
@@ -177,10 +178,11 @@ BarBar.Background background {
   right-margin: 200;
   left-margin: 200;
 
-  Gtk.Calendar {
-    show-heading: false;
-  }
+  BarBar.ActivityGraph {}
 
+  // Gtk.Calendar {
+  //   show-heading: false;
+  // }
   // Gtk.LevelBar {
   //   orientation: vertical;
   //   value: bind cpu.percent;

@@ -45,6 +45,8 @@
 #include "dwl/no-ipc/barbar-dwl-tags.h"
 #include "dwl/no-ipc/barbar-dwl-title.h"
 
+#include "widgets/barbar-activity-graph.h"
+#include "widgets/barbar-box.h"
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-processes.h"
