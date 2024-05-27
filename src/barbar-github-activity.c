@@ -22,6 +22,8 @@ enum {
   PROP_0,
 
   PROP_INTERVAL,
+  PROP_USER_NAME,
+  PROP_AUTH_TOKEN,
 
   NUM_PROPERTIES,
 };
@@ -29,10 +31,34 @@ enum {
 static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
+static void
+g_barbar_github_activity_buildable_interface_init(GtkBuildableIface *iface);
 
 static GtkBuildableIface *parent_buildable_iface;
 
-G_DEFINE_TYPE(BarBarGithubActivity, g_barbar_github_activity, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarGithubActivity, g_barbar_github_activity, GTK_TYPE_WIDGET,
+    G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+                          g_barbar_github_activity_buildable_interface_init))
+
+static void g_barbar_github_activity_tag_add_child(GtkBuildable *buildable,
+                                                   GtkBuilder *builder,
+                                                   GObject *child,
+                                                   const char *type) {
+  g_return_if_fail(GTK_IS_WIDGET(child));
+
+  BarBarGithubActivity *self = BARBAR_GITHUB_ACTIVITY(buildable);
+
+  // if (g_strcmp0(type, "tag") == 0) {
+  // g_barbar_river_tag_add_button(self, GTK_WIDGET(child));
+  // }
+}
+
+static void
+g_barbar_github_activity_buildable_interface_init(GtkBuildableIface *iface) {
+  parent_buildable_iface = g_type_interface_peek_parent(iface);
+  iface->add_child = g_barbar_github_activity_tag_add_child;
+}
 
 static void on_response(SoupSession *session, GAsyncResult *res,
                         gpointer user_data);
@@ -145,7 +171,40 @@ static void on_response(SoupSession *session, GAsyncResult *res,
     printf("totalContributions: %d\n", identifier);
   }
   g_bytes_unref(bytes);
-
-  // g_main_loop_quit(loop);
-  // g_object_unref(msg);
 }
+
+static void
+g_barbar_github_activity_class_init(BarBarGithubActivityClass *class) {
+  GObjectClass *gobject_class = G_OBJECT_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+
+  /**
+   * BarBarGithubActivity:interval:
+   *
+   * How often we should pull info from github
+   */
+  properties[PROP_INTERVAL] = g_param_spec_uint(
+      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
+      3600 * 1000, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarGithubActivity:user-name:
+   *
+   * Github user-name
+   */
+  properties[PROP_USER_NAME] = g_param_spec_string(
+      "user-name", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarGithubActivity:auth_token:
+   *
+   * The github token generated for the user. The token needs to have read:user
+   * enabled.
+   */
+  properties[PROP_USER_NAME] = g_param_spec_string(
+      "auth-token", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
+}
+
+static void g_barbar_github_activity_init(BarBarGithubActivity *self) {}

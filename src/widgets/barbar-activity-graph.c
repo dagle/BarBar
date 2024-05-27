@@ -1,7 +1,4 @@
 #include "barbar-activity-graph.h"
-#include "glib-object.h"
-#include "gtk/gtk.h"
-#include "gtk/gtkshortcut.h"
 #include "widgets/barbar-box.h"
 
 /**
@@ -255,6 +252,7 @@ static void g_barbar_activity_graph_constructed(GObject *object) {
 
   gtk_grid_set_column_spacing(GTK_GRID(self->grid), self->col_spacing);
   gtk_grid_set_row_spacing(GTK_GRID(self->grid), self->row_spacing);
+  // printf("%d - %d\n", self->cols, self->rows);
 
   for (int j = 0; j < self->rows; j++) {
     for (int i = 0; i < self->cols; i++) {
@@ -267,4 +265,24 @@ static void g_barbar_activity_graph_constructed(GObject *object) {
 static void g_barbar_activity_graph_init(BarBarActivityGraph *self) {
   self->grid = gtk_grid_new();
   gtk_widget_set_parent(self->grid, GTK_WIDGET(self));
+}
+
+void g_barbar_activity_graph_set_activity(BarBarActivityGraph *graph, int col,
+                                          int row, int activity) {
+  g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
+
+  GtkWidget *child = gtk_grid_get_child_at(GTK_GRID(graph->grid), col, row);
+
+  if (!child) {
+    // some warning.
+    return;
+  }
+  // g_barbar_box_set_value(BARBAR_BOX(child), activity);
+}
+
+GtkWidget *g_barbar_activity_graph_new(int cols, int rows) {
+  BarBarActivityGraph *graph = g_object_new(BARBAR_TYPE_ACTIVITY_GRAPH, "cols",
+                                            cols, "rows", rows, NULL);
+
+  return GTK_WIDGET(graph);
 }

@@ -34,6 +34,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarActivityGraph, g_barbar_activity_graph, BARBAR,
                      ACTIVITY_GRAPH, GtkWidget)
 
-GtkWidget *g_barbar_activity_graph_new(int rows, int cols);
+GtkWidget *g_barbar_activity_graph_new(int cols, int rows);
+
+void g_barbar_activity_graph_set_activity(BarBarActivityGraph *graph, int col,
+                                          int row, int activity);
 
 G_END_DECLS

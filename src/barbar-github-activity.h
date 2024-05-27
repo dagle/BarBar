@@ -1,3 +1,4 @@
+
 /*
  * The MIT License (MIT)
  *
@@ -29,10 +30,11 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_ROTARY (g_barbar_rotary_get_type())
+#define BARBAR_TYPE_GITHUB_ACTIVITY (g_barbar_github_activity_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarGithubActivity, g_barbar_github_activity, BARBAR,
+                     GITHUB_ACTIVITY, GtkWidget)
 
-GtkWidget *g_barbar_rotary_new(void);
+/*GtkWidget *g_barbar_github_activity_new(void);*/
 
 G_END_DECLS
