@@ -1,19 +1,49 @@
+#include "barbar-github-activity.h"
 #include <glib.h>
 #include <json-glib/json-glib.h>
 #include <libsoup/soup.h>
 #include <stdio.h>
 
-void on_response(SoupSession *session, GAsyncResult *res, gpointer user_data);
+/**
+ * BarBarGitHubActivity:
+ *
+ * An activity graph, often used to display github activity
+ */
+struct _BarBarGithubActivity {
+  GtkWidget parent_instance;
 
-int main(int argc, char *argv[]) {
+  char *user_name;
+  char *auth_token;
+  GtkWidget *activity_graph;
+};
+
+// this should inherit the ActivityGraph class or buildable
+enum {
+  PROP_0,
+
+  PROP_INTERVAL,
+
+  NUM_PROPERTIES,
+};
+
+static GParamSpec *properties[NUM_PROPERTIES] = {
+    NULL,
+};
+
+static GtkBuildableIface *parent_buildable_iface;
+
+G_DEFINE_TYPE(BarBarGithubActivity, g_barbar_github_activity, GTK_TYPE_WIDGET)
+
+static void on_response(SoupSession *session, GAsyncResult *res,
+                        gpointer user_data);
+
+static int fetch_data(BarBarGithubActivity *activity) {
   // Initialize libsoup
-  GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+  // GMainLoop *loop = g_main_loop_new(NULL, FALSE);
   SoupSession *session = soup_session_new();
   SoupMessage *msg;
   SoupMessageHeaders *headers;
 
-  // Replace with your GitHub personal access token
-  const char *auth_token = "";
   const char *url = "https://api.github.com/graphql";
 
   // GraphQL query
@@ -21,13 +51,11 @@ int main(int argc, char *argv[]) {
       "query($userName:String!) { user(login: $userName) { "
       "contributionsCollection { contributionCalendar { totalContributions "
       "weeks { contributionDays { contributionCount date } } } } } }";
-  const char *variables =
-      "{\"userName\": \"dagle\"}"; // Replace "octocat" with the GitHub
-                                   // username you want to query
 
   // Construct the JSON payload
-  gchar *payload = g_strdup_printf("{\"query\": \"%s\", \"variables\": %s}",
-                                   query, variables);
+  gchar *payload = g_strdup_printf(
+      "{\"query\": \"%s\", \"variables\": {\"userName\": \"%s\"}}", query,
+      activity->user_name);
 
   // Create the message
   msg = soup_message_new(SOUP_METHOD_POST, url);
@@ -36,8 +64,9 @@ int main(int argc, char *argv[]) {
   headers = soup_message_get_request_headers(msg);
 
   // Set the headers
-  soup_message_headers_append(headers, "Authorization",
-                              g_strdup_printf("Bearer %s", auth_token));
+  soup_message_headers_append(
+      headers, "Authorization",
+      g_strdup_printf("Bearer %s", activity->auth_token));
   soup_message_headers_append(headers, "Content-Type", "application/json");
   soup_message_headers_append(headers, "User-Agent",
                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64; "
@@ -48,18 +77,19 @@ int main(int argc, char *argv[]) {
                                    (GAsyncReadyCallback)on_response, NULL);
 
   // Run the main loop
-  g_main_loop_run(loop);
+  // g_main_loop_run(loop);
 
   // Clean up
+  // g_object_unref(session);
+  // g_main_loop_unref(loop);
   g_object_unref(msg);
-  g_object_unref(session);
-  g_main_loop_unref(loop);
   g_free(payload);
 
   return 0;
 }
 
-void on_response(SoupSession *session, GAsyncResult *res, gpointer user_data) {
+static void on_response(SoupSession *session, GAsyncResult *res,
+                        gpointer user_data) {
   JsonParser *parser;
   GError *error = NULL;
   gboolean ret;

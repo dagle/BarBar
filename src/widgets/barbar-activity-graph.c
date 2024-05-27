@@ -3,7 +3,6 @@
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include "widgets/barbar-box.h"
-// #include "widgets/barbar-box.h"
 
 /**
  * BarBarActivityGraph:

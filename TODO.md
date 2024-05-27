@@ -7,13 +7,13 @@ Maybe: Fan/fan-speeds, UPS, entropy, hddtemp, hwmon, i2c, machine info, gpu (nvi
 Finish up:
 - [ ] Go over all memory allocation and make sure everything is freed correctly
 
-- [ ] Tray
+- [-] Tray
 -- [ ] Being able to display multiple trays by having a try service
 -- [ ] Make menus feel nicer
 
 - [x] River-tags, make it buildable, so you can use widget
 
-
+- [ ] Hover and shit
 
 Bar-graph
 
