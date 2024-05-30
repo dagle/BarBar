@@ -6,23 +6,92 @@ window {
     font-family: FontAwesome, Terminess Nerd Font;
     font-size: 12px;
     min-height: 0;
-    /* background-color: black; */
+    background-color: black;
     transition-property: background-color;
     transition-duration: .5s;
     color: #ffffff;
     border: none;
 }
 
-window.background {
-  padding: 8px;
-  /* background-color: #2b60b5; */
-  background-color: rgba(0, 0, 0, 0.5);
-  font-family: FontAwesome, Terminess Nerd Font;
-  font-size: 14px;
+background {
+    font-family: FontAwesome, Terminess Nerd Font;
+    font-size: 12px;
+    min-height: 0;
+    background-color: black;
+    transition-property: background-color;
+    transition-duration: .5s;
+    color: #ffffff;
+    border: none;
 }
+
+bar {
+    font-family: FontAwesome, Terminess Nerd Font;
+    font-size: 12px;
+    min-height: 0;
+    background-color: black;
+    transition-property: background-color;
+    transition-duration: .5s;
+    color: #ffffff;
+    border: none;
+}
+
+/* background-color: #2b60b5; */
+/* window.background { */
+/*   padding: 8px; */
+/*   background-color: rgba(0, 0, 0, 0.5); */
+/*   font-family: FontAwesome, Terminess Nerd Font; */
+/*   font-size: 14px; */
+/* } */
 
 label#time {
   font-size: 48px;
+}
+
+/*activity-graph {*/
+/*  background-color: #C0FF00;*/
+/*}*/
+
+activity-graph barbar-box {
+  background-color: #12161B;
+  /*background-color: #C0FF00;*/
+}
+
+activity-graph barbar-box.level-1 {
+  background-color: #0B3621;
+}
+
+activity-graph barbar-box.level-2 {
+  background-color: #005728;
+}
+
+activity-graph barbar-box.level-3 {
+  background-color: #1E8534;
+}
+
+activity-graph barbar-box.level-4 {
+  background-color: #24A153;
+}
+
+/*activity-graph barbar-box.low{*/
+/*  background-color: #0B3621;*/
+/*}*/
+/*activity-graph barbar-box.mid {*/
+/*  background-color: #005728;*/
+/*}*/
+/*activity-graph barbar-box.high {*/
+/*  background-color: #1E8534;*/
+/*}*/
+/*activity-graph barbar-box.max {*/
+/*  background-color: #24A153;*/
+/*}*/
+
+background separator {
+/*separator background {*/
+    background-color: #C0FF00;
+    /* border-color: #C0FF00; */
+    /* border-bottom-style: solid; */
+    /* border-bottom: 1px solid; */
+    margin: 1em 3px 0.8em 3px;
 }
 
 barbar-separator {
