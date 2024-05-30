@@ -23,6 +23,7 @@ glib =  dependency('glib-2.0', version: '>=2.68')
 gobject = dependency('gobject-2.0')
 gio = dependency('gio-2.0')
 giounix = dependency('gio-unix-2.0')
+soup = dependency('libsoup-3.0')
 json = dependency('json-glib-1.0')
 udev = dependency('libudev')
 module = dependency('gmodule-export-2.0')
@@ -62,6 +63,7 @@ deps = [
   template_glib,
   libgweather,
   libgeoclue,
+  soup,
   # xkbcommon,
   m_dep,
   module,

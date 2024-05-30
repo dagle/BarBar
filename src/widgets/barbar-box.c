@@ -29,27 +29,19 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 G_DEFINE_TYPE(BarBarBox, g_barbar_box, GTK_TYPE_WIDGET)
 
 // Maybe this is horrible design
-void g_barbar_box_set_level(BarBarBox *box, uint level) {
+void g_barbar_box_set_level(BarBarBox *box, uint value) {
   g_return_if_fail(BARBAR_IS_BOX(box));
-  char level_str[9];
 
-  if (box->level == level) {
+  if (box->level == value) {
     return;
   }
 
-  // g_snprintf(level_str, sizeof(level_str), "level-%d", box->level);
-  //
-  // if (gtk_widget_has_css_class(GTK_WIDGET(box), level_str)) {
-  //   gtk_widget_remove_css_class(GTK_WIDGET(box), level_str);
-  // }
-
-  box->level = level;
-
-  // g_snprintf(level_str, sizeof(level_str), "level-%d", level);
-  // gtk_widget_add_css_class(GTK_WIDGET(box), level_str);
+  box->level = value;
 
   g_object_notify_by_pspec(G_OBJECT(box), properties[PROP_LEVEL]);
 }
+
+uint g_barbar_box_get_value(BarBarBox *box) { return box->level; }
 
 static void g_barbar_box_measure(GtkWidget *widget, GtkOrientation orientation,
                                  int for_size, int *minimum, int *natural,
@@ -61,20 +53,6 @@ static void g_barbar_box_measure(GtkWidget *widget, GtkOrientation orientation,
   } else {
     *minimum = *natural = self->size;
   }
-}
-
-static GtkSizeRequestMode g_barbar_rotary_get_request_mode(GtkWidget *widget) {
-  return GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH;
-}
-static void g_barbar_box_size_allocate(GtkWidget *widget, int width, int height,
-                                       int baseline) {
-  // printf("allocate width: %d height: %d\n", width, height);
-  //   BarBarRotary *self = BARBAR_ROTARY(widget);
-  //
-  //   self->width = width;
-  //   self->height = height;
-  //   update_circle(self);
-  //   update_rotary(self);
 }
 
 static void g_barbar_box_set_size(BarBarBox *box, guint size) {
@@ -129,14 +107,13 @@ static void g_barbar_box_class_init(BarBarBoxClass *class) {
   object_class->get_property = g_barbar_box_get_property;
 
   widget_class->measure = g_barbar_box_measure;
-  widget_class->size_allocate = g_barbar_box_size_allocate;
-  widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
+  // widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
 
   properties[PROP_SIZE] = g_param_spec_uint(
       "size", NULL, NULL, 1, G_MAXUINT, 2,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
   properties[PROP_LEVEL] = g_param_spec_uint(
-      "level", NULL, NULL, 0, G_MAXUINT, 99,
+      "value", NULL, NULL, 0, G_MAXUINT, 0,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(object_class, NUM_PROPERTIES, properties);

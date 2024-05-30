@@ -47,6 +47,7 @@
 
 #include "widgets/barbar-activity-graph.h"
 #include "widgets/barbar-box.h"
+#include "widgets/barbar-eventswitcher.h"
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-processes.h"
@@ -54,6 +55,8 @@
 #include "widgets/barbar-sensorwidget.h"
 #include "widgets/barbar-separator.h"
 #include "widgets/barbar-valueicon.h"
+
+#include "barbar-github-activity.h"
 
 #include "tray/barbar-dbusmenu.h"
 #include "tray/barbar-tray-item.h"

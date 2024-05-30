@@ -1,4 +1,5 @@
 #include "barbar-activity-graph.h"
+#include "glib.h"
 #include "widgets/barbar-box.h"
 
 /**
@@ -11,7 +12,8 @@ struct _BarBarActivityGraph {
 
   // treshold values
   // int high;
-  int step;
+  // uint step;
+  // uint max;
 
   uint rows;
   uint cols;
@@ -25,7 +27,8 @@ struct _BarBarActivityGraph {
 enum {
   PROP_0,
 
-  PROP_STEP,
+  // PROP_STEP,
+  // PROP_MAX,
 
   PROP_ROWS,
   PROP_COLS,
@@ -42,30 +45,30 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarActivityGraph, g_barbar_activity_graph, GTK_TYPE_WIDGET)
 
-static void g_barbar_activity_graph_set_step(BarBarActivityGraph *graph,
-                                             guint step) {
-  g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
-
-  if (graph->step == step) {
-    return;
-  }
-
-  graph->step = step;
-
-  g_object_notify_by_pspec(G_OBJECT(graph), properties[PROP_STEP]);
-}
-
-// static void g_barbar_activity_graph_set_mid(BarBarActivityGraph *graph,
-//                                             guint mid) {
+// static void g_barbar_activity_graph_set_step(BarBarActivityGraph *graph,
+//                                              guint step) {
 //   g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
 //
-//   if (graph->mid == mid) {
+//   if (graph->step == step) {
 //     return;
 //   }
 //
-//   graph->mid = mid;
+//   graph->step = step;
 //
-//   g_object_notify_by_pspec(G_OBJECT(graph), properties[PROP_MID]);
+//   g_object_notify_by_pspec(G_OBJECT(graph), properties[PROP_STEP]);
+// }
+
+// static void g_barbar_activity_graph_set_max(BarBarActivityGraph *graph,
+//                                             guint max) {
+//   g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
+//
+//   if (graph->max == max) {
+//     return;
+//   }
+//
+//   graph->max = max;
+//
+//   g_object_notify_by_pspec(G_OBJECT(graph), properties[PROP_MAX]);
 // }
 
 static void g_barbar_activity_graph_set_rows(BarBarActivityGraph *graph,
@@ -140,11 +143,11 @@ static void g_barbar_activity_graph_set_property(GObject *object,
   BarBarActivityGraph *graph = BARBAR_ACTIVITY_GRAPH(object);
 
   switch (property_id) {
-  case PROP_STEP:
-    g_barbar_activity_graph_set_step(graph, g_value_get_uint(value));
-    break;
-  // case PROP_MID:
-  //   g_barbar_activity_graph_set_mid(graph, g_value_get_uint(value));
+  // case PROP_STEP:
+  //   g_barbar_activity_graph_set_step(graph, g_value_get_uint(value));
+  //   break;
+  // case PROP_MAX:
+  //   g_barbar_activity_graph_set_max(graph, g_value_get_uint(value));
   //   break;
   case PROP_ROWS:
     g_barbar_activity_graph_set_rows(graph, g_value_get_uint(value));
@@ -173,11 +176,11 @@ static void g_barbar_activity_graph_get_property(GObject *object,
   BarBarActivityGraph *graph = BARBAR_ACTIVITY_GRAPH(object);
 
   switch (property_id) {
-  case PROP_STEP:
-    g_value_set_uint(value, graph->step);
-    break;
-  // case PROP_MID:
-  //   g_value_set_uint(value, graph->mid);
+  // case PROP_STEP:
+  //   g_value_set_uint(value, graph->step);
+  //   break;
+  // case PROP_MAX:
+  //   g_value_set_uint(value, graph->max);
   //   break;
   case PROP_ROWS:
     g_value_set_uint(value, graph->rows);
@@ -208,18 +211,14 @@ g_barbar_activity_graph_class_init(BarBarActivityGraphClass *class) {
   gobject_class->set_property = g_barbar_activity_graph_set_property;
   gobject_class->get_property = g_barbar_activity_graph_get_property;
   gobject_class->constructed = g_barbar_activity_graph_constructed;
-  // widget_class->root = g_barbar_activity_graph_root;
-  // widget_class->size_allocate = size_allocate;
-  // widget_class->measure = measure;
-  // widget_class->snapshot = snapshot;
 
-  // widget_class->size_allocate = g_barbar_box_size_allocate;
-  // widget_class->get_request_mode = g_barbar_rotary_get_request_mode;
-  // widget_class->measure = g_barbar_rotary_measure;
-
-  properties[PROP_STEP] = g_param_spec_uint(
-      "step", NULL, NULL, 1, G_MAXUINT, 3,
-      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  // properties[PROP_STEP] = g_param_spec_uint(
+  //     "step", NULL, NULL, 1, G_MAXUINT, 3,
+  //     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  //
+  // properties[PROP_MAX] = g_param_spec_uint(
+  //     "max", NULL, NULL, 1, G_MAXUINT, 12,
+  //     G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_ROWS] = g_param_spec_uint(
       "rows", NULL, NULL, 1, 500, 7,
@@ -241,7 +240,7 @@ g_barbar_activity_graph_class_init(BarBarActivityGraphClass *class) {
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "activity-graph");
 }
 
@@ -268,16 +267,70 @@ static void g_barbar_activity_graph_init(BarBarActivityGraph *self) {
 }
 
 void g_barbar_activity_graph_set_activity(BarBarActivityGraph *graph, int col,
-                                          int row, int activity) {
+                                          int row, int level) {
   g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
 
   GtkWidget *child = gtk_grid_get_child_at(GTK_GRID(graph->grid), col, row);
+  char level_str[9];
 
   if (!child) {
-    // some warning.
+    g_warning("Cannot find a child for column %d and row %d", col, row);
     return;
   }
-  // g_barbar_box_set_value(BARBAR_BOX(child), activity);
+
+  uint old_level = g_barbar_box_get_value(BARBAR_BOX(child));
+
+  g_snprintf(level_str, sizeof(level_str), "level-%d", old_level);
+
+  if (gtk_widget_has_css_class(child, level_str)) {
+    gtk_widget_remove_css_class(child, level_str);
+  }
+
+  g_snprintf(level_str, sizeof(level_str), "level-%d", level);
+  // printf("%s\n", level_str);
+  gtk_widget_add_css_class(child, level_str);
+
+  g_barbar_box_set_level(BARBAR_BOX(child), level);
+}
+
+uint g_barbar_activity_graph_get_rows(BarBarActivityGraph *graph) {
+  return graph->cols;
+}
+
+uint g_barbar_activity_graph_get_cols(BarBarActivityGraph *graph) {
+  return graph->cols;
+}
+
+uint g_barbar_activity_graph_get_size(BarBarActivityGraph *graph) {
+  return graph->rows * graph->cols;
+}
+
+void g_barbar_activity_graph_set_activity_linear(BarBarActivityGraph *graph,
+                                                 int num, int activity) {
+  g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
+  // printf("set value\n");
+
+  uint col = num / graph->rows;
+  uint row = num % graph->rows;
+  g_barbar_activity_graph_set_activity(graph, col, row, activity);
+}
+void g_barbar_activity_graph_set_color(BarBarActivityGraph *graph, int col,
+                                       int row, const char *color) {
+
+  g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
+
+  // TODO:
+
+  // GtkWidget *child = gtk_grid_get_child_at(GTK_GRID(graph->grid), col, row);
+}
+void g_barbar_activity_graph_set_color_linear(BarBarActivityGraph *graph,
+                                              int num, const char *color) {
+  g_return_if_fail(BARBAR_IS_ACTIVITY_GRAPH(graph));
+  // printf("set value\n");
+
+  uint col = num / graph->rows;
+  uint row = num % graph->rows;
+  g_barbar_activity_graph_set_color(graph, col, row, color);
 }
 
 GtkWidget *g_barbar_activity_graph_new(int cols, int rows) {

@@ -55,10 +55,13 @@ libbarbar_src = [
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
   'widgets/barbar-valueicon.c',
-  'widgets/barbar-separator.c',
+  'widgets/barbar-separator.c', # delete
   'widgets/barbar-processes.c',
   'widgets/barbar-activity-graph.c',
   'widgets/barbar-box.c',
+  'widgets/barbar-eventswitcher.c',
+
+  'barbar-github-activity.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray.c',
@@ -110,8 +113,10 @@ libbarbar_headers = [
   'widgets/barbar-processes.h',
   'widgets/barbar-activity-graph.h',
   'widgets/barbar-box.h',
-
   'widgets/barbar-valueicon.h',
+  'widgets/barbar-eventswitcher.h',
+
+  'barbar-github-activity.h',
 
   # 'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-service.h',

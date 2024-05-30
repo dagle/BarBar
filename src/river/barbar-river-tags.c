@@ -76,6 +76,8 @@ static void g_barbar_river_tag_add_child(GtkBuildable *buildable,
 
   if (g_strcmp0(type, "tag") == 0) {
     g_barbar_river_tag_add_button(self, GTK_WIDGET(child));
+  } else {
+    parent_buildable_iface->add_child(buildable, builder, child, type);
   }
 }
 

@@ -25,11 +25,34 @@ BarBar.Bar {
       }
     }
 
-    [start]
-    BarBar.Tray {}
+    // if we want an item that reveals it self wen hovering, we can simple do this.
 
     [start]
-    BarBar.RiverLayout {}
+    Gtk.Box {
+      Gtk.EventControllerMotion hover {}
+
+      Gtk.Label {
+        label: "rev";
+      }
+
+      Gtk.Revealer {
+        transition-duration: 350;
+        transition-type: slide_right;
+        reveal-child: bind hover.contains-pointer;
+
+        Gtk.Label {
+          label: "ealer";
+        }
+      }
+    }
+
+    [start]
+    Gtk.Label {
+      label: "apapapapapapapapapapapapapapp";
+      ellipsize: end;
+      wrap: false;
+      max-width-chars: 8;
+    }
 
     [center]
     BarBar.RiverView {}
@@ -41,6 +64,8 @@ BarBar.Bar {
 
     [end]
     Gtk.ScaleButton volume {
+      tooltip-markup: bind plumb.percent;
+
       adjustment: Adjustment {
         lower: 0.0;
         upper: 1.0;
@@ -133,14 +158,6 @@ BarBar.Bar {
     }
 
     [end]
-    Gtk.ToggleButton btn {
-      [child]
-      Gtk.Label {
-        label: "bajs";
-      }
-    }
-
-    [end]
     Gtk.ScaleButton backbutton {
       adjustment: Adjustment {
         lower: 0.0;
@@ -173,26 +190,43 @@ BarBar.Bar {
 // We can do even more! Lets draw some widgets on
 // the background!
 BarBar.Background background {
-  top-margin: 50;
-  bottom-margin: 50;
-  right-margin: 200;
-  left-margin: 200;
+  // dunno if I like this but it's decent.
+  Gtk.ToggleButton {
+    toggled => $g_barbar_toggle_stack();
 
-  BarBar.ActivityGraph {}
+    child: Gtk.Stack {
+      Gtk.Label {
+        label: "apa";
+      }
 
-  // Gtk.Calendar {
-  //   show-heading: false;
-  // }
-  // Gtk.LevelBar {
-  //   orientation: vertical;
-  //   value: bind cpu.percent;
-  // }
-  // BarBar.Rotary {
-  //   value: bind cpu.percent;
-  // }
-  //   BarBar.Graph {
-  //     value: bind cpu.percent;
+      Gtk.Label {
+        label: "bepa";
+      }
+    };
+  }
+
+  // If we want a more fancy thing, we chan use this
+  // BarBar.EventSwitcher switcher {
+  //   Gtk.GestureClick left {
+  //     button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
+  //     released => $g_barbar_event_switcher_next(switcher) swapped;
   //   }
+  // 
+  //   Gtk.GestureClick right {
+  //     button: 3;
+  //     released => $g_barbar_event_switcher_previous(switcher) swapped;
+  //   }
+  // 
+  //   Gtk.Stack stack {
+  //     Gtk.Label {
+  //       label: "apa";
+  //     }
+  // 
+  //     Gtk.Label {
+  //       label: "bepa";
+  //     }
+  //   }
+  // }
 }
 
 // Here we define some sensors.

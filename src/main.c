@@ -86,6 +86,15 @@ G_MODULE_EXPORT char *barbar_header_dynamic(GtkWidget *label,
   return buffer;
 }
 
+void g_barbar_toggle_stack(GtkToggleButton *button, gpointer user_data) {
+  GtkSelectionModel *pages;
+  GtkWidget *stack = gtk_button_get_child(GTK_BUTTON(button));
+
+  pages = gtk_stack_get_pages(GTK_STACK(stack));
+  guint idx = gtk_toggle_button_get_active(button) ? 1 : 0;
+  gtk_selection_model_select_item(pages, idx, TRUE);
+}
+
 static void activate(GtkApplication *app, void *data) {
   GtkBuilderScope *scope;
   GtkBuilder *builder;
@@ -96,6 +105,14 @@ static void activate(GtkApplication *app, void *data) {
                                   barbar_strdup_printf);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   barbar_header_static);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_event_switcher_select);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_event_switcher_next);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_event_switcher_previous);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_toggle_stack);
 
   barbar_default_style_provider("barbar/style.css");
 

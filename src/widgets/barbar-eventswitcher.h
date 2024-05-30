@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 #pragma once
 
 #include <glib-object.h>
@@ -29,28 +30,25 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_ACTIVITY_GRAPH (g_barbar_activity_graph_get_type())
+#define BARBAR_TYPE_EVENT_SWITCHER (g_barbar_event_switcher_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarActivityGraph, g_barbar_activity_graph, BARBAR,
-                     ACTIVITY_GRAPH, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarEventSwitcher, g_barbar_event_switcher, BARBAR,
+                     EVENT_SWITCHER, GtkWidget)
 
-GtkWidget *g_barbar_activity_graph_new(int cols, int rows);
+GtkWidget *g_barbar_event_switcher_new(void);
 
-void g_barbar_activity_graph_set_activity(BarBarActivityGraph *graph, int col,
-                                          int row, int activity);
+void g_barbar_event_switcher_set_stack(BarBarEventSwitcher *event,
+                                       GtkStack *stack);
 
-void g_barbar_activity_graph_set_activity_linear(BarBarActivityGraph *graph,
-                                                 int num, int activity);
+void g_barbar_event_switcher_next(BarBarEventSwitcher *switcher, gint n_press,
+                                  gdouble x, gdouble y, GtkGestureClick *self);
 
-void g_barbar_activity_graph_set_color(BarBarActivityGraph *graph, int col,
-                                       int row, const char *color);
-void g_barbar_activity_graph_set_color_linear(BarBarActivityGraph *graph,
-                                              int num, const char *color);
+void g_barbar_event_switcher_previous(BarBarEventSwitcher *switcher,
+                                      gint n_press, gdouble x, gdouble y,
+                                      GtkGestureClick *self);
 
-uint g_barbar_activity_graph_get_rows(BarBarActivityGraph *graph);
-
-uint g_barbar_activity_graph_get_cols(BarBarActivityGraph *graph);
-
-uint g_barbar_activity_graph_get_size(BarBarActivityGraph *graph);
+void g_barbar_event_switcher_select(BarBarEventSwitcher *switcher,
+                                    guint position, gint n_press, gdouble x,
+                                    gdouble y, GtkGestureClick *self);
 
 G_END_DECLS
