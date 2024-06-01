@@ -46,12 +46,17 @@ BarBar.Bar {
       }
     }
 
+    // [start]
+    // BarBar.RevealLabel {
+    //   Gtk.Label {}
+    // }
+
     [start]
     Gtk.Label {
-      label: "apapapapapapapapapapapapapapp";
+      label: "apapapa_papapapapapapapapapapp";
       ellipsize: end;
-      wrap: false;
-      max-width-chars: 8;
+      // wrap: false;
+      width-chars: 8;
     }
 
     [center]
@@ -195,6 +200,8 @@ BarBar.Background background {
     toggled => $g_barbar_toggle_stack();
 
     child: Gtk.Stack {
+      transition-type: slide_right;
+
       Gtk.Label {
         label: "apa";
       }

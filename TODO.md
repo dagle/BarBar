@@ -3,8 +3,8 @@ as a device? This would be great for batteries, mpris etc since we could just re
 
 Maybe: Fan/fan-speeds, UPS, entropy, hddtemp, hwmon, i2c, machine info, gpu (nvidia, amd, intel), location/timezone something?, users logged in
 
-- How to change a widget on click? To have 2 alternating widgets and on click we change.
-- Tooltip
+-  [x] How to change a widget on click? To have 2 alternating widgets and on click we change.
+-  [-] Tooltip
 
 Finish up:
 - [ ] Go over all memory allocation and make sure everything is freed correctly
