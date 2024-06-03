@@ -2,20 +2,15 @@
 #include "glib-object.h"
 #include "gtk/gtk.h"
 
-typedef struct _GtkProgressTracker GtkProgressTracker;
-
-struct _GtkProgressTracker {
-  guint64 last_frame_time;
-  guint64 duration;
-  double iteration;
-  double iteration_count;
-  gboolean is_running;
-};
-
 struct _BarBarRevealLabel {
   GtkWidget parent_instance;
 
+  char *str;
+
+  guint max_length;
+
   GtkLabel *label;
+  GtkRevealer *revealer;
   // double current_pos;
   GtkRevealerTransitionType transition_type;
   guint transition_duration;
@@ -25,7 +20,6 @@ struct _BarBarRevealLabel {
   double target_pos;
 
   guint tick_id;
-  GtkProgressTracker tracker;
   GtkEventController *hover;
 };
 
@@ -46,6 +40,18 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 
 G_DEFINE_TYPE(BarBarRevealLabel, g_barbar_reveal_label, GTK_TYPE_WIDGET)
 
+void g_barbar_reveal_label_set_str(BarBarRevealLabel *revealer,
+                                   const char *str) {
+
+  g_return_if_fail(BARBAR_IS_REVEAL_LABEL(revealer));
+
+  if (str == NULL) {
+    gtk_label_set_label(revealer->label, NULL);
+
+    gtk_label_set_label(revealer->label, NULL);
+  }
+}
+
 /**
  * g_barbar_reveal_label_set_label: (attributes
  * org.gtk.Method.set_property=child)
@@ -56,7 +62,7 @@ G_DEFINE_TYPE(BarBarRevealLabel, g_barbar_reveal_label, GTK_TYPE_WIDGET)
  */
 void g_barbar_reveal_label_set_label(BarBarRevealLabel *revealer,
                                      GtkLabel *label) {
-  g_return_if_fail(GTK_IS_REVEALER(revealer));
+  g_return_if_fail(BARBAR_IS_REVEAL_LABEL(revealer));
   g_return_if_fail(label == NULL || revealer->label == label);
 
   if (revealer->label == label)
@@ -120,7 +126,7 @@ static void g_barbar_reveal_label_class_init(BarBarRevealLabelClass *class) {
   object_class->set_property = g_barbar_reveal_label_set_property;
   object_class->get_property = g_barbar_reveal_label_get_property;
 
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
 static void g_barbar_reveal_label_init(BarBarRevealLabel *self) {
