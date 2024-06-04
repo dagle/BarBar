@@ -1,5 +1,6 @@
 #include "barbar-dwl-tags.h"
 #include "barbar-dwl-service.h"
+#include "glib-object.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -108,8 +109,8 @@ static void g_barbar_dwl_tag_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_dwl_tag_get_property(GObject *object, guint property_id,
-                                          GValue *value, GParamSpec *pspec) {
+static void g_barbar_dwl_tags_get_property(GObject *object, guint property_id,
+                                           GValue *value, GParamSpec *pspec) {
   BarBarDwlTags *dwl = BARBAR_DWL_TAGS(object);
 
   switch (property_id) {
@@ -123,12 +124,21 @@ static void g_barbar_dwl_tag_get_property(GObject *object, guint property_id,
 
 static guint click_signal;
 
+static void g_barbar_dwl_tags_finalize(GObject *object) {
+  BarBarDwlTags *dwl = BARBAR_DWL_TAGS(object);
+
+  g_free(dwl->output_name);
+  g_clear_object(&dwl->service);
+  G_OBJECT_CLASS(g_barbar_dwl_tags_parent_class)->finalize(object);
+}
+
 static void g_barbar_dwl_tags_class_init(BarBarDwlTagsClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_dwl_tag_set_property;
-  gobject_class->get_property = g_barbar_dwl_tag_get_property;
+  gobject_class->get_property = g_barbar_dwl_tags_get_property;
+  gobject_class->finalize = g_barbar_dwl_tags_finalize;
 
   widget_class->root = g_barbar_dwl_tag_root;
 
@@ -257,7 +267,7 @@ static void g_barbar_dwl_tags_init(BarBarDwlTags *self) {}
 
 static void g_barbar_dwl_tags_defaults(BarBarDwlTags *self) {
   GtkWidget *btn;
-  char str[2];
+  char str[3];
   for (uint32_t i = 0; i < self->nums; i++) {
     if (self->buttons[i]) {
       continue;

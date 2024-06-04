@@ -83,12 +83,22 @@ static void g_barbar_river_mode_get_property(GObject *object, guint property_id,
   }
 }
 
+static void g_barbar_river_mode_finalize(GObject *object) {
+  BarBarRiverMode *river = BARBAR_RIVER_MODE(object);
+
+  zriver_seat_status_v1_destroy(river->seat_listener);
+  g_free(river->mode);
+
+  G_OBJECT_CLASS(g_barbar_river_mode_parent_class)->finalize(object);
+}
+
 static void g_barbar_river_mode_class_init(BarBarRiverModeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
 
   gobject_class->set_property = g_barbar_river_mode_set_property;
   gobject_class->get_property = g_barbar_river_mode_get_property;
+  gobject_class->finalize = g_barbar_river_mode_finalize;
 
   sensor_class->start = g_barbar_river_mode_start;
 

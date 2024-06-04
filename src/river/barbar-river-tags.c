@@ -1,4 +1,5 @@
 #include "river/barbar-river-tags.h"
+#include "glib-object.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -36,7 +37,6 @@ struct _BarBarRiverTag {
   uint nums;
   gboolean fill;
 
-  GList *buttonss;
   GtkWidget *buttons[32];
 };
 
@@ -130,12 +130,22 @@ static void g_barbar_river_tag_get_property(GObject *object, guint property_id,
 
 static guint click_signal;
 
+static void g_barbar_river_tag_finalize(GObject *object) {
+  BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
+
+  zriver_output_status_v1_destroy(river->output_status);
+  zriver_control_v1_destroy(river->control);
+
+  G_OBJECT_CLASS(g_barbar_river_tag_parent_class)->finalize(object);
+}
+
 static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_river_tag_set_property;
   gobject_class->get_property = g_barbar_river_tag_get_property;
+  gobject_class->finalize = g_barbar_river_tag_finalize;
 
   widget_class->root = g_barbar_river_tag_root;
 

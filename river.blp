@@ -25,6 +25,9 @@ BarBar.Bar {
       }
     }
 
+    [start]
+    BarBar.RiverLayout {}
+
     // if we want an item that reveals it self wen hovering, we can simple do this.
 
     [start]
@@ -72,8 +75,12 @@ BarBar.Bar {
 
     [end]
     Gtk.ScaleButton volume {
-      tooltip-markup: bind plumb.percent;
-
+      tooltip-markup: bind $barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
+      // tooltip-markup: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // Gtk.Label {
+      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // use-markup: true;
+      // }
       adjustment: Adjustment {
         lower: 0.0;
         upper: 1.0;

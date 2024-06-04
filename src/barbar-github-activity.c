@@ -351,6 +351,17 @@ void g_barbar_github_activity_root(GtkWidget *widget) {
   // NULL);
 }
 
+static void g_barbar_github_activity_set_finalize(GObject *object) {
+  BarBarGithubActivity *hub = BARBAR_GITHUB_ACTIVITY(object);
+
+  g_free(hub->user_name);
+  g_free(hub->auth_token);
+
+  g_object_unref(hub->session);
+
+  G_OBJECT_CLASS(g_barbar_github_activity_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_github_activity_class_init(BarBarGithubActivityClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -358,6 +369,7 @@ g_barbar_github_activity_class_init(BarBarGithubActivityClass *class) {
 
   widget_class->root = g_barbar_github_activity_root;
 
+  gobject_class->finalize = g_barbar_github_activity_set_finalize;
   gobject_class->set_property = g_barbar_github_activity_set_property;
   gobject_class->get_property = g_barbar_github_activity_get_property;
 

@@ -239,13 +239,13 @@ static void update_location(gpointer data) {
 
   GWeatherLocation *world = gweather_location_get_world();
 
-  g_clear_pointer(&self->location, g_object_unref);
+  g_clear_object(&self->location);
   self->location =
       gweather_location_find_nearest_city(world, latitude, longitude);
 
   g_object_unref(world);
 
-  g_clear_pointer(&self->info, g_object_unref);
+  g_clear_object(&self->info);
   self->info = gweather_info_new(self->location);
   gweather_info_set_contact_info(self->info, self->contact_info);
 

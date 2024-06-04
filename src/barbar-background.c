@@ -100,7 +100,6 @@ static void g_barbar_background_class_init(BarBarBackgroundClass *class) {
 
   gobject_class->set_property = g_barbar_bar_set_property;
   gobject_class->get_property = g_barbar_bar_get_property;
-  // gobject_class->constructor = g_barbar_bar_constructor;
   gobject_class->constructed = g_barbar_bar_constructed;
 
   /**

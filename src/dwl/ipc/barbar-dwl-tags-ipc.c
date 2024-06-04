@@ -18,10 +18,8 @@ struct _BarBarDwlTagsIpc {
 
   struct zdwl_ipc_manager_v2 *ipc_manager;
   struct zdwl_ipc_output_v2 *ipc_output;
-  char *output_name;
   uint nums;
   struct wl_output *output;
-  gboolean active;
 
   GtkWidget *buttons[32];
 };
@@ -29,7 +27,6 @@ struct _BarBarDwlTagsIpc {
 enum {
   PROP_0,
 
-  PROP_OUTPUT,
   PROP_TAGNUMS,
 
   NUM_PROPERTIES,
@@ -74,16 +71,6 @@ g_barbar_dwl_tags_ipc_buildable_interface_init(GtkBuildableIface *iface) {
   iface->add_child = g_barbar_dwl_tags_add_child;
 }
 
-static void g_barbar_dwl_tags_set_output(BarBarDwlTagsIpc *dwl,
-                                         const gchar *output) {
-  g_return_if_fail(BARBAR_IS_DWL_TAGS_IPC(dwl));
-
-  g_free(dwl->output_name);
-
-  dwl->output_name = g_strdup(output);
-  g_object_notify_by_pspec(G_OBJECT(dwl), dwl_tags_props[PROP_OUTPUT]);
-}
-
 static void g_barbar_dwl_tags_set_tagnums(BarBarDwlTagsIpc *dwl,
                                           guint tagnums) {
   g_return_if_fail(BARBAR_IS_DWL_TAGS_IPC(dwl));
@@ -102,9 +89,6 @@ static void g_barbar_dwl_tag_set_property(GObject *object, guint property_id,
                                           GParamSpec *pspec) {
   BarBarDwlTagsIpc *dwl = BARBAR_DWL_TAGS_IPC(object);
   switch (property_id) {
-  case PROP_OUTPUT:
-    g_barbar_dwl_tags_set_output(dwl, g_value_get_string(value));
-    break;
   case PROP_TAGNUMS:
     g_barbar_dwl_tags_set_tagnums(dwl, g_value_get_uint(value));
     break;
@@ -128,24 +112,24 @@ static void g_barbar_dwl_tag_get_property(GObject *object, guint property_id,
 
 static guint click_signal;
 
+static void g_barbar_dwl_tag_finalize(GObject *object) {
+  BarBarDwlTagsIpc *dwl = BARBAR_DWL_TAGS_IPC(object);
+
+  zdwl_ipc_output_v2_destroy(dwl->ipc_output);
+  zdwl_ipc_manager_v2_destroy(dwl->ipc_manager);
+
+  G_OBJECT_CLASS(g_barbar_dwl_tags_ipc_parent_class)->finalize(object);
+}
+
 static void g_barbar_dwl_tags_ipc_class_init(BarBarDwlTagsIpcClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_dwl_tag_set_property;
   gobject_class->get_property = g_barbar_dwl_tag_get_property;
+  gobject_class->finalize = g_barbar_dwl_tag_finalize;
 
   widget_class->root = g_barbar_dwl_tag_root;
-
-  /**
-   * BarBarDwlTagsIpc:output:
-   *
-   * What screen we want this be connected to.
-   * This is because gtk4 not having support for
-   * wl_output interface v4
-   */
-  dwl_tags_props[PROP_OUTPUT] = g_param_spec_string(
-      "output", NULL, NULL, "WL-1", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * BarBarDwlTagsIpc:tagnums:
@@ -292,10 +276,7 @@ static void toggle_visibility(void *data,
                               struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2) {}
 
 static void active(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
-                   uint32_t active) {
-  BarBarDwlTagsIpc *dwl = BARBAR_DWL_TAGS_IPC(data);
-  dwl->active = active;
-}
+                   uint32_t active) {}
 
 static void tag(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
                 uint32_t tag, uint32_t state, uint32_t clients,

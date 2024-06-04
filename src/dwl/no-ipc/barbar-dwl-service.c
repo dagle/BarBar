@@ -1,5 +1,6 @@
 #include "barbar-dwl-service.h"
 #include "barbar-error.h"
+#include "glib-object.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
 #include <stdint.h>
@@ -9,14 +10,10 @@
 struct _BarBarDwlService {
   BarBarSensor parent_instance;
 
-  GDataInputStream *input;
-  GInputStream *stream;
-
   // path to the data, if null, iit will read stdin.
   char *file_path;
   GFileMonitor *monitor;
-  GFileInputStream *file_input_stream;
-  GFile *file;
+  GDataInputStream *input;
 };
 
 typedef enum {
@@ -314,6 +311,7 @@ static void g_barbar_dwl_service_file_changed(GFileMonitor *self, GFile *file,
 }
 
 static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
+
   static GMutex __BarBarDwlService_started;
   static volatile gsize __BarBarDwlService_once = 0;
   static gboolean started = FALSE;
@@ -335,18 +333,22 @@ static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
 
   if (service->file_path) {
     GFileType ft;
-    service->file = g_file_new_for_path(service->file_path);
-    ft = g_file_query_file_type(service->file, G_FILE_QUERY_INFO_NONE, NULL);
+    GFileInputStream *file_input_stream = NULL;
+    GFile *file = NULL;
 
-    service->file_input_stream = g_file_read(service->file, NULL, &error);
+    file = g_file_new_for_path(service->file_path);
+    ft = g_file_query_file_type(file, G_FILE_QUERY_INFO_NONE, NULL);
 
-    if (service->file_input_stream == NULL) {
+    file_input_stream = g_file_read(file, NULL, &error);
+
+    if (file_input_stream == NULL) {
       g_printerr("Error opening file: %s\n", error->message);
       g_error_free(error);
+      g_clear_object(&file);
       return;
     }
-    service->stream = G_INPUT_STREAM(service->file_input_stream);
-    service->input = g_data_input_stream_new(service->stream);
+    service->input = g_data_input_stream_new(G_INPUT_STREAM(file_input_stream));
+    g_clear_object(&file_input_stream);
 
     // if we have a fifo, we can read it like a pipe
     if (ft & G_FILE_TYPE_SPECIAL) {
@@ -355,11 +357,12 @@ static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
           g_barbar_dwl_service_pipe_reader, service);
     } else {
       service->monitor =
-          g_file_monitor_file(service->file, G_FILE_MONITOR_NONE, NULL, &error);
+          g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &error);
 
       if (error) {
         g_printerr("Error opening file: %s\n", error->message);
         g_error_free(error);
+        g_clear_object(&file);
         return;
       }
       g_barbar_dwl_service_read_file(service);
@@ -367,15 +370,27 @@ static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
       g_signal_connect(service->monitor, "changed",
                        G_CALLBACK(g_barbar_dwl_service_file_changed), service);
     }
+    g_clear_object(&file);
   } else {
     // or we have piped from stdin
-    service->stream = g_unix_input_stream_new(STDIN_FILENO, FALSE);
-    service->input = g_data_input_stream_new(service->stream);
+    GInputStream *stream;
+    stream = g_unix_input_stream_new(STDIN_FILENO, FALSE);
+    g_clear_object(&stream);
+    service->input = g_data_input_stream_new(stream);
 
     g_data_input_stream_read_line_async(service->input, G_PRIORITY_DEFAULT,
                                         NULL, g_barbar_dwl_service_pipe_reader,
                                         service);
   }
+}
+
+static void g_barbar_dwl_service_finalize(GObject *object) {
+  BarBarDwlService *dwl = BARBAR_DWL_SERVICE(object);
+
+  g_free(dwl->file_path);
+  g_clear_object(&dwl->monitor);
+  g_clear_object(&dwl->input);
+  G_OBJECT_CLASS(g_barbar_dwl_service_parent_class)->finalize(object);
 }
 
 static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
@@ -384,6 +399,7 @@ static void g_barbar_dwl_service_class_init(BarBarDwlServiceClass *class) {
 
   gobject_class->set_property = g_barbar_dwl_service_set_property;
   gobject_class->get_property = g_barbar_dwl_service_get_property;
+  gobject_class->finalize = g_barbar_dwl_service_finalize;
 
   gobject_class->constructor = g_barbar_dwl_service_constructor;
   sensor_class->start = g_barbar_dwl_service_start;

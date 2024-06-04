@@ -26,8 +26,6 @@ struct _BarBarDwlLayoutIpc {
 enum {
   PROP_0,
 
-  PROP_OUTPUT,
-
   NUM_PROPERTIES,
 };
 
@@ -42,24 +40,31 @@ static void g_barbar_dwl_layout_ipc_root(GtkWidget *widget);
 static void g_barbar_dwl_layout_set_property(GObject *object, guint property_id,
                                              const GValue *value,
                                              GParamSpec *pspec) {
-  // BarBarDwlLayout *dwl = BARBAR_DWL_LAYOUT(object);
-  // switch (property_id) {
-  // case PROP_OUTPUT:
-  //   g_barbar_dwl_layout_set_output(dwl, g_value_get_string(value));
-  //   break;
-  // default:
-  //   G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-  // }
+  // BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
+  switch (property_id) {
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
 }
 
 static void g_barbar_dwl_layout_get_property(GObject *object, guint property_id,
                                              GValue *value, GParamSpec *pspec) {
-  // BarBarDwlLayout *dwl = BARBAR_DWL_LAYOUT(object);
-  //
-  // switch (property_id) {
-  // default:
-  //   G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-  // }
+  // BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
+
+  switch (property_id) {
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+  }
+}
+
+static void g_barbar_dwl_layout_finalize(GObject *object) {
+  BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
+
+  // g_free(dwl->output_name);
+  zdwl_ipc_output_v2_destroy(dwl->ipc_output);
+  zdwl_ipc_manager_v2_destroy(dwl->ipc_manager);
+
+  G_OBJECT_CLASS(g_barbar_dwl_layout_ipc_parent_class)->finalize(object);
 }
 
 static void g_barbar_dwl_layout_ipc_class_init(BarBarDwlLayoutIpcClass *class) {
@@ -68,14 +73,9 @@ static void g_barbar_dwl_layout_ipc_class_init(BarBarDwlLayoutIpcClass *class) {
 
   gobject_class->set_property = g_barbar_dwl_layout_set_property;
   gobject_class->get_property = g_barbar_dwl_layout_get_property;
+  gobject_class->finalize = g_barbar_dwl_layout_finalize;
 
   widget_class->root = g_barbar_dwl_layout_ipc_root;
-
-  dwl_layout_props[PROP_OUTPUT] = g_param_spec_string(
-      "output", NULL, NULL, "WL-1", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
-                                    dwl_layout_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "dwl-layout");

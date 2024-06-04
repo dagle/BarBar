@@ -161,6 +161,7 @@ static void update(gpointer data, BarBarSensor *sensor) {
   char *str;
   if (!(str = tmpl_template_expand_string(label->tmpl, scope, &error))) {
     g_printerr("Label: Error expanding the template: %s\n", error->message);
+    g_error_free(error);
     return;
   }
 

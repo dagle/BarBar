@@ -43,7 +43,6 @@ static GParamSpec *river_view_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_river_view_constructed(GObject *object);
 static void g_barbar_river_view_start(GtkWidget *widget);
 
 static void g_barbar_river_view_set_property(GObject *object, guint property_id,
@@ -75,13 +74,21 @@ static void g_barbar_river_view_get_property(GObject *object, guint property_id,
   }
 }
 
+static void g_barbar_river_view_finalize(GObject *object) {
+  BarBarRiverView *river = BARBAR_RIVER_VIEW(object);
+
+  zriver_seat_status_v1_destroy(river->seat_listener);
+
+  G_OBJECT_CLASS(g_barbar_river_view_parent_class)->finalize(object);
+}
+
 static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_river_view_set_property;
   gobject_class->get_property = g_barbar_river_view_get_property;
-  gobject_class->constructed = g_barbar_river_view_constructed;
+  gobject_class->finalize = g_barbar_river_view_finalize;
 
   widget_class->root = g_barbar_river_view_start;
 
@@ -159,12 +166,10 @@ static const struct zriver_seat_status_v1_listener seat_status_listener = {
     .mode = listen_mode,
 };
 
-static void g_barbar_river_view_init(BarBarRiverView *self) {}
-static void g_barbar_river_view_constructed(GObject *object) {
-  BarBarRiverView *river = BARBAR_RIVER_VIEW(object);
-  river->label = gtk_label_new("");
-  gtk_widget_set_parent(river->label, GTK_WIDGET(river));
-  river->focused = FALSE;
+static void g_barbar_river_view_init(BarBarRiverView *self) {
+  self->label = gtk_label_new("");
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+  self->focused = FALSE;
 }
 
 static const struct wl_registry_listener wl_registry_listener = {

@@ -34,15 +34,17 @@ static GParamSpec *river_layout_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+static guint click_signal;
+
 static void g_barbar_river_layout_start(GtkWidget *widget);
 
 void g_barbar_river_layout_set_layout_internal(BarBarRiverLayout *self,
                                                const char *layout) {
-  if (!g_strcmp0(gtk_label_get_text(GTK_LABEL(self->layout)), layout)) {
+  if (!g_strcmp0(gtk_button_get_label(GTK_BUTTON(self->layout)), layout)) {
     return;
   }
 
-  gtk_label_set_text(GTK_LABEL(self->layout), layout);
+  gtk_button_set_label(GTK_BUTTON(self->layout), layout);
   g_object_notify_by_pspec(G_OBJECT(self), river_layout_props[PROP_LAYOUT]);
 }
 
@@ -85,10 +87,19 @@ static void g_barbar_river_layout_get_property(GObject *object,
   }
 }
 
+static void g_barbar_river_layout_finalize(GObject *object) {
+  BarBarRiverLayout *river = BARBAR_RIVER_LAYOUT(object);
+
+  zriver_output_status_v1_destroy(river->output_status);
+
+  G_OBJECT_CLASS(g_barbar_river_layout_parent_class)->finalize(object);
+}
+
 static void g_barbar_river_layout_class_init(BarBarRiverLayoutClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
+  gobject_class->finalize = g_barbar_river_layout_finalize;
   gobject_class->set_property = g_barbar_river_layout_set_property;
   gobject_class->get_property = g_barbar_river_layout_get_property;
   widget_class->root = g_barbar_river_layout_start;
@@ -104,12 +115,24 @@ static void g_barbar_river_layout_class_init(BarBarRiverLayoutClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_layout_props);
 
+  click_signal =
+      g_signal_new("clicked", BARBAR_TYPE_RIVER_LAYOUT,
+                   G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "river-layout");
 }
 
+static void clicked(GtkButton *self, gpointer user_data) {
+  BarBarRiverLayout *layout = BARBAR_RIVER_LAYOUT(user_data);
+
+  g_signal_emit(layout, click_signal, 0);
+}
+
 static void g_barbar_river_layout_init(BarBarRiverLayout *self) {
-  self->layout = gtk_label_new("");
+  self->layout = gtk_button_new();
+  g_signal_connect(self->layout, "clicked", G_CALLBACK(clicked), self);
   gtk_widget_set_parent(self->layout, GTK_WIDGET(self));
 }
 

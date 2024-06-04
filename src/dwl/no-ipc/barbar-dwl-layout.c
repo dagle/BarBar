@@ -70,12 +70,21 @@ static void g_barbar_dwl_layout_get_property(GObject *object, guint property_id,
   }
 }
 
+static void g_barbar_dwl_layout_finalize(GObject *object) {
+  BarBarDwlLayout *dwl = BARBAR_DWL_LAYOUT(object);
+
+  g_free(dwl->output_name);
+  g_clear_object(&dwl->service);
+  G_OBJECT_CLASS(g_barbar_dwl_layout_parent_class)->finalize(object);
+}
+
 static void g_barbar_dwl_layout_class_init(BarBarDwlLayoutClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_dwl_layout_set_property;
   gobject_class->get_property = g_barbar_dwl_layout_get_property;
+  gobject_class->finalize = g_barbar_dwl_layout_finalize;
 
   widget_class->root = g_barbar_dwl_layout_start;
 

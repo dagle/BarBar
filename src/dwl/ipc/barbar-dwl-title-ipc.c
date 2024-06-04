@@ -16,7 +16,6 @@
 struct _BarBarDwlTitleIpc {
   GtkWidget parent_instance;
 
-  char *output_name;
   struct zdwl_ipc_manager_v2 *ipc_manager;
   struct zdwl_ipc_output_v2 *ipc_output;
   struct wl_output *output;
@@ -26,8 +25,6 @@ struct _BarBarDwlTitleIpc {
 
 enum {
   PROP_0,
-
-  PROP_OUTPUT,
 
   NUM_PROPERTIES,
 };
@@ -40,24 +37,11 @@ static GParamSpec *dwl_title_props[NUM_PROPERTIES] = {
 
 static void g_barbar_dwl_title_start(GtkWidget *widget);
 
-// static void g_barbar_dwl_title_set_output(BarBarDwlTitle *dwl,
-//                                           const gchar *output) {
-//   g_return_if_fail(BARBAR_IS_DWL_TITLE(dwl));
-//
-//   g_free(dwl->output_name);
-//
-//   dwl->output_name = g_strdup(output);
-//   g_object_notify_by_pspec(G_OBJECT(dwl), dwl_title_props[PROP_OUTPUT]);
-// }
-
 static void g_barbar_dwl_title_set_property(GObject *object, guint property_id,
                                             const GValue *value,
                                             GParamSpec *pspec) {
   BarBarDwlTitleIpc *dwl = BARBAR_DWL_TITLE_IPC(object);
   switch (property_id) {
-  // case PROP_OUTPUT:
-  //   g_barbar_dwl_title_set_output(dwl, g_value_get_string(value));
-  //   break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -67,12 +51,20 @@ static void g_barbar_dwl_title_set_property(GObject *object, guint property_id,
 static void g_barbar_dwl_title_get_property(GObject *object, guint property_id,
                                             GValue *value, GParamSpec *pspec) {
   BarBarDwlTitleIpc *dwl = BARBAR_DWL_TITLE_IPC(object);
-  // BarBarDwlTitle *dwl = BARBAR_DWL_TITLE(object);
 
   switch (property_id) {
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
+}
+
+static void g_barbar_dwl_title_finalize(GObject *object) {
+  BarBarDwlTitleIpc *dwl = BARBAR_DWL_TITLE_IPC(object);
+
+  zdwl_ipc_output_v2_destroy(dwl->ipc_output);
+  zdwl_ipc_manager_v2_destroy(dwl->ipc_manager);
+
+  G_OBJECT_CLASS(g_barbar_dwl_title_ipc_parent_class)->finalize(object);
 }
 
 static void g_barbar_dwl_title_ipc_class_init(BarBarDwlTitleIpcClass *class) {
@@ -81,34 +73,13 @@ static void g_barbar_dwl_title_ipc_class_init(BarBarDwlTitleIpcClass *class) {
 
   gobject_class->set_property = g_barbar_dwl_title_set_property;
   gobject_class->get_property = g_barbar_dwl_title_get_property;
+  gobject_class->finalize = g_barbar_dwl_title_finalize;
 
   widget_class->root = g_barbar_dwl_title_start;
-
-  /**
-   * BarBarDwlTitleIpc:output:
-   *
-   * What screen we want this be connected to.
-   * This is because gtk4 not having support for
-   * wl_output interface v4
-   */
-  dwl_title_props[PROP_OUTPUT] = g_param_spec_string(
-      "output", NULL, NULL, "WL-1", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-
-  g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
-                                    dwl_title_props);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "dwl-title");
 }
-
-// static void g_dwl_listen_cb(BarBarDwlService *service, char *output_name,
-//                             char *title, gpointer data) {
-//   BarBarDwlTitle *dwl = BARBAR_DWL_TITLE(data);
-//
-//   if (!g_strcmp0(dwl->output_name, output_name)) {
-//     gtk_label_set_text(GTK_LABEL(dwl->label), title);
-//   }
-// }
 
 static void g_barbar_dwl_title_ipc_init(BarBarDwlTitleIpc *self) {
   self->label = gtk_label_new("");
@@ -124,11 +95,6 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
     dwl->ipc_manager = wl_registry_bind(
         registry, name, &zdwl_ipc_manager_v2_interface, version);
   }
-  // if (strcmp(interface, zdwl_ipc_output_v2_interface.name) == 0) {
-  //   dwl->ipc_manager = wl_registry_bind(registry, name,
-  //                                       &zdwl_ipc_output_v2_interface,
-  //                                       version);
-  // }
 }
 
 static void registry_handle_global_remove(void *_data,
