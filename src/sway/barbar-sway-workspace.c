@@ -1,4 +1,5 @@
 #include "sway/barbar-sway-workspace.h"
+#include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -24,7 +25,6 @@ struct _BarBarSwayWorkspace {
 
   char *output_name;
 
-  GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
   // struct wl_output *output; in future versions?
 
@@ -114,6 +114,16 @@ static void g_barbar_sway_workspace_get_property(GObject *object,
   }
 }
 
+static void g_barbar_sway_workspace_finalize(GObject *object) {
+  BarBarSwayWorkspace *workspace = BARBAR_SWAY_WORKSPACE(object);
+
+  g_clear_object(&workspace->sub);
+  g_list_free_full(workspace->workspaces, g_free);
+  g_free(workspace->output_name);
+
+  G_OBJECT_CLASS(g_barbar_sway_workspace_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -121,6 +131,7 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
 
   gobject_class->set_property = g_barbar_sway_workspace_set_property;
   gobject_class->get_property = g_barbar_sway_workspace_get_property;
+  gobject_class->finalize = g_barbar_sway_workspace_finalize;
 
   sway_workspace_props[PROP_OUTPUT] =
       g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
@@ -144,21 +155,9 @@ static void g_barbar_sway_workspace_init(BarBarSwayWorkspace *self) {}
 
 static void default_clicked_handler(BarBarSwayWorkspace *sway, guint tag,
                                     gpointer user_data) {
-
-  g_barbar_sway_ipc_command("workspace %d", tag);
-  // g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
-  // ipc_.sendCmd(SWAY_RUN_COMMAND, fmt::format("workspace {} \"{}\"",
-  //                                       config_["disable-auto-back-and-forth"].asBool()
-  //                                           ? "--no-auto-back-and-forth"
-  //                                           : "",
-  //                                       node["name"].asString()));
+  g_barbar_sway_ipc_oneshot(SWAY_RUN_COMMAND, FALSE, NULL, NULL, NULL,
+                            "%workspace %d", tag);
 }
-
-// void print_workspace(char *name, struct workspace *workspace) {
-//   printf("%s: %d %s %d %d %d %s\n", name, workspace->num, workspace->name,
-//          workspace->visible, workspace->urgent, workspace->focused,
-//          workspace->output);
-// }
 
 void g_barbar_sway_read_workspace(JsonReader *reader,
                                   struct workspace *workspace) {
@@ -474,20 +473,20 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 }
 
 static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
   GError *error = NULL;
   char *str = NULL;
   gsize len;
 
   gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+      g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
     g_printerr("Sway workspace: Failed to get workspaces: %s\n",
                error->message);
     return;
   }
+
   if (ret) {
     g_barbar_sway_handle_workspaces(sway, str, len);
 
@@ -500,39 +499,9 @@ static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
 
 static void g_barbar_sway_workspace_start(GtkWidget *widget) {
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(widget);
-  GInputStream *input_stream;
-  GOutputStream *output_stream;
-  GError *error = NULL;
 
   GTK_WIDGET_CLASS(g_barbar_sway_workspace_parent_class)->root(widget);
 
-  sway->ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  sway->sub =
-      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
-
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
-
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_read_async(input_stream, NULL, workspaces_cb, sway);
+  g_barbar_sway_ipc_oneshot(SWAY_GET_WORKSPACES, TRUE, NULL, workspaces_cb,
+                            sway, "");
 }

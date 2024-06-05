@@ -23,6 +23,7 @@ static GParamSpec *sway_sub_props[NUM_PROPERTIES] = {
 };
 
 static guint event_signal;
+static guint event_string_signal;
 
 static void g_barbar_sway_susbscribe_set_interest(BarBarSwaySubscribe *sub,
                                                   const char *interest) {
@@ -72,7 +73,7 @@ void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
   gboolean ret =
       g_barbar_sway_ipc_read_finish(stream, res, &type, &str, &len, &error);
 
-  if (error) {
+  if (!ret || error) {
     return;
   }
 
@@ -92,7 +93,7 @@ void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
   gboolean ret =
       g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
 
-  if (error) {
+  if (!ret || error) {
     g_printerr("Failed to subscribe for workspace events: %s", error->message);
     return;
   }
@@ -118,6 +119,15 @@ g_barbar_sway_subscribe_class_init(BarBarSwaySubscribeClass *class) {
   event_signal = g_signal_new(
       "event", G_TYPE_FROM_CLASS(class), G_SIGNAL_RUN_FIRST, 0, NULL, NULL,
       NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_POINTER, G_TYPE_UINT);
+
+  // TODO: Change to this in the future
+  // event_signal = g_signal_new("event", G_TYPE_FROM_CLASS(class),
+  //                             G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
+  //                             G_TYPE_NONE, 3, G_TYPE_UINT, JSON_TYPE_PARSER);
+
+  event_string_signal = g_signal_new(
+      "event-string", G_TYPE_FROM_CLASS(class), G_SIGNAL_RUN_FIRST, 0, NULL,
+      NULL, NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_STRING);
 }
 static void g_barbar_sway_subscribe_init(BarBarSwaySubscribe *self) {}
 

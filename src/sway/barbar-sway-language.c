@@ -1,4 +1,5 @@
 #include "sway/barbar-sway-language.h"
+#include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 
@@ -10,9 +11,7 @@
 struct _BarBarSwayLanguage {
   BarBarSensor parent_instance;
 
-  GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
-  // struct xkb_context *ctx;
 
   char *keyboard;
   char *identifier;
@@ -54,8 +53,8 @@ static void g_barbar_sway_workspace_set_identifier(BarBarSwayLanguage *sway,
                            sway_language_props[PROP_IDENTIFIER]);
 }
 
-static void g_barbar_sway_workspace_set_keyboard(BarBarSwayLanguage *sway,
-                                                 const gchar *keyboard) {
+static void g_barbar_sway_language_set_keyboard(BarBarSwayLanguage *sway,
+                                                const gchar *keyboard) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
   if (!g_strcmp0(sway->keyboard, keyboard)) {
@@ -68,9 +67,9 @@ static void g_barbar_sway_workspace_set_keyboard(BarBarSwayLanguage *sway,
   g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_KEYBOARD]);
 }
 
-static void g_barbar_sway_workspace_set_language(BarBarSwayLanguage *sway,
-                                                 const gchar *language,
-                                                 size_t length) {
+static void g_barbar_sway_language_set_language(BarBarSwayLanguage *sway,
+                                                const gchar *language,
+                                                size_t length) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
   // TODO: fix compare
@@ -86,8 +85,8 @@ static void g_barbar_sway_workspace_set_language(BarBarSwayLanguage *sway,
   g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LANGUAGE]);
 }
 
-static void g_barbar_sway_workspace_set_variant(BarBarSwayLanguage *sway,
-                                                const gchar *variant) {
+static void g_barbar_sway_language_set_variant(BarBarSwayLanguage *sway,
+                                               const gchar *variant) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
   if (!g_strcmp0(sway->variant, variant)) {
@@ -118,6 +117,8 @@ static void g_barbar_sway_workspace_set_layout(BarBarSwayLanguage *sway,
   if (!layout) {
     return;
   }
+
+  const char *delim = strchr(layout, '(');
   // TODO: Can we do this without trying to implement this our selfs
 
   // struct xkb_keymap *kb =
@@ -174,6 +175,18 @@ static void g_barbar_sway_language_get_property(GObject *object,
   }
 }
 
+static void g_barbar_sway_language_finalize(GObject *object) {
+  BarBarSwayLanguage *language = BARBAR_SWAY_LANGUAGE(object);
+
+  g_clear_object(&language->sub);
+  g_free(language->keyboard);
+  g_free(language->identifier);
+  g_free(language->language);
+  g_free(language->variant);
+
+  G_OBJECT_CLASS(g_barbar_sway_language_parent_class)->finalize(object);
+}
+
 static void g_barbar_sway_language_class_init(BarBarSwayLanguageClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
@@ -182,6 +195,7 @@ static void g_barbar_sway_language_class_init(BarBarSwayLanguageClass *class) {
 
   gobject_class->set_property = g_barbar_sway_language_set_property;
   gobject_class->get_property = g_barbar_sway_language_get_property;
+  gobject_class->finalize = g_barbar_sway_language_finalize;
 
   sway_language_props[PROP_IDENTIFIER] = g_param_spec_string(
       "identifer", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
@@ -230,7 +244,7 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
       if (!g_strcmp0(sway->identifier, identifier)) {
         json_reader_read_member(reader, "name");
         const char *name = json_reader_get_string_value(reader);
-        g_barbar_sway_workspace_set_keyboard(sway, name);
+        g_barbar_sway_language_set_keyboard(sway, name);
         json_reader_end_member(reader);
 
         json_reader_read_member(reader, "xkb_active_layout_name");
@@ -278,13 +292,14 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
     if (g_strcmp0(sway->identifier, identifier)) {
       json_reader_read_member(reader, "name");
       const char *name = json_reader_get_string_value(reader);
+      g_barbar_sway_workspace_set_keyboard();
       // set language
       json_reader_end_member(reader);
 
-      json_reader_read_member(reader, "xkb_active_layout_name");
-      const char *layout = json_reader_get_string_value(reader);
-      // set layout
-      json_reader_end_member(reader);
+      // json_reader_read_member(reader, "xkb_active_layout_name");
+      // const char *layout = json_reader_get_string_value(reader);
+      // // set layout
+      // json_reader_end_member(reader);
       json_reader_end_element(reader);
     }
   }
@@ -293,19 +308,19 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 }
 
 static void input_cb(GObject *object, GAsyncResult *res, gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwayLanguage *sway = BARBAR_SWAY_LANGUAGE(data);
   GError *error = NULL;
   char *str = NULL;
   gsize len;
 
   gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+      g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
     g_printerr("Failed to get workspaces: %s\n", error->message);
     return;
   }
+
   if (ret) {
     g_barbar_sway_handle_inputs(sway, str, len);
 
@@ -319,43 +334,5 @@ static void input_cb(GObject *object, GAsyncResult *res, gpointer data) {
 static void g_barbar_sway_language_start(BarBarSensor *sensor) {
   BarBarSwayLanguage *sway = BARBAR_SWAY_LANGUAGE(sensor);
 
-  GInputStream *input_stream;
-  GOutputStream *output_stream;
-  GError *error = NULL;
-
-  // sway->ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-
-  // if (!sway->ctx) {
-  //   g_printerr("Sway language: Couldn't initialize xkb context");
-  //   return;
-  // }
-
-  sway->ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway language: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  sway->sub = BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"input\"]"));
-
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_send(output_stream, SWAY_GET_INPUTS, "", &error);
-
-  if (error != NULL) {
-    g_printerr("Sway language: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  if (error != NULL) {
-    g_printerr("Sway language: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_read_async(input_stream, NULL, input_cb, sway);
+  g_barbar_sway_ipc_oneshot(SWAY_GET_INPUTS, TRUE, NULL, input_cb, sway, "");
 }

@@ -110,6 +110,13 @@ gboolean g_barbar_sway_ipc_read_finish(GInputStream *stream,
 
 gboolean g_barbar_sway_message_is_success(const char *buf, gssize len);
 
-void g_barbar_sway_ipc_command(const char *format, ...);
+gboolean g_barbar_sway_ipc_oneshot_finish(GAsyncResult *result, guint32 *type,
+                                          char **response, gsize *length,
+                                          GError **error);
+
+void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
+                               GCancellable *cancellable,
+                               GAsyncReadyCallback callback, gpointer data,
+                               const char *format, ...);
 
 G_END_DECLS

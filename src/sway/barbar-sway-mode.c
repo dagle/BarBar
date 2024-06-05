@@ -1,4 +1,5 @@
 #include "barbar-sway-mode.h"
+#include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 
@@ -12,7 +13,6 @@ struct _BarBarSwayMode {
   BarBarSensor parent_instance;
 
   char *mode;
-  GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
 };
 
@@ -72,6 +72,15 @@ static void g_barbar_sway_mode_get_property(GObject *object, guint property_id,
   }
 }
 
+static void g_barbar_sway_mode_finalize(GObject *object) {
+  BarBarSwayMode *mode = BARBAR_SWAY_MODE(object);
+
+  g_free(mode->mode);
+  g_clear_object(&mode->sub);
+
+  G_OBJECT_CLASS(g_barbar_sway_mode_parent_class)->finalize(object);
+}
+
 static void g_barbar_sway_mode_class_init(BarBarSwayModeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
@@ -80,6 +89,7 @@ static void g_barbar_sway_mode_class_init(BarBarSwayModeClass *class) {
 
   gobject_class->set_property = g_barbar_sway_mode_set_property;
   gobject_class->get_property = g_barbar_sway_mode_get_property;
+  gobject_class->finalize = g_barbar_sway_mode_finalize;
 
   /**
    * BarBarSwayMode:mode:
@@ -170,19 +180,20 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 
 static void binding_state_cb(GObject *object, GAsyncResult *res,
                              gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwayMode *sway = BARBAR_SWAY_MODE(data);
   GError *error = NULL;
   char *str = NULL;
   gsize len;
 
   gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+      g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
     g_printerr("Sway mode: Failed to get current mode: %s\n", error->message);
+    g_error_free(error);
     return;
   }
+
   if (ret) {
     g_barbar_sway_handle_mode(sway, str, len);
 
@@ -195,36 +206,9 @@ static void binding_state_cb(GObject *object, GAsyncResult *res,
 
 static void g_barbar_sway_mode_start(BarBarSensor *sensor) {
   BarBarSwayMode *sway = BARBAR_SWAY_MODE(sensor);
-  GInputStream *input_stream;
-  GOutputStream *output_stream;
-  GError *error = NULL;
-
-  sway->ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
 
   sway->sub = BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"mode\"]"));
 
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_send(output_stream, SWAY_GET_BINDING_STATE, "", &error);
-
-  if (error != NULL) {
-    g_printerr("Sway mode: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  if (error != NULL) {
-    g_printerr("Sway mode: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_read_async(input_stream, NULL, binding_state_cb, sway);
+  g_barbar_sway_ipc_oneshot(SWAY_GET_BINDING_STATE, TRUE, NULL,
+                            binding_state_cb, sway, "");
 }

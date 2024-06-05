@@ -1,4 +1,5 @@
 #include "sway/barbar-sway-window.h"
+#include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -15,10 +16,9 @@ struct _BarBarSwayWindow {
   GtkWidget parent_instance;
 
   char *output_name;
-  GSocketConnection *ipc;
   BarBarSwaySubscribe *sub;
 
-  struct wl_output *output;
+  // struct wl_output *output;
 
   GtkWidget *label;
 };
@@ -38,8 +38,6 @@ static GParamSpec *sway_window_props[NUM_PROPERTIES] = {
 };
 
 static void g_barbar_sway_window_start(GtkWidget *widget);
-
-static void g_barbar_sway_window_constructed(GObject *object);
 
 static void g_barbar_sway_window_set_output(BarBarSwayWindow *sway,
                                             const gchar *output) {
@@ -80,13 +78,23 @@ static void g_barbar_sway_window_get_property(GObject *object,
   }
 }
 
+static void g_barbar_sway_window_finalize(GObject *object) {
+  BarBarSwayWindow *window = BARBAR_SWAY_WINDOW(object);
+
+  g_clear_object(&window->sub);
+  g_free(window->output_name);
+
+  G_OBJECT_CLASS(g_barbar_sway_window_parent_class)->finalize(object);
+}
+
 static void g_barbar_sway_window_class_init(BarBarSwayWindowClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_sway_window_set_property;
   gobject_class->get_property = g_barbar_sway_window_get_property;
-  gobject_class->constructed = g_barbar_sway_window_constructed;
+  gobject_class->finalize = g_barbar_sway_window_finalize;
+
   widget_class->root = g_barbar_sway_window_start;
 
   sway_window_props[PROP_OUTPUT] =
@@ -99,12 +107,9 @@ static void g_barbar_sway_window_class_init(BarBarSwayWindowClass *class) {
   gtk_widget_class_set_css_name(widget_class, "sway-window");
 }
 
-static void g_barbar_sway_window_init(BarBarSwayWindow *self) {}
-static void g_barbar_sway_window_constructed(GObject *object) {
-  BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(object);
-
-  sway->label = gtk_label_new("");
-  gtk_widget_set_parent(sway->label, GTK_WIDGET(sway));
+static void g_barbar_sway_window_init(BarBarSwayWindow *self) {
+  self->label = gtk_label_new("");
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
 }
 
 static void g_barbar_sway_handle_window_change(const char *payload,
@@ -125,9 +130,9 @@ static void g_barbar_sway_handle_window_change(const char *payload,
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
 
-  json_reader_read_member(reader, "change");
-  const char *change = json_reader_get_string_value(reader);
-  json_reader_end_member(reader);
+  // json_reader_read_member(reader, "change");
+  // const char *change = json_reader_get_string_value(reader);
+  // json_reader_end_member(reader);
 
   // if (!strcmp(change, "init")) {
   //   g_barbar_sway_workspace_add(sway, reader);
@@ -199,19 +204,20 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 }
 
 static void tree_cb(GObject *object, GAsyncResult *res, gpointer data) {
-  GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(data);
   GError *error = NULL;
   char *str = NULL;
   gsize len;
 
   gboolean ret =
-      g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
+      g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
     g_printerr("Failed to get workspaces: %s\n", error->message);
+    g_error_free(error);
     return;
   }
+
   if (ret) {
     g_barbar_sway_initial_window(sway, str, len);
 
@@ -224,67 +230,8 @@ static void tree_cb(GObject *object, GAsyncResult *res, gpointer data) {
 
 static void g_barbar_sway_window_start(GtkWidget *widget) {
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(widget);
-  GInputStream *input_stream;
-  GOutputStream *output_stream;
-  GError *error = NULL;
 
   GTK_WIDGET_CLASS(g_barbar_sway_window_parent_class)->root(widget);
 
-  sway->ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway window: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  sway->sub =
-      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"window\"]"));
-
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_send(output_stream, SWAY_GET_TREE, "", &error);
-
-  if (error != NULL) {
-    g_printerr("Sway window: Couldn't send the tree command: %s\n",
-               error->message);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-
-  g_barbar_sway_ipc_read_async(input_stream, NULL, tree_cb, sway);
-
-  // const char *intrest = "[\"window\"]";
-
-  // gdk_display = gdk_display_get_default();
-  //
-  // GtkNative *native = gtk_widget_get_native(GTK_WIDGET(sway));
-  // GdkSurface *surface = gtk_native_get_surface(native);
-  // monitor = gdk_display_get_monitor_at_surface(gdk_display, surface);
-  // sway->output = gdk_wayland_monitor_get_wl_output(monitor);
-  //
-  // // TODO: We need to get the output->name, we can't really do that atm
-  // // because gtk4 binds to the wl_output interface version 3, which doesn't
-  // // support this. This will change in future. For now the user needs to
-  // specify
-  // // the output. This will be fixed in the future.
-  //
-  // ipc = g_barbar_sway_ipc_connect(&error);
-  // if (error != NULL) {
-  //   g_printerr("Sway window: Couldn't connect to the sway ipc %s",
-  //              error->message);
-  //   return;
-  // }
-  //
-  // g_barbar_sway_ipc_send(ipc, SWAY_GET_TREE, "");
-  // len = g_barbar_sway_ipc_read(ipc, &buf, NULL);
-  // if (len > 0) {
-  //   g_barbar_sway_initial_window(sway, buf, len);
-  //   g_free(buf);
-  // }
-
-  // g_barbar_sway_ipc_subscribe(ipc, intrest, sway,
-  //                             g_barbar_sway_handle_window_change);
-
-  // g_barbar_sway_ipc_close(ipc);
+  g_barbar_sway_ipc_oneshot(SWAY_GET_TREE, TRUE, NULL, tree_cb, sway, "");
 }
