@@ -7,6 +7,7 @@ void g_barbar_init(void) {
   g_barbar_background_get_type();
   g_barbar_position_get_type();
   g_barbar_sensor_get_type();
+  g_barbar_interval_sensor_get_type();
   g_barbar_sensor_context_get_type();
   g_barbar_clock_get_type();
   g_barbar_mem_get_type();

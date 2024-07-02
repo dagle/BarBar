@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "barbar-sensor.h"
+#include "barbar-interval-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
@@ -33,6 +33,6 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_UPTIME (g_barbar_uptime_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarUptime, g_barbar_uptime, BARBAR, UPTIME,
-                     BarBarSensor)
+                     BarBarIntervalSensor)
 
 G_END_DECLS

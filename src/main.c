@@ -114,7 +114,7 @@ static void activate(GtkApplication *app, void *data) {
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   g_barbar_toggle_stack);
 
-  barbar_default_style_provider("barbar/style.css");
+  g_barbar_default_style_provider("barbar/style.css");
 
   // GtkWidget *background = g_barbar_background_new();
   //
@@ -123,7 +123,7 @@ static void activate(GtkApplication *app, void *data) {
   // GtkWidget *widget = g_barbar_rotary_new();
   // gtk_window_set_child(GTK_WINDOW(background), widget);
 
-  builder = barbar_default_builder("barbar/config.ui", NULL);
+  builder = g_barbar_default_builder("barbar/config.ui", NULL);
 
   GSList *list = gtk_builder_get_objects(builder);
 

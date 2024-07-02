@@ -95,6 +95,7 @@ void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
 
   if (!ret || error) {
     g_printerr("Failed to subscribe for workspace events: %s", error->message);
+    g_error_free(error);
     return;
   }
 

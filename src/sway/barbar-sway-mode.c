@@ -1,5 +1,4 @@
 #include "barbar-sway-mode.h"
-#include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 
@@ -51,7 +50,7 @@ static void g_barbar_sway_mode_set_property(GObject *object, guint property_id,
                                             const GValue *value,
                                             GParamSpec *pspec) {
 
-  BarBarSwayMode *sway = BARBAR_SWAY_MODE(object);
+  // BarBarSwayMode *sway = BARBAR_SWAY_MODE(object);
 
   switch (property_id) {
   default:
@@ -133,6 +132,7 @@ static void g_barbar_sway_handle_mode(BarBarSwayMode *sway, gchar *payload,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_error_free(err);
     g_object_unref(parser);
     return;
   }
@@ -164,6 +164,7 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_error_free(err);
     g_object_unref(parser);
     return;
   }

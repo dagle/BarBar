@@ -10,8 +10,9 @@ libbarbar_src = [
   'barbar-timespan.c',
   'barbar-error.c',
 
-  'sensors/barbar-battery.c',
   'sensors/barbar-sensor.c',
+  'sensors/barbar-interval-sensor.c',
+  'sensors/barbar-battery.c',
   'sensors/barbar-clock.c',
   'sensors/barbar-cpu.c',
   'sensors/barbar-mem.c',
@@ -77,8 +78,9 @@ libbarbar_headers = [
   'barbar-timespan.h',
   'barbar-error.h',
 
-  'sensors/barbar-battery.h',
   'sensors/barbar-sensor.h',
+  'sensors/barbar-interval-sensor.h',
+  'sensors/barbar-battery.h',
   'sensors/barbar-clock.h',
   'sensors/barbar-cpu.h',
   'sensors/barbar-mem.h',

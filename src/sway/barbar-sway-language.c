@@ -6,7 +6,7 @@
 /**
  * BarBarSwayLanguage:
  *
- * A sensor to display the keyboard and language
+ * A sensor to display the keyboard and language in sway.
  */
 struct _BarBarSwayLanguage {
   BarBarSensor parent_instance;
@@ -38,8 +38,8 @@ static GParamSpec *sway_language_props[NUM_PROPERTIES] = {
 
 static void g_barbar_sway_language_start(BarBarSensor *sensor);
 
-static void g_barbar_sway_workspace_set_identifier(BarBarSwayLanguage *sway,
-                                                   const gchar *identifier) {
+static void g_barbar_sway_language_set_identifier(BarBarSwayLanguage *sway,
+                                                  const gchar *identifier) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
   if (!g_strcmp0(sway->identifier, identifier)) {
@@ -68,19 +68,32 @@ static void g_barbar_sway_language_set_keyboard(BarBarSwayLanguage *sway,
 }
 
 static void g_barbar_sway_language_set_language(BarBarSwayLanguage *sway,
-                                                const gchar *language,
-                                                size_t length) {
+                                                const gchar *language) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
+  char *str;
 
-  // TODO: fix compare
+  if (language == NULL && sway->language == NULL) {
+    return;
+  }
 
-  if (!g_strcmp0(sway->language, language)) {
+  if (language == NULL) {
+    sway->language = NULL;
+
+    g_object_notify_by_pspec(G_OBJECT(sway),
+                             sway_language_props[PROP_LANGUAGE]);
+    return;
+  }
+
+  str = g_strdup(language);
+  str = g_strstrip(str);
+
+  if (!g_strcmp0(sway->language, str)) {
+    g_free(str);
     return;
   }
 
   g_free(sway->language);
-  sway->language = g_strndup(language, length);
-  printf("language: %s\n", sway->language);
+  sway->language = str;
 
   g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LANGUAGE]);
 }
@@ -89,51 +102,45 @@ static void g_barbar_sway_language_set_variant(BarBarSwayLanguage *sway,
                                                const gchar *variant) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
-  if (!g_strcmp0(sway->variant, variant)) {
+  char *str;
+
+  if (variant == NULL && sway->language == NULL) {
+    return;
+  }
+
+  if (variant == NULL) {
+    sway->variant = NULL;
+
+    g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_VARIANT]);
+    return;
+  }
+
+  str = g_strdup(variant);
+  str = g_strstrip(str);
+
+  if (!g_strcmp0(sway->variant, str)) {
+    g_free(str);
     return;
   }
 
   g_free(sway->variant);
-  sway->variant = g_strdup(variant);
+  sway->variant = str;
 
   g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_VARIANT]);
 }
 
-// const char *find_first_opening_parenthesis(const char *str) {
-//   const char *before_space = str;
-//   while (*str != '\0') {
-//     if (*str == '(') {
-//       return before_space;
-//     } else if (!isspace(*str)) {
-//       before_space = str;
-//     }
-//     str++;
-//   }
-//   return NULL;
-// }
-//
-static void g_barbar_sway_workspace_set_layout(BarBarSwayLanguage *sway,
-                                               const gchar *layout) {
+static void g_barbar_sway_language_set_layout(BarBarSwayLanguage *sway,
+                                              const gchar *layout) {
   if (!layout) {
     return;
   }
 
-  const char *delim = strchr(layout, '(');
-  // TODO: Can we do this without trying to implement this our selfs
+  gchar **split = g_strsplit(layout, "()", -1);
 
-  // struct xkb_keymap *kb =
-  //     xkb_keymap_new_from_string(sway->ctx, layout,
-  //     XKB_KEYMAP_FORMAT_TEXT_V1,
-  //                                XKB_KEYMAP_COMPILE_NO_FLAGS);
-  // xkb_layout_index_t idx = xkb_keymap_num_layouts(kb);
-  //
-  // for (int i = 0; i < idx; i++) {
-  //
-  //   const char *str = xkb_keymap_layout_get_name(kb, i);
-  //   printf("kb: %s\n", str);
-  // }
-  //
-  // xkb_keymap_unref(kb);
+  g_barbar_sway_language_set_language(sway, split[1]);
+  g_barbar_sway_language_set_variant(sway, split[2]);
+
+  g_strfreev(split);
 }
 
 static void g_barbar_sway_language_set_property(GObject *object,
@@ -144,7 +151,7 @@ static void g_barbar_sway_language_set_property(GObject *object,
 
   switch (property_id) {
   case PROP_IDENTIFIER:
-    g_barbar_sway_workspace_set_identifier(sway, g_value_get_string(value));
+    g_barbar_sway_language_set_identifier(sway, g_value_get_string(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -223,6 +230,8 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
 
   if (!ret) {
     g_printerr("Sway language: Failed to parse json: %s", err->message);
+    g_error_free(err);
+    g_object_unref(parser);
     return;
   }
 
@@ -239,7 +248,7 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
       const char *identifier = json_reader_get_string_value(reader);
       json_reader_end_member(reader);
       if (!sway->identifier) {
-        g_barbar_sway_workspace_set_identifier(sway, identifier);
+        g_barbar_sway_language_set_identifier(sway, identifier);
       }
       if (!g_strcmp0(sway->identifier, identifier)) {
         json_reader_read_member(reader, "name");
@@ -249,7 +258,7 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
 
         json_reader_read_member(reader, "xkb_active_layout_name");
         const char *layout = json_reader_get_string_value(reader);
-        g_barbar_sway_workspace_set_layout(sway, layout);
+        g_barbar_sway_language_set_layout(sway, layout);
         json_reader_end_member(reader);
         json_reader_end_element(reader);
         break;
@@ -259,6 +268,14 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
   }
   g_object_unref(reader);
   g_object_unref(parser);
+}
+
+// works like g_strcmp0 but if either dev or identifier is null, returns success
+static gint g_identifier_cmp(const char *identifier, const char *dev) {
+  if (!identifier || !dev) {
+    return 0;
+  }
+  return g_strcmp0(identifier, dev);
 }
 
 static void event_listner(BarBarSwaySubscribe *sub, guint type,
@@ -277,6 +294,8 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
 
   if (!ret) {
     g_printerr("Sway language: Failed to parse json: %s", err->message);
+    g_error_free(err);
+    g_object_unref(parser);
     return;
   }
 
@@ -289,17 +308,16 @@ static void event_listner(BarBarSwaySubscribe *sub, guint type,
     json_reader_read_member(reader, "identifier");
     const char *identifier = json_reader_get_string_value(reader);
     json_reader_end_member(reader);
-    if (g_strcmp0(sway->identifier, identifier)) {
+    if (!g_identifier_cmp(sway->identifier, identifier)) {
       json_reader_read_member(reader, "name");
       const char *name = json_reader_get_string_value(reader);
-      g_barbar_sway_workspace_set_keyboard();
-      // set language
+      g_barbar_sway_language_set_keyboard(sway, name);
       json_reader_end_member(reader);
 
-      // json_reader_read_member(reader, "xkb_active_layout_name");
-      // const char *layout = json_reader_get_string_value(reader);
-      // // set layout
-      // json_reader_end_member(reader);
+      json_reader_read_member(reader, "xkb_active_layout_name");
+      const char *layout = json_reader_get_string_value(reader);
+      g_barbar_sway_language_set_layout(sway, layout);
+      json_reader_end_member(reader);
       json_reader_end_element(reader);
     }
   }
@@ -317,7 +335,8 @@ static void input_cb(GObject *object, GAsyncResult *res, gpointer data) {
       g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
-    g_printerr("Failed to get workspaces: %s\n", error->message);
+    g_printerr("Failed to get languages: %s\n", error->message);
+    g_error_free(error);
     return;
   }
 

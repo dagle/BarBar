@@ -491,6 +491,7 @@ gboolean g_barbar_sway_message_is_success(const char *buf, gssize len) {
 
   if (!ret) {
     g_printerr("Failed to parse json: %s", err->message);
+    g_error_free(err);
     g_object_unref(parser);
     return FALSE;
   }
@@ -679,4 +680,54 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
   g_socket_client_connect_async(ipc->socket_client,
                                 G_SOCKET_CONNECTABLE(address), cancellable,
                                 cmd_connect, task);
+}
+
+static void g_barbar_request_send_cb(GObject *source, GAsyncResult *res,
+                                     gpointer data) {
+  GOutputStream *stream = G_OUTPUT_STREAM(source);
+  GTask *task = data;
+  GError *error = NULL;
+  SwayIpcCmd *ipc = g_task_get_task_data(task);
+  GInputStream *input_stream;
+
+  g_barbar_sway_ipc_send_finish(stream, res, &error);
+
+  if (error) {
+    g_task_return_error(task, error);
+    g_object_unref(task);
+    return;
+  }
+
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc->socket_client));
+
+  // if we have no callback, we return early and don't read the output.
+  if (ipc->cb || g_task_get_check_cancellable(task)) {
+    g_task_return_boolean(task, TRUE);
+    g_object_unref(task);
+    return;
+  }
+
+  g_barbar_sway_ipc_read_async(input_stream, g_task_get_cancellable(task),
+                               cmd_output_cb, task);
+}
+
+void g_barbar_sway_ipc_request(GSocketConnection *ipc,
+                               BarBarSwayMessageType type,
+                               GCancellable *cancellable,
+                               GAsyncReadyCallback callback, gpointer data,
+                               const char *format, ...) {
+  va_list args;
+
+  GOutputStream *output_stream;
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(ipc));
+
+  GTask *task;
+
+  task = g_task_new(ipc, cancellable, callback, data);
+
+  va_start(args, format);
+  // ipc->message = g_strdup_vprintf(format, args);
+  g_barbar_sway_ipc_send_vprintf_async(output_stream, SWAY_RUN_COMMAND,
+                                       cancellable, cmd_cb, task, format, args);
+  va_end(args);
 }

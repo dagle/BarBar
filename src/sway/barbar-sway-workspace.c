@@ -364,6 +364,7 @@ static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_error_free(err);
     g_object_unref(parser);
     return;
   }
@@ -442,6 +443,7 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 
   if (!ret) {
     g_printerr("Sway workspace: Failed to parse json: %s", err->message);
+    g_error_free(err);
     g_object_unref(parser);
     return;
   }
@@ -484,6 +486,7 @@ static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
   if (error) {
     g_printerr("Sway workspace: Failed to get workspaces: %s\n",
                error->message);
+    g_error_free(error);
     return;
   }
 

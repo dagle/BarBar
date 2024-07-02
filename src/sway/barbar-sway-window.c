@@ -125,6 +125,7 @@ static void g_barbar_sway_handle_window_change(const char *payload,
 
   if (!ret) {
     g_printerr("Sway window: Failed to parse json: %s", err->message);
+    g_error_free(err);
     return;
   }
 
@@ -187,6 +188,7 @@ static void g_barbar_sway_initial_window(BarBarSwayWindow *sway, gchar *payload,
 
   if (!ret) {
     g_printerr("Sway window: Failed to parse json: %s", err->message);
+    g_error_free(err);
     return;
   }
 

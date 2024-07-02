@@ -1,6 +1,6 @@
 #include "barbar-uptime.h"
 #include "barbar-timespan.h"
-#include <ctype.h>
+#include "sensors/barbar-interval-sensor.h"
 #include <glib.h>
 #include <glibtop.h>
 #include <glibtop/uptime.h>
@@ -13,25 +13,20 @@
  * A simple uptime sensor that updates every interval
  */
 struct _BarBarUptime {
-  BarBarSensor parent_instance;
+  BarBarIntervalSensor parent_instance;
 
   char *format;
-  guint interval;
 
   GDateTime *boot;
   char *time;
-
-  guint source_id;
 };
 
-#define DEFAULT_INTERVAL 1000
 #define DEFAULT_FORMAT "%D%( days, )%h:%m" // kinda like the uptime tool works
 
 enum {
   PROP_0,
 
   PROP_FORMAT,
-  PROP_INTERVAL,
   PROP_TIME,
 
   NUM_PROPERTIES,
@@ -42,9 +37,9 @@ enum {
   NUM_SIGNALS,
 };
 
-G_DEFINE_TYPE(BarBarUptime, g_barbar_uptime, BARBAR_TYPE_SENSOR)
+G_DEFINE_TYPE(BarBarUptime, g_barbar_uptime, BARBAR_TYPE_INTERVAL_SENSOR)
 
-static void g_barbar_uptime_start(BarBarSensor *sensor);
+static gboolean g_barbar_uptime_tick(BarBarIntervalSensor *sensor);
 
 static GParamSpec *uptime_props[NUM_PROPERTIES] = {
     NULL,
@@ -66,14 +61,6 @@ static void g_barbar_uptime_set_format(BarBarUptime *uptime,
   g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_FORMAT]);
 }
 
-static void g_barbar_uptime_set_interval(BarBarUptime *uptime, guint interval) {
-  g_return_if_fail(BARBAR_IS_UPTIME(uptime));
-
-  uptime->interval = interval;
-
-  g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_INTERVAL]);
-}
-
 static void g_barbar_uptime_set_property(GObject *object, guint property_id,
                                          const GValue *value,
                                          GParamSpec *pspec) {
@@ -82,9 +69,6 @@ static void g_barbar_uptime_set_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_FORMAT:
     g_barbar_uptime_set_format(uptime, g_value_get_string(value));
-    break;
-  case PROP_INTERVAL:
-    g_barbar_uptime_set_interval(uptime, g_value_get_uint(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -99,9 +83,6 @@ static void g_barbar_uptime_get_property(GObject *object, guint property_id,
   case PROP_FORMAT:
     g_value_set_string(value, uptime->format);
     break;
-  case PROP_INTERVAL:
-    g_value_set_uint(value, uptime->interval);
-    break;
   case PROP_TIME:
     g_value_set_string(value, uptime->time);
     break;
@@ -111,15 +92,18 @@ static void g_barbar_uptime_get_property(GObject *object, guint property_id,
 }
 
 void g_barbar_uptime_dispose(GObject *object) {
+  BarBarUptime *uptime = BARBAR_UPTIME(object);
 
+  g_clear_pointer(&uptime->boot, g_date_time_unref);
   G_OBJECT_CLASS(g_barbar_uptime_parent_class)->dispose(object);
 }
 
 static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
+  BarBarIntervalSensorClass *interval_class =
+      BARBAR_INTERVAL_SENSOR_CLASS(class);
 
-  sensor_class->start = g_barbar_uptime_start;
+  interval_class->tick = g_barbar_uptime_tick;
 
   gobject_class->set_property = g_barbar_uptime_set_property;
   gobject_class->get_property = g_barbar_uptime_get_property;
@@ -142,14 +126,6 @@ static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
    */
   uptime_props[PROP_TIME] =
       g_param_spec_string("time", NULL, NULL, NULL, G_PARAM_READABLE);
-  /**
-   * BarBarUptime:interval:
-   *
-   * How often the uptime should be updated
-   */
-  uptime_props[PROP_INTERVAL] = g_param_spec_uint(
-      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
-      DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     uptime_props);
@@ -173,15 +149,18 @@ static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
       );
 }
 
-static gboolean g_barbar_uptime_update(gpointer data);
-
 static void g_barbar_uptime_init(BarBarUptime *uptime) {
+  glibtop_uptime buf;
   uptime->format = g_strdup(DEFAULT_FORMAT);
-  uptime->interval = DEFAULT_INTERVAL;
+  glibtop_init();
+
+  glibtop_get_uptime(&buf);
+
+  uptime->boot = g_date_time_new_from_unix_local(buf.boot_time);
 }
 
-static gboolean g_barbar_uptime_update(gpointer data) {
-  BarBarUptime *uptime = BARBAR_UPTIME(data);
+static gboolean g_barbar_uptime_tick(BarBarIntervalSensor *sensor) {
+  BarBarUptime *uptime = BARBAR_UPTIME(sensor);
 
   GDateTime *local = g_date_time_new_now_local();
   GTimeSpan span = g_date_time_difference(local, uptime->boot);
@@ -196,22 +175,4 @@ static gboolean g_barbar_uptime_update(gpointer data) {
   g_date_time_unref(local);
 
   return G_SOURCE_CONTINUE;
-}
-
-static void g_barbar_uptime_start(BarBarSensor *sensor) {
-  glibtop_uptime buf;
-  BarBarUptime *uptime = BARBAR_UPTIME(sensor);
-
-  glibtop_init();
-
-  glibtop_get_uptime(&buf);
-
-  uptime->boot = g_date_time_new_from_unix_local(buf.boot_time);
-
-  if (uptime->source_id > 0) {
-    g_source_remove(uptime->source_id);
-  }
-  g_barbar_uptime_update(uptime);
-  uptime->source_id = g_timeout_add_full(0, uptime->interval,
-                                         g_barbar_uptime_update, uptime, NULL);
 }

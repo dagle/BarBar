@@ -11,6 +11,7 @@
 #include "sensors/barbar-filesystem.h"
 #include "sensors/barbar-gamemode.h"
 #include "sensors/barbar-inhibitor.h"
+#include "sensors/barbar-interval-sensor.h"
 #include "sensors/barbar-keyboard.h"
 #include "sensors/barbar-mem.h"
 #include "sensors/barbar-mpris.h"

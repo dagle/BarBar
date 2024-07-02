@@ -25,13 +25,13 @@ GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget) {
 }
 
 /**
- * barbar_default_style_provider:
+ * g_barbar_default_style_provider:
  * @path: path relative in config to find config
  *
  * Load the css style in config
  *
  */
-void barbar_default_style_provider(const char *path) {
+void g_barbar_default_style_provider(const char *path) {
   GtkCssProvider *css_provider;
   GdkDisplay *display;
   char *style_path;
@@ -50,7 +50,7 @@ void barbar_default_style_provider(const char *path) {
 }
 
 /**
- * barbar_default_builder:
+ * g_barbar_default_builder:
  * @path: path relative in config to find config
  * @err: Return location for an error
  *
@@ -58,7 +58,7 @@ void barbar_default_style_provider(const char *path) {
  *
  * Returns: (transfer full): returns a builder
  */
-GtkBuilder *barbar_default_builder(const char *path, GError **err) {
+GtkBuilder *g_barbar_default_builder(const char *path, GError **err) {
   GtkBuilder *builder;
   char *ui_path;
 

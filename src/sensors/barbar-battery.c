@@ -12,11 +12,8 @@
 struct _BarBarBattery {
   BarBarSensor parent_instance;
 
-  guint interval;
-
   char *device;
   double percent;
-  guint source_id;
 
   UpClient *client;
   UpDevice *dev;
@@ -36,15 +33,12 @@ enum {
   NUM_SIGNALS,
 };
 
-#define DEFAULT_INTERVAL 1000
-
 static guint battery_signals[NUM_SIGNALS];
 
 #define LOGIN_PATH "/org/freedesktop/login1"
 #define LOGIN_INTERFACE "org.freedesktop.login1.Manager"
 #define LOGIN_NAME "org.freedesktop.login1"
 
-// use upower
 G_DEFINE_TYPE(BarBarBattery, g_barbar_battery, BARBAR_TYPE_SENSOR)
 
 static GParamSpec *battery_props[NUM_PROPERTIES] = {
@@ -157,9 +151,7 @@ static void g_barbar_battery_class_init(BarBarBatteryClass *class) {
       );
 }
 
-static void g_barbar_battery_init(BarBarBattery *self) {
-  self->interval = DEFAULT_INTERVAL;
-}
+static void g_barbar_battery_init(BarBarBattery *self) {}
 
 static void g_barbar_battery_update(UpDevice *dev, BarBarBattery *battery) {
   double percent;
@@ -173,38 +165,6 @@ static void g_barbar_battery_cb(UpDevice *dev, GParamSpec *pspec,
   BarBarBattery *battery = BARBAR_BATTERY(user_data);
   g_barbar_battery_update(dev, battery);
 }
-
-// static void g_barbar_battery_update(GObject *object, GParamSpec *pspec,
-//                                     gpointer data) {
-//
-//   BarBarBattery *battery = BARBAR_BATTERY(data);
-//   GError *err = NULL;
-//
-//   // GDBusConnection *login1_connection =
-//   //     g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &err);
-//   //
-//   // GDBusProxy *proxy = g_dbus_proxy_new_sync(
-//   //     login1_connection, G_DBUS_PROXY_FLAGS_NONE, NULL, LOGIN_NAME,
-//   //     LOGIN_PATH, LOGIN_INTERFACE, NULL, &err);
-//
-//   // if (!login1_connection) {
-//   // throw std::runtime_error("Unable to connect to the SYSTEM Bus!...");
-//   // } else {
-//   // login1_id = g_dbus_connection_signal_subscribe(
-//   // 		login1_connection, "org.freedesktop.login1",
-//   // "org.freedesktop.login1.Manager", 		"PrepareForSleep",
-//   // "/org/freedesktop/login1", NULL, G_DBUS_SIGNAL_FLAGS_NONE,
-//   // 		prepareForSleep_cb, this, NULL);
-//   // }
-//
-//   // event_box_.signal_button_press_event().connect(sigc::mem_fun(*this,
-//   // &UPower::handleToggle));
-//
-//   // g_signal_connect(client, "device-added", G_CALLBACK(deviceAdded_cb),
-//   this);
-//   // g_signal_connect(client, "device-removed", G_CALLBACK(deviceRemoved_cb),
-//   // this);
-// }
 
 static void g_barbar_battery_setup_device(BarBarBattery *battery) {
   if (!battery->device) {

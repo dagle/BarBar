@@ -24,18 +24,22 @@
 
 #pragma once
 
-#include <glib-object.h>
-#include <glib.h>
-#include <gtk/gtk.h>
+#include "barbar-sensor.h"
 
 G_BEGIN_DECLS
 
-GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget);
+#define BARBAR_TYPE_INTERVAL_SENSOR (g_barbar_sensor_get_type())
 
-void g_barbar_default_style_provider(const char *path);
+G_DECLARE_DERIVABLE_TYPE(BarBarIntervalSensor, g_barbar_interval_sensor, BARBAR,
+                         INTERVAL_SENSOR, BarBarSensor)
 
-GtkBuilder *g_barbar_default_builder(const char *path, GError **err);
+struct _BarBarIntervalSensorClass {
+  GObjectClass parent_class;
 
-GtkBuilder *barbar_default_blueprint(const char *path, GError *err);
+  gboolean (*tick)(BarBarIntervalSensor *self);
+};
+
+void g_barbar_interval_sensor_set_interval(BarBarIntervalSensor *self,
+                                           uint interval);
 
 G_END_DECLS
