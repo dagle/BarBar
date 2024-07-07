@@ -1,4 +1,5 @@
 #include "sensors/barbar-interval-sensor.h"
+#include "glib-object.h"
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <stdio.h>
@@ -102,7 +103,11 @@ g_barbar_interval_sensor_class_init(BarBarIntervalSensorClass *class) {
                                     interval_props);
 }
 
-static void g_barbar_interval_sensor_init(BarBarIntervalSensor *self) {}
+static void g_barbar_interval_sensor_init(BarBarIntervalSensor *self) {
+  BarBarIntervalSensorPrivate *priv =
+      g_barbar_interval_sensor_get_instance_private(self);
+  priv->interval = DEFAULT_INTERVAL;
+}
 
 static gboolean g_barbar_interval_sensor_update(gpointer data) {
   BarBarIntervalSensor *sensor = BARBAR_INTERVAL_SENSOR(data);

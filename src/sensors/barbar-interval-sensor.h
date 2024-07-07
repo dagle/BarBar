@@ -28,13 +28,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_INTERVAL_SENSOR (g_barbar_sensor_get_type())
+#define BARBAR_TYPE_INTERVAL_SENSOR (g_barbar_interval_sensor_get_type())
 
 G_DECLARE_DERIVABLE_TYPE(BarBarIntervalSensor, g_barbar_interval_sensor, BARBAR,
                          INTERVAL_SENSOR, BarBarSensor)
 
 struct _BarBarIntervalSensorClass {
-  GObjectClass parent_class;
+  BarBarSensorClass parent_class;
 
   gboolean (*tick)(BarBarIntervalSensor *self);
 };

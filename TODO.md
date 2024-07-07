@@ -4,24 +4,28 @@ as a device? This would be great for batteries, mpris etc since we could just re
 Maybe: Fan/fan-speeds, UPS, entropy, hddtemp, hwmon, i2c, machine info, gpu (nvidia, amd, intel), location/timezone something?, users logged in
 
 -  [x] How to change a widget on click? To have 2 alternating widgets and on click we change.
--  [-] Tooltip
 
 Finish up:
 - [ ] Go over all memory allocation and make sure everything is freed correctly
+- [ ] All the percentage bullshit. Just make a print function. print_props should be
+the base of that function.
 
 - [-] Tray
--- [ ] Being able to display multiple trays by having a try service
+-- [ ] Being able to display multiple trays by having a tray service
 -- [ ] Make menus feel nicer
 
 - [x] River-tags, make it buildable, so you can use widget
 
 - [ ] Hover and shit
+-  [-] Tooltip
+
+- A lib to do system info remotely, to go with libgtop?
 
 Bar-graph
 
 # conky layout
 
-- [ ] make a conky layout, it's currently way to hard to make a conky setup
+- [-] make a conky layout, it's currently way to hard to make a conky setup
 
 # cheat sheet example
 
@@ -42,7 +46,7 @@ Bar-graph
 # A generic interface to a list in sensors?
 # Mpris
 
-- [x] create a format function
+- [ ] Write your own playerctl that better fits your needs
 - [ ] be able to listen to multiple players
 - [ ] send/create updates correctly
 
@@ -69,6 +73,7 @@ Bar-graph
 
 # Inhibitor
 - [ ] being able to specify a screen
+- [ ] listen to events
 
 # Transition Layout Manager
 
@@ -76,6 +81,8 @@ Bar-graph
 
 # widgets
 ## mediacontrol
+- If playerctl is rewritten as a sensor (from scratch),
+implementing this should be extremely easy.
 - [ ] An initial widget
 - [ ] Make the widget respect size.
 

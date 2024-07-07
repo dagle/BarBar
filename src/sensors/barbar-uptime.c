@@ -174,5 +174,8 @@ static gboolean g_barbar_uptime_tick(BarBarIntervalSensor *sensor) {
   g_signal_emit(uptime, signals[TICK], 0);
   g_date_time_unref(local);
 
+  guint interval;
+  g_object_get(uptime, "interval", &interval, NULL);
+
   return G_SOURCE_CONTINUE;
 }

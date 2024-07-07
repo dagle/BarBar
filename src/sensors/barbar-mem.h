@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "barbar-sensor.h"
+#include "barbar-interval-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
@@ -32,6 +32,6 @@ G_BEGIN_DECLS
 
 #define BARBAR_TYPE_MEM (g_barbar_mem_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarMem, g_barbar_mem, BARBAR, MEM, BarBarIntervalSensor)
 
 G_END_DECLS

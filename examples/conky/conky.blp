@@ -237,7 +237,7 @@ BarBar.Background background {
 
       [child]
       Gtk.Label {
-        label: "11%";
+        label: bind mem.percent;
         xalign: 1;
 
         layout {
@@ -469,5 +469,6 @@ BarBar.Cmd kernel {
 }
 
 BarBar.Uptime uptime {
+  interval: 1000;
   format: "%cy%(years )%ch%(hours )%02mm %02ss";
 }

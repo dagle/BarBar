@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "barbar-sensor.h"
+#include "barbar-interval-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
@@ -32,6 +32,6 @@ G_BEGIN_DECLS
 
 #define BARBAR_TYPE_CPU (g_barbar_cpu_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, BarBarIntervalSensor)
 
 G_END_DECLS

@@ -1,8 +1,10 @@
 #include "barbar.h"
 #include "barbar-github-activity.h"
 #include "widgets/barbar-eventswitcher.h"
+#include <glibtop.h>
 
 void g_barbar_init(void) {
+  glibtop_init();
   g_barbar_bar_get_type();
   g_barbar_background_get_type();
   g_barbar_position_get_type();
