@@ -126,7 +126,6 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
   if (player->playback == playback) {
     return;
   }
-  // TODO: upstream shit
 
   player->playback = playback;
   g_object_notify_by_pspec(G_OBJECT(player),
@@ -140,7 +139,6 @@ static void g_barbar_mpris_player_set_loop_status(BarBarMprisPlayer *player,
   if (player->loop == loop) {
     return;
   }
-  // TODO: upstream shit
 
   player->loop = loop;
   g_object_notify_by_pspec(G_OBJECT(player),
@@ -154,7 +152,6 @@ static void g_barbar_mpris_player_set_volume(BarBarMprisPlayer *player,
   if (player->volume == volume) {
     return;
   }
-  // TODO: upstream shit
 
   player->volume = volume;
   g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_VOLUME]);
@@ -167,7 +164,6 @@ static void g_barbar_mpris_player_set_position(BarBarMprisPlayer *player,
   if (player->position == pos) {
     return;
   }
-  // TODO: upstream shit
 
   player->position = pos;
   g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_POSITION]);
