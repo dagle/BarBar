@@ -42,4 +42,6 @@ struct _BarBarIntervalSensorClass {
 void g_barbar_interval_sensor_set_interval(BarBarIntervalSensor *self,
                                            uint interval);
 
+uint g_barbar_interval_sensor_get_interval(BarBarIntervalSensor *self);
+
 G_END_DECLS

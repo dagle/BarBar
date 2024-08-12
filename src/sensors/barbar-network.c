@@ -1,5 +1,4 @@
 #include "barbar-network.h"
-#include "glibconfig.h"
 #include <glibtop/netload.h>
 #include <glibtop/parameter.h>
 
@@ -28,10 +27,6 @@ struct _BarBarNetwork {
   char *interface;
   int family;
 
-  guint interval;
-
-  guint source_id;
-
   guint64 bytes_in;
   guint64 bytes_out;
 
@@ -42,7 +37,6 @@ struct _BarBarNetwork {
 enum {
   PROP_0,
 
-  PROP_INTERVAL,
   PROP_INTERFACE,
 
   PROP_UP_SPEED,
@@ -56,14 +50,7 @@ enum {
   NUM_SIGNALS,
 };
 
-#ifndef PROFILE_COUNT
-#define PROFILE_COUNT 1
-#endif
-
-// update every 10 sec
-#define DEFAULT_INTERVAL 10000
-
-G_DEFINE_TYPE(BarBarNetwork, g_barbar_network, BARBAR_TYPE_SENSOR)
+G_DEFINE_TYPE(BarBarNetwork, g_barbar_network, BARBAR_TYPE_INTERVAL_SENSOR)
 
 static GParamSpec *network_props[NUM_PROPERTIES] = {
     NULL,
@@ -71,7 +58,7 @@ static GParamSpec *network_props[NUM_PROPERTIES] = {
 
 static guint network_signals[NUM_SIGNALS];
 
-static void g_barbar_network_start(BarBarSensor *sensor);
+static gboolean g_barbar_network_tick(BarBarIntervalSensor *sensor);
 
 static void g_barbar_network_set_interface(BarBarNetwork *network,
                                            const char *interface) {
@@ -80,19 +67,9 @@ static void g_barbar_network_set_interface(BarBarNetwork *network,
   g_free(network->interface);
   network->interface = g_strdup(interface);
 
-  g_object_notify_by_pspec(G_OBJECT(network), network_props[PROP_INTERVAL]);
+  g_object_notify_by_pspec(G_OBJECT(network), network_props[PROP_INTERFACE]);
 }
 
-static void g_barbar_network_set_interval(BarBarNetwork *network,
-                                          guint interval) {
-  g_return_if_fail(BARBAR_IS_NETWORK(network));
-
-  network->interval = interval;
-  if (network->source_id > 0) {
-  }
-
-  g_object_notify_by_pspec(G_OBJECT(network), network_props[PROP_INTERVAL]);
-}
 static void g_barbar_network_set_property(GObject *object, guint property_id,
                                           const GValue *value,
                                           GParamSpec *pspec) {
@@ -101,9 +78,6 @@ static void g_barbar_network_set_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_INTERFACE:
     g_barbar_network_set_interface(network, g_value_get_string(value));
-    break;
-  case PROP_INTERVAL:
-    g_barbar_network_set_interval(network, g_value_get_uint(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -117,9 +91,6 @@ static void g_barbar_network_get_property(GObject *object, guint property_id,
   switch (property_id) {
   case PROP_INTERFACE:
     g_value_set_string(value, network->interface);
-    break;
-  case PROP_INTERVAL:
-    g_value_set_uint(value, network->interval);
     break;
   case PROP_UP_SPEED:
     g_value_set_uint64(value, network->up_speed);
@@ -136,22 +107,14 @@ static void g_barbar_network_constructed(GObject *obj);
 
 static void g_barbar_network_class_init(BarBarNetworkClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
+  BarBarIntervalSensorClass *interval_class =
+      BARBAR_INTERVAL_SENSOR_CLASS(class);
 
-  sensor_class->start = g_barbar_network_start;
+  interval_class->tick = g_barbar_network_tick;
 
   gobject_class->set_property = g_barbar_network_set_property;
   gobject_class->get_property = g_barbar_network_get_property;
   gobject_class->constructed = g_barbar_network_constructed;
-
-  /**
-   * BarBarNetwork:interval:
-   *
-   * How often network should be pulled for info
-   */
-  network_props[PROP_INTERVAL] = g_param_spec_uint(
-      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
-      DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   /**
    * BarBarNetwork:interface:
@@ -200,7 +163,6 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
 }
 
 static void g_barbar_network_init(BarBarNetwork *self) {
-  self->interval = DEFAULT_INTERVAL;
   self->bytes_out = 0;
   self->bytes_in = 0;
 }
@@ -224,8 +186,8 @@ static char *hwaddress_format_for_display(glibtop_netload *buf) {
   return str;
 }
 
-static gboolean g_barbar_network_update(gpointer data) {
-  BarBarNetwork *net = BARBAR_NETWORK(data);
+static gboolean g_barbar_network_tick(BarBarIntervalSensor *sensor) {
+  BarBarNetwork *net = BARBAR_NETWORK(sensor);
 
   glibtop_netload netload;
   struct in_addr addr, subnet;
@@ -252,8 +214,9 @@ static gboolean g_barbar_network_update(gpointer data) {
   if (!net->bytes_in) {
     net->bytes_out = netload.bytes_out;
   }
+  guint interval = g_barbar_interval_sensor_get_interval(sensor);
 
-  guint tick = net->interval / 1000;
+  guint tick = interval / 1000;
 
   net->down_speed = (netload.bytes_in - net->bytes_in) / tick;
   net->up_speed = (netload.bytes_out - net->bytes_out) / tick;
@@ -267,14 +230,4 @@ static gboolean g_barbar_network_update(gpointer data) {
   g_signal_emit(net, network_signals[TICK], 0);
 
   return G_SOURCE_CONTINUE;
-}
-
-static void g_barbar_network_start(BarBarSensor *sensor) {
-  BarBarNetwork *net = BARBAR_NETWORK(sensor);
-  if (net->source_id > 0) {
-    g_source_remove(net->source_id);
-  }
-  g_barbar_network_update(net);
-  net->source_id =
-      g_timeout_add_full(0, net->interval, g_barbar_network_update, net, NULL);
 }

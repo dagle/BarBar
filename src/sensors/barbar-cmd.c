@@ -9,13 +9,10 @@
  * Run a command every interval
  */
 struct _BarBarCmd {
-  BarBarSensor parent;
+  BarBarIntervalSensor parent_instance;
 
   gchar **cmd;
   char *value;
-
-  guint interval;
-  guint source_id;
 };
 
 enum {
@@ -23,18 +20,19 @@ enum {
 
   CMD_PROP_CMD,
   CMD_PROP_VALUE,
-  CMD_PROP_INTERVAL,
 
   CMD_NUM_PROPERTIES,
 };
 
 #define DEFAULT_INTERVAL 10000
 
-G_DEFINE_TYPE(BarBarCmd, g_barbar_cmd, BARBAR_TYPE_SENSOR)
+G_DEFINE_TYPE(BarBarCmd, g_barbar_cmd, BARBAR_TYPE_INTERVAL_SENSOR)
 
 static GParamSpec *cmd_props[CMD_NUM_PROPERTIES] = {
     NULL,
 };
+
+static gboolean g_barbar_cmd_tick(BarBarIntervalSensor *sensor);
 
 void g_barbar_cmd_set_cmd(BarBarCmd *self, const char *cmd) {
   g_return_if_fail(BARBAR_IS_CMD(self));
@@ -53,20 +51,13 @@ void g_barbar_cmd_set_cmd(BarBarCmd *self, const char *cmd) {
   g_object_notify_by_pspec(G_OBJECT(self), cmd_props[CMD_PROP_CMD]);
 }
 
-void g_barbar_cmd_set_value(BarBarCmd *self, char *value) {
+static void g_barbar_cmd_set_value(BarBarCmd *self, char *value) {
   g_return_if_fail(BARBAR_IS_CMD(self));
 
   g_free(self->value);
   self->value = value;
 
   g_object_notify_by_pspec(G_OBJECT(self), cmd_props[CMD_PROP_VALUE]);
-}
-void g_barbar_cmd_set_interval(BarBarCmd *self, uint interval) {
-  g_return_if_fail(BARBAR_IS_CMD(self));
-
-  self->interval = interval;
-
-  g_object_notify_by_pspec(G_OBJECT(self), cmd_props[CMD_PROP_INTERVAL]);
 }
 
 static void g_barbar_cmd_set_property(GObject *object, guint property_id,
@@ -77,9 +68,6 @@ static void g_barbar_cmd_set_property(GObject *object, guint property_id,
   switch (property_id) {
   case CMD_PROP_CMD:
     g_barbar_cmd_set_cmd(cmd, g_value_get_string(value));
-    break;
-  case CMD_PROP_INTERVAL:
-    g_barbar_cmd_set_interval(cmd, g_value_get_uint(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -94,9 +82,6 @@ static void g_barbar_cmd_get_property(GObject *object, guint property_id,
   case CMD_PROP_CMD:
     g_value_set_boxed(value, cmd->cmd);
     break;
-  case CMD_PROP_INTERVAL:
-    g_value_set_uint(value, cmd->interval);
-    break;
   case CMD_PROP_VALUE:
     g_value_set_string(value, cmd->value);
     break;
@@ -109,11 +94,13 @@ static void g_barbar_cmd_start(BarBarSensor *sensor);
 
 static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  BarBarSensorClass *sensor_class = BARBAR_SENSOR_CLASS(class);
+  BarBarIntervalSensorClass *interval_class =
+      BARBAR_INTERVAL_SENSOR_CLASS(class);
+
+  interval_class->tick = g_barbar_cmd_tick;
 
   gobject_class->set_property = g_barbar_cmd_set_property;
   gobject_class->get_property = g_barbar_cmd_get_property;
-  sensor_class->start = g_barbar_cmd_start;
 
   // cmd_props[CMD_PROP_CMD] = g_param_spec_boxed(
   //     "command", "cmd", NULL, G_TYPE_STRV,
@@ -138,14 +125,6 @@ static void g_barbar_cmd_class_init(BarBarCmdClass *class) {
   // cmd_props[CMD_PROP_VALUE] = g_param_spec_object(
   //     "value", NULL, NULL, GTK_TYPE_EXPRESSION, G_PARAM_READABLE);
 
-  /**
-   * BarBarCmd:interval:
-   *
-   * How often the command should be executed, in ms.
-   */
-  cmd_props[CMD_PROP_INTERVAL] = g_param_spec_uint(
-      "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
-      DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   g_object_class_install_properties(gobject_class, CMD_NUM_PROPERTIES,
                                     cmd_props);
 }
@@ -175,8 +154,8 @@ static void g_barbar_cmd_callback(GObject *object, GAsyncResult *res,
   g_object_unref(proc);
 }
 
-static gboolean g_barbar_cmd_update(gpointer data) {
-  BarBarCmd *self = BARBAR_CMD(data);
+static gboolean g_barbar_cmd_tick(BarBarIntervalSensor *sensor) {
+  BarBarCmd *self = BARBAR_CMD(sensor);
   GError *err = NULL;
 
   GSubprocess *proc = g_subprocess_newv(
@@ -195,14 +174,4 @@ static gboolean g_barbar_cmd_update(gpointer data) {
                                       self);
 
   return G_SOURCE_CONTINUE;
-}
-
-static void g_barbar_cmd_start(BarBarSensor *sensor) {
-  BarBarCmd *cmd = BARBAR_CMD(sensor);
-  if (cmd->source_id > 0) {
-    g_source_remove(cmd->source_id);
-  }
-  g_barbar_cmd_update(cmd);
-  cmd->source_id =
-      g_timeout_add_full(0, cmd->interval, g_barbar_cmd_update, cmd, NULL);
 }

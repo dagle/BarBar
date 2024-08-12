@@ -30,6 +30,22 @@
 
 G_BEGIN_DECLS
 
+/**
+ * BarBarProcessOrder:
+ * @BARBAR_ORDER_MEM: Sort processes by mem usage
+ * @BARBAR_ORDER_CPU: Sort processes by cpu usage
+ *
+ * How a processes list should be sorted
+ */
+typedef enum {
+  BARBAR_ORDER_MEM,
+  BARBAR_ORDER_CPU,
+} BarBarProcessOrder;
+
+GType g_barbar_procces_order_get_type(void);
+
+#define BARBAR_TYPE_PROCESS_ORDER (g_barbar_procces_order_get_type())
+
 #define BARBAR_TYPE_CPU_PROCESSES (g_barbar_cpu_processes_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, BARBAR,

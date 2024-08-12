@@ -74,7 +74,7 @@ wayland_protos = dependency('wayland-protocols')
 subdir('src')
 
 if get_option('docs')
-  subdir('docs')
+  # subdir('docs')
 endif
 
 install_data('barbar.desktop', install_dir: barbar_applicationsdir)

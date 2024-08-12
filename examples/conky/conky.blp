@@ -213,6 +213,8 @@ BarBar.Background background {
         }
       }
 
+      // TODO: fix
+
       [child]
       Gtk.Label {
         label: "+33.0C";
@@ -235,9 +237,11 @@ BarBar.Background background {
         }
       }
 
+      // TODO: pretty print cpu
+
       [child]
       Gtk.Label {
-        label: bind mem.percent;
+        label: bind cpu.percent;
         xalign: 1;
 
         layout {
@@ -287,6 +291,8 @@ BarBar.Background background {
         }
       }
 
+      // TODO: fix
+
       [child]
       Gtk.Label {
         hexpand: true;
@@ -299,6 +305,8 @@ BarBar.Background background {
         }
       }
 
+      // TODO: fix
+
       [child]
       Gtk.Label {
         label: "Memory Usage:";
@@ -309,6 +317,8 @@ BarBar.Background background {
           row: 1;
         }
       }
+
+      // TODO: fix
 
       [child]
       Gtk.Label {
@@ -358,6 +368,8 @@ BarBar.Background background {
         }
       }
 
+      // TODO: fix all
+
       [child]
       Gtk.Label {
         hexpand: true;
@@ -369,6 +381,31 @@ BarBar.Background background {
           row: 0;
         }
       }
+
+      [child]
+      Gtk.Label {
+        label: "IO Read / Write:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "95,7G/1830G";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 1;
+        }
+      }
+
+      // TODO: Add 2 graphs for IO
     }
 
     Gtk.Box {
@@ -389,10 +426,11 @@ BarBar.Background background {
 
     Gtk.Grid {
       hexpand: true;
+      // TODO: fix all of this
 
       [child]
       Gtk.Label {
-        label: "Swap Usage:";
+        label: "Default Gateway:";
         xalign: 0;
 
         layout {
@@ -412,6 +450,97 @@ BarBar.Background background {
           row: 0;
         }
       }
+
+      [child]
+      Gtk.Label {
+        label: "Internal IP Address:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "0/16Gb";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 1;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "External IP Address:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 2;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        hexpand: true;
+        label: "0/16Gb";
+        xalign: 1;
+
+        layout {
+          column: 1;
+          row: 2;
+        }
+      }
+
+      // [child]
+      // Gtk.Label {
+      //   label: "Upload speed / Download Total:";
+      //   xalign: 0;
+      // 
+      //   layout {
+      //     column: 0;
+      //     row: 3;
+      //   }
+      // }
+      // 
+      // [child]
+      // Gtk.Label {
+      //   hexpand: true;
+      //   label: "0/16Gb";
+      //   xalign: 1;
+      // 
+      //   layout {
+      //     column: 1;
+      //     row: 3;
+      //   }
+      // }
+      // 
+      // [child]
+      // Gtk.Label {
+      //   label: "Upload speed / Download Speed:";
+      //   xalign: 0;
+      // 
+      //   layout {      //     column: 0;
+      //     row: 4;
+      //   }
+      // }
+      // 
+      // [child]
+      // Gtk.Label {
+      //   hexpand: true;
+      //   label: "0/16Gb";
+      //   xalign: 1;
+      // 
+      //   layout {
+      //     column: 1;
+      //     row: 4;
+      //   }
+      // }
     }
 
     [child]

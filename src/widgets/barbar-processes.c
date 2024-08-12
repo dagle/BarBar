@@ -1,4 +1,7 @@
 #include "barbar-processes.h"
+#include "glib-object.h"
+#include "gtk/gtk.h"
+#include "gtk/gtkshortcut.h"
 #include <glibtop.h>
 #include <glibtop/cpu.h>
 #include <glibtop/proclist.h>
@@ -19,14 +22,23 @@ struct _BarBarCpuProcesses {
   // double prev_total;
   // double prev_utime;
   // double prev_stime;
-  GList *lines;
+  //
+
+  /* line showing for each process */
+  // GList *lines;
+
+  /*  */
+  // GtkWidget *headers;
+  GtkWidget *grid;
+
+  gboolean show_header;
 
   guint number;
-  GtkWidget *label;
 
   guint interval;
   guint delta;
   guint source_id;
+  BarBarProcessOrder order;
 };
 
 struct procline {
@@ -43,6 +55,7 @@ enum {
   PROP_DELTA,
   PROP_INTERVAL,
   PROP_NUMBER,
+  PROP_ORDER,
 
   NUM_PROPERTIES,
 };
@@ -51,6 +64,24 @@ enum {
 #define DEFAULT_DELTA 1000
 
 G_DEFINE_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, GTK_TYPE_WIDGET)
+
+GType g_barbar_procces_order_get_type(void) {
+
+  static gsize barbar_process_order_type;
+  if (g_once_init_enter(&barbar_process_order_type)) {
+
+    static GEnumValue pattern_types[] = {
+        {BARBAR_ORDER_MEM, "BARBAR_ORDER_MEM", "mem"},
+        {BARBAR_ORDER_CPU, "BARBAR_ORDER_CPU", "cpu"},
+        {0, NULL, NULL},
+    };
+
+    GType type = 0;
+    type = g_enum_register_static("BarBarProcessOrder", pattern_types);
+    g_once_init_leave(&barbar_process_order_type, type);
+  }
+  return barbar_process_order_type;
+}
 
 static GParamSpec *processes_props[NUM_PROPERTIES] = {
     NULL,
@@ -97,6 +128,19 @@ static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_INTERVAL]);
 }
 
+static void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
+                                             guint order) {
+  g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
+
+  if (cpu->order == order) {
+    return;
+  }
+
+  cpu->order = order;
+
+  g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_ORDER]);
+}
+
 static void g_barbar_cpu_processes_set_property(GObject *object,
                                                 guint property_id,
                                                 const GValue *value,
@@ -113,6 +157,9 @@ static void g_barbar_cpu_processes_set_property(GObject *object,
   case PROP_INTERVAL:
     g_barbar_cpu_processes_set_interval(cpu, g_value_get_uint(value));
     break;
+  case PROP_ORDER:
+    g_barbar_cpu_processes_set_order(cpu, g_value_get_uint(value));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -128,6 +175,9 @@ static void g_barbar_cpu_processes_get_property(GObject *object,
   switch (property_id) {
   case PROP_INTERVAL:
     g_value_set_uint(value, cpu->interval);
+    break;
+  case PROP_ORDER:
+    g_value_set_enum(value, cpu->order);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -169,19 +219,45 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
       g_param_spec_uint("number", NULL, NULL, 0, G_MAXUINT32, DEFAULT_INTERVAL,
                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
+  processes_props[PROP_ORDER] = g_param_spec_enum(
+      "order", NULL, NULL, BARBAR_TYPE_PROCESS_ORDER, BARBAR_ORDER_CPU,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     processes_props);
 
-  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
+  gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "process-list");
+}
+
+static void g_barbar_populate_headers(BarBarCpuProcesses *self) {
+  // self->headers = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  GtkWidget *process = gtk_label_new("process");
+  gtk_label_set_xalign(GTK_LABEL(process), 0);
+  // GtkWidget *cpu = gtk_label_new("cpu");
+  // gtk_label_set_xalign(GTK_LABEL(cpu), 0.5);
+  GtkWidget *mem = gtk_label_new("mem");
+  gtk_label_set_xalign(GTK_LABEL(mem), 1);
+
+  // gtk_widget_set_parent(process, GTK_WIDGET(self->headers));
+  // gtk_widget_set_parent(cpu, GTK_WIDGET(self->headers));
+  // gtk_widget_set_parent(mem, GTK_WIDGET(self->headers));
+  gtk_grid_attach(GTK_GRID(self->grid), process, 0, 0, 1, 1);
+  // gtk_grid_attach(GTK_GRID(self->grid), cpu, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(self->grid), mem, 1, 0, 1, 1);
+  // gtk_grid_attach(GTK_GRID(self->grid), mem, 2, 0, 1, 1);
 }
 
 static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {
   self->interval = DEFAULT_INTERVAL;
-  self->interval = DEFAULT_DELTA;
+  self->delta = DEFAULT_INTERVAL;
 
-  self->label = gtk_label_new("test");
-  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+  self->grid = gtk_grid_new();
+  gtk_widget_set_hexpand(self->grid, true);
+
+  g_barbar_populate_headers(self);
+
+  gtk_widget_set_parent(self->grid, GTK_WIDGET(self));
 }
 
 struct state {

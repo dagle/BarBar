@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2023 Per Odlund
+ * Copyright (c) 2024 Per Odlund
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,15 @@
 
 #pragma once
 
-#include "barbar-interval-sensor.h"
+#include "barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_CMD (g_barbar_cmd_get_type())
+#define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, BarBarIntervalSensor)
+G_DECLARE_FINAL_TYPE(BarBarCollector, g_barbar_collector, BARBAR, COLLECTOR,
+                     BarBarSensor)
 
 G_END_DECLS

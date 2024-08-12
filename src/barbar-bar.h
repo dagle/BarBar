@@ -48,9 +48,9 @@ typedef enum {
 
 GType g_barbar_position_get_type(void);
 
-#define BARBAR_TYPE_BAR (g_barbar_bar_get_type())
-
 #define BARBAR_TYPE_POSITION (g_barbar_position_get_type())
+
+#define BARBAR_TYPE_BAR (g_barbar_bar_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWindow)
 

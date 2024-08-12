@@ -13,9 +13,6 @@ struct _BarBarMem {
   BarBarIntervalSensor parent_instance;
 
   double percent;
-
-  guint interval;
-  guint source_id;
 };
 
 enum {

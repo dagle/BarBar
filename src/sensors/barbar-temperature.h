@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "sensors/barbar-sensor.h"
+#include "barbar-interval-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
 
@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_TEMPERATURE (g_barbar_temperature_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarTemperature, g_barbar_temperature, BARBAR,
-                     TEMPERATURE, BarBarSensor)
+                     TEMPERATURE, BarBarIntervalSensor)
 
 char *g_barbar_temperature_format(BarBarTemperature *self, const char *format,
                                   ...);

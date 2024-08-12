@@ -46,6 +46,12 @@ void g_barbar_interval_sensor_set_interval(BarBarIntervalSensor *self,
   g_object_notify_by_pspec(G_OBJECT(self), interval_props[PROP_INTERVAL]);
 }
 
+uint g_barbar_interval_sensor_get_interval(BarBarIntervalSensor *self) {
+  BarBarIntervalSensorPrivate *priv =
+      g_barbar_interval_sensor_get_instance_private(self);
+  return priv->interval;
+}
+
 static void g_barbar_interval_sensor_set_property(GObject *object,
                                                   guint property_id,
                                                   const GValue *value,
