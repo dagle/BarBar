@@ -64,10 +64,8 @@ static void g_barbar_network_set_interface(BarBarNetwork *network,
                                            const char *interface) {
   g_return_if_fail(BARBAR_IS_NETWORK(network));
 
-  g_free(network->interface);
-  network->interface = g_strdup(interface);
-
-  g_object_notify_by_pspec(G_OBJECT(network), network_props[PROP_INTERFACE]);
+  if (g_set_str(&network->interface, interface))
+    g_object_notify_by_pspec(G_OBJECT(network), network_props[PROP_INTERFACE]);
 }
 
 static void g_barbar_network_set_property(GObject *object, guint property_id,

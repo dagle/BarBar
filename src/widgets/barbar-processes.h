@@ -40,6 +40,7 @@ G_BEGIN_DECLS
 typedef enum {
   BARBAR_ORDER_MEM,
   BARBAR_ORDER_CPU,
+  BARBAR_ORDER_IO,
 } BarBarProcessOrder;
 
 GType g_barbar_procces_order_get_type(void);

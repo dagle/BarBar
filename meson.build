@@ -69,7 +69,7 @@ deps = [
   module,
 ]
 
-LIBS = [glib, gio, gobject]
+LIBS = [glib, gio, gobject, gtk]
 wayland_protos = dependency('wayland-protocols')
 subdir('src')
 

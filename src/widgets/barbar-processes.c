@@ -4,7 +4,9 @@
 #include "gtk/gtkshortcut.h"
 #include <glibtop.h>
 #include <glibtop/cpu.h>
+#include <glibtop/procio.h>
 #include <glibtop/proclist.h>
+#include <glibtop/procmem.h>
 #include <glibtop/procstate.h>
 #include <glibtop/proctime.h>
 #include <math.h>
@@ -73,6 +75,7 @@ GType g_barbar_procces_order_get_type(void) {
     static GEnumValue pattern_types[] = {
         {BARBAR_ORDER_MEM, "BARBAR_ORDER_MEM", "mem"},
         {BARBAR_ORDER_CPU, "BARBAR_ORDER_CPU", "cpu"},
+        {BARBAR_ORDER_IO, "BARBAR_ORDER_IO", "io"},
         {0, NULL, NULL},
     };
 
@@ -340,6 +343,29 @@ static void g_barbar_cpu_processes_delta(gpointer data) {
   g_array_unref(array);
 }
 
+// static
+
+static void get_main_metric(BarBarCpuProcesses *self, pid_t *pids,
+                            glibtop_proclist *buf) {
+  switch (self->order) {
+  case BARBAR_ORDER_MEM:
+    for (int i = 0; i < buf->number; ++i) {
+      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+    }
+    break;
+  case BARBAR_ORDER_CPU:
+    for (int i = 0; i < buf->number; ++i) {
+      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+    }
+    break;
+  case BARBAR_ORDER_IO:
+    for (int i = 0; i < buf->number; ++i) {
+      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+    }
+    break;
+  }
+}
+
 static gboolean g_barbar_cpu_processes_update(gpointer data) {
   BarBarCpuProcesses *self = BARBAR_CPU_PROCESSES(data);
   glibtop_proclist buf;
@@ -357,12 +383,16 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
   // guint64 total_delta = total - self->prev_total;
   printf("num: %ld\n", buf.number);
 
+  // We get all the data for the metric we sort for
+  // We then get all the data for the rest of the metrics
   for (int i = 0; i < buf.number; ++i) {
     delta[i].pid = pids[i];
 
     // get the proc time twice so we can calculate the usage
-    glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
     glibtop_get_proc_state(&delta[i].pstate, delta[i].pid);
+    glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+    // glibtop_get_proc_mem();
+    // glibtop_get_proc_io();
   }
   array = g_array_new_take(delta, buf.number, FALSE, sizeof(struct delta));
 

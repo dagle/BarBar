@@ -14,9 +14,6 @@ struct _BarBarCpu {
   double prev_total;
   double prev_idle;
   double percent;
-
-  guint interval;
-  guint source_id;
 };
 
 enum {

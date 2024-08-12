@@ -41,8 +41,9 @@ static GParamSpec *background_props[NUM_PROPERTIES] = {
     NULL,
 };
 
-static void g_barbar_bar_set_property(GObject *object, guint property_id,
-                                      const GValue *value, GParamSpec *pspec) {
+static void g_barbar_background_set_property(GObject *object, guint property_id,
+                                             const GValue *value,
+                                             GParamSpec *pspec) {
   BarBarBackground *background = BARBAR_BACKGROUND(object);
 
   switch (property_id) {
@@ -66,8 +67,8 @@ static void g_barbar_bar_set_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_bar_get_property(GObject *object, guint property_id,
-                                      GValue *value, GParamSpec *pspec) {
+static void g_barbar_background_get_property(GObject *object, guint property_id,
+                                             GValue *value, GParamSpec *pspec) {
 
   BarBarBackground *background = BARBAR_BACKGROUND(object);
 
@@ -92,15 +93,15 @@ static void g_barbar_bar_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_bar_constructed(GObject *object);
+static void g_barbar_background_constructed(GObject *object);
 
 static void g_barbar_background_class_init(BarBarBackgroundClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
-  gobject_class->set_property = g_barbar_bar_set_property;
-  gobject_class->get_property = g_barbar_bar_get_property;
-  gobject_class->constructed = g_barbar_bar_constructed;
+  gobject_class->set_property = g_barbar_background_set_property;
+  gobject_class->get_property = g_barbar_background_get_property;
+  gobject_class->constructed = g_barbar_background_constructed;
 
   /**
    * BarBarBackground:left-margin:
@@ -157,7 +158,7 @@ static void g_barbar_background_init(BarBarBackground *self) {
   gtk_layer_init_for_window(gtk_window);
 }
 
-static void g_barbar_bar_constructed(GObject *object) {
+static void g_barbar_background_constructed(GObject *object) {
   G_OBJECT_CLASS(g_barbar_background_parent_class)->constructed(object);
   BarBarBackground *background = BARBAR_BACKGROUND(object);
 
