@@ -1,5 +1,7 @@
 #include "barbar-processes.h"
 #include "glib-object.h"
+#include "glib.h"
+#include "glibconfig.h"
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include <glibtop.h>
@@ -10,7 +12,9 @@
 #include <glibtop/procstate.h>
 #include <glibtop/proctime.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 /**
  * BarBarRiverProcesses:
@@ -21,27 +25,48 @@
 struct _BarBarCpuProcesses {
   GtkWidget parent_instance;
 
-  // double prev_total;
-  // double prev_utime;
-  // double prev_stime;
-  //
-
   /* line showing for each process */
   // GList *lines;
 
   /*  */
   // GtkWidget *headers;
+  guint32 tick;
+
+  GArray *processes;
   GtkWidget *grid;
 
   gboolean show_header;
 
   guint number;
+  guint64 previous_total;
 
   guint interval;
-  guint delta;
   guint source_id;
   BarBarProcessOrder order;
 };
+
+typedef struct proc_info {
+  pid_t pid;
+  glibtop_proc_state state;
+
+  // Maybe make these pointers and malloc these, lets do this later
+  double amount;
+  glibtop_proc_time ptime;
+  glibtop_proc_mem mem;
+  glibtop_proc_io io;
+
+  // maybe these 2
+  guint64 utime;
+  guint64 stime;
+
+  guint64 old_utime;
+  guint64 old_stime;
+
+  // the value of tick isn't really important, just to be able to tell the diff
+  // between 2 values ticks.
+  guint32 tick;
+
+} proc_info;
 
 struct procline {
   GtkWidget *box;
@@ -54,16 +79,15 @@ struct procline {
 enum {
   PROP_0,
 
-  PROP_DELTA,
   PROP_INTERVAL,
+  PROP_HEADERS,
   PROP_NUMBER,
   PROP_ORDER,
 
   NUM_PROPERTIES,
 };
 
-#define DEFAULT_INTERVAL 30000
-#define DEFAULT_DELTA 1000
+#define DEFAULT_INTERVAL 1000
 
 G_DEFINE_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, GTK_TYPE_WIDGET)
 
@@ -105,19 +129,6 @@ static void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu,
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_NUMBER]);
 }
 
-static void g_barbar_cpu_processes_set_delta(BarBarCpuProcesses *cpu,
-                                             guint delta) {
-  g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
-
-  if (cpu->delta == delta) {
-    return;
-  }
-
-  cpu->delta = delta;
-
-  g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_DELTA]);
-}
-
 static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
                                                 guint interval) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
@@ -132,7 +143,7 @@ static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
 }
 
 static void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
-                                             guint order) {
+                                             BarBarProcessOrder order) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
 
   if (cpu->order == order) {
@@ -154,14 +165,11 @@ static void g_barbar_cpu_processes_set_property(GObject *object,
   case PROP_NUMBER:
     g_barbar_cpu_processes_set_number(cpu, g_value_get_uint(value));
     break;
-  case PROP_DELTA:
-    g_barbar_cpu_processes_set_delta(cpu, g_value_get_uint(value));
-    break;
   case PROP_INTERVAL:
     g_barbar_cpu_processes_set_interval(cpu, g_value_get_uint(value));
     break;
   case PROP_ORDER:
-    g_barbar_cpu_processes_set_order(cpu, g_value_get_uint(value));
+    g_barbar_cpu_processes_set_order(cpu, g_value_get_enum(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -196,6 +204,13 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
   widget_class->root = g_barbar_cpu_processes_root;
 
   /**
+   * BarBarCpuProcesses:headers:
+   *
+   */
+  processes_props[PROP_HEADERS] =
+      g_param_spec_boolean("headers", "Headers", NULL, TRUE, G_PARAM_READWRITE);
+
+  /**
    * BarBarCpuProcesses:interval:
    *
    * How often we should fetch the process list
@@ -203,15 +218,6 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
   processes_props[PROP_INTERVAL] = g_param_spec_uint(
       "interval", "Interval", "Interval in milli seconds", 0, G_MAXUINT32,
       DEFAULT_INTERVAL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-
-  /**
-   * BarBarCpuProcesses:Delta:
-   *
-   * How long processes should be monitored
-   */
-  processes_props[PROP_DELTA] =
-      g_param_spec_uint("delta", NULL, NULL, 0, G_MAXUINT32, DEFAULT_DELTA,
-                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * BarBarCpuProcesses:number:
@@ -233,27 +239,116 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
   gtk_widget_class_set_css_name(widget_class, "process-list");
 }
 
+static void insert_row(BarBarCpuProcesses *self, proc_info *proc, int row);
+
+static proc_info *new_info(GArray *processes, pid_t pid) {
+  // TODO:
+  return NULL;
+}
+
+static proc_info *find_info(GArray *processes, pid_t pid) {
+  for (int i = 0; i < processes->len; i++) {
+    proc_info *proc = &g_array_index(processes, proc_info, i);
+    if (proc->pid == pid) {
+      return proc;
+    }
+  }
+  return NULL;
+}
+
+static proc_info *get_info(GArray *processes, pid_t pid) {
+  proc_info *info = find_info(processes, pid);
+  return info ? info : new_info(processes, pid);
+}
+
+static void proc_info_cleanup(GArray *processes, guint32 tick) {
+  for (int i = 0; i < processes->len; ++i) {
+    proc_info *proc = &g_array_index(processes, proc_info, i);
+    if (proc->tick != tick) {
+      // TODO: remove process
+    }
+  }
+}
+
 static void g_barbar_populate_headers(BarBarCpuProcesses *self) {
   // self->headers = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   GtkWidget *process = gtk_label_new("process");
-  gtk_label_set_xalign(GTK_LABEL(process), 0);
+  gtk_widget_set_halign(process, GTK_ALIGN_START);
+  gtk_widget_set_hexpand(process, TRUE);
+  // gtk_label_set_xalign(GTK_LABEL(process), 0);
   // GtkWidget *cpu = gtk_label_new("cpu");
   // gtk_label_set_xalign(GTK_LABEL(cpu), 0.5);
-  GtkWidget *mem = gtk_label_new("mem");
-  gtk_label_set_xalign(GTK_LABEL(mem), 1);
+  //
+  GtkWidget *cpu = gtk_label_new("cpu");
+  gtk_widget_set_halign(cpu, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(cpu, TRUE);
 
-  // gtk_widget_set_parent(process, GTK_WIDGET(self->headers));
-  // gtk_widget_set_parent(cpu, GTK_WIDGET(self->headers));
-  // gtk_widget_set_parent(mem, GTK_WIDGET(self->headers));
+  GtkWidget *mem = gtk_label_new("mem");
+  gtk_widget_set_halign(mem, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(mem, TRUE);
+
+  GtkWidget *io = gtk_label_new("io");
+  gtk_widget_set_halign(io, GTK_ALIGN_END);
+  gtk_widget_set_hexpand(io, TRUE);
+
   gtk_grid_attach(GTK_GRID(self->grid), process, 0, 0, 1, 1);
-  // gtk_grid_attach(GTK_GRID(self->grid), cpu, 1, 0, 1, 1);
-  gtk_grid_attach(GTK_GRID(self->grid), mem, 1, 0, 1, 1);
-  // gtk_grid_attach(GTK_GRID(self->grid), mem, 2, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(self->grid), cpu, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(self->grid), mem, 2, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(self->grid), io, 3, 0, 1, 1);
+}
+
+static void insert_row(BarBarCpuProcesses *self, proc_info *proc, int row) {
+  GtkWidget *widget;
+  char str[8];
+  row++;
+
+  widget = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
+  if (widget) {
+    GtkWidget *process = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
+    gtk_label_set_text(GTK_LABEL(process), proc->state.cmd);
+
+    GtkWidget *cpu = gtk_grid_get_child_at(GTK_GRID(self->grid), 1, row);
+    snprintf(str, 7, "%.2f", proc->amount);
+    gtk_label_set_text(GTK_LABEL(cpu), str);
+
+    GtkWidget *mem = gtk_grid_get_child_at(GTK_GRID(self->grid), 2, row);
+    snprintf(str, 7, "%lu", proc->mem.rss);
+    gtk_label_set_text(GTK_LABEL(mem), str);
+
+    GtkWidget *io = gtk_grid_get_child_at(GTK_GRID(self->grid), 3, row);
+    snprintf(str, 7, "%lu", proc->io.disk_wchar);
+    gtk_label_set_text(GTK_LABEL(io), str);
+
+  } else {
+    GtkWidget *process = gtk_label_new(proc->state.cmd);
+    gtk_widget_set_halign(process, GTK_ALIGN_START);
+    gtk_widget_set_hexpand(process, TRUE);
+
+    snprintf(str, 7, "%.2f", proc->amount);
+    GtkWidget *cpu = gtk_label_new(str);
+    gtk_widget_set_halign(cpu, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(cpu, TRUE);
+
+    snprintf(str, 7, "%lu", proc->mem.rss);
+    GtkWidget *mem = gtk_label_new(str);
+    gtk_widget_set_halign(mem, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(mem, TRUE);
+
+    snprintf(str, 7, "%lu", proc->io.disk_wchar);
+    GtkWidget *io = gtk_label_new(str);
+    gtk_widget_set_halign(io, GTK_ALIGN_END);
+    gtk_widget_set_hexpand(io, TRUE);
+
+    gtk_grid_attach(GTK_GRID(self->grid), process, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(self->grid), cpu, 1, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(self->grid), mem, 2, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(self->grid), io, 3, row, 1, 1);
+  }
 }
 
 static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {
   self->interval = DEFAULT_INTERVAL;
-  self->delta = DEFAULT_INTERVAL;
+  self->show_header = TRUE;
 
   self->grid = gtk_grid_new();
   gtk_widget_set_hexpand(self->grid, true);
@@ -263,106 +358,100 @@ static void g_barbar_cpu_processes_init(BarBarCpuProcesses *self) {
   gtk_widget_set_parent(self->grid, GTK_WIDGET(self));
 }
 
-struct state {
-  // int number;
-  pid_t *pids;
-  glibtop_proc_time *ptime;
-  glibtop_proc_state *pstate;
+static gint g_barbar_cpu_sort(gconstpointer a, gconstpointer b) {
+  const proc_info *proc_a = a;
+  const proc_info *proc_b = b;
 
-  glibtop_proc_time *delta_ptime;
-  glibtop_proc_state *delta_pstate;
-};
-
-struct delta {
-  pid_t pid;
-
-  glibtop_proc_time ptime;
-  glibtop_proc_time delta_ptime;
-
-  double time;
-  glibtop_proc_state pstate;
-
-  // glibtop_proc_state delta_pstate;
-};
-
-// static void g_barbar_state_sort2(struct state *state) {}
-
-static gint g_barbar_state_sort(gconstpointer a, gconstpointer b) {
-  const struct delta *delta_a = a;
-  const struct delta *delta_b = b;
-  if (!delta_a) {
-    printf("a is null!\n");
-    return -1;
-  }
-  if (!delta_a) {
-    printf("a is null!\n");
+  if (proc_b->amount > proc_a->amount) {
     return 1;
   }
-  return delta_b->time - delta_a->time;
+  if (proc_a->amount > proc_b->amount) {
+    return -1;
+  }
+  return 0;
 }
 
-// let curr_stat = proc.curr_proc.stat();
-// let prev_stat = &proc.prev_stat;
-//
-// let curr_time = curr_stat.utime + curr_stat.stime;
-// let prev_time = prev_stat.utime + prev_stat.stime;
-// let usage_ms = (curr_time - prev_time) * 1000 / procfs::ticks_per_second();
-// let interval_ms = proc.interval.as_secs() * 1000 +
-// u64::from(proc.interval.subsec_millis()); let usage = usage_ms as f64 * 100.0
-// / interval_ms as f64;
-//
-// let fmt_content = format!("{usage:.1}");
-// let raw_content = (usage * 1000.0) as u32;
-//
-// self.fmt_contents.insert(proc.pid, fmt_content);
-// self.raw_contents.insert(proc.pid, raw_content);
+static gint g_barbar_mem_sort(gconstpointer a, gconstpointer b) {
+  const proc_info *proc_a = a;
+  const proc_info *proc_b = b;
 
-// Data should be something else
-static void g_barbar_cpu_processes_delta(gpointer data) {
-  GArray *array = data;
-  for (int i = 0; i < array->len; ++i) {
-    struct delta *delta = &g_array_index(array, struct delta, i);
-    glibtop_get_proc_time(&delta->delta_ptime, delta->pid);
-    guint64 d = (delta->delta_ptime.stime - delta->ptime.stime) +
-                (delta->delta_ptime.utime - delta->ptime.utime);
-    guint64 usage_ms = d * 1000 / delta->delta_ptime.frequency;
-    guint64 interval_ms = DEFAULT_DELTA;
-    double usage = (double)usage_ms * 100.0 / (double)interval_ms;
-    delta->time = usage;
-  }
-  g_array_sort(array, g_barbar_state_sort);
-
-  for (int i = 0; i < array->len; ++i) {
-    struct delta *delta = &g_array_index(array, struct delta, i);
-    printf("%s - %f\n", delta->pstate.cmd, delta->time);
-    if (i > 5) {
-      break;
-    }
-  }
-  fprintf(stdout, "No. of clock ticks per sec : %ld\n", sysconf(_SC_CLK_TCK));
-  g_array_unref(array);
+  return proc_a->mem.rss - proc_b->mem.rss;
 }
 
-// static
+static gint g_barbar_io_sort(gconstpointer a, gconstpointer b) {
+  const proc_info *proc_a = a;
+  const proc_info *proc_b = b;
 
-static void get_main_metric(BarBarCpuProcesses *self, pid_t *pids,
-                            glibtop_proclist *buf) {
+  return proc_a->io.disk_wchar - proc_b->io.disk_wchar;
+}
+
+static void get_proctime(proc_info *proc, guint64 total) {
+  // float mul = 100.0;
+  // if (top_cpu_separate.get(*state)) mul *= info.cpu_count;
+  //
+  glibtop_get_proc_time(&proc->ptime, proc->pid);
+  // proc->amount = mul * (proc->pti me.rtime) / (double)total;
+  // proc->amount = (proc->ptime.cutime + proc->ptime.cstime) / (double)total;
+  proc->amount = (proc->ptime.rtime) / (double)total;
+}
+
+static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
+                        glibtop_proclist *buf, guint64 total) {
+
+  guint selected = MIN(self->number, buf->number);
   switch (self->order) {
   case BARBAR_ORDER_MEM:
     for (int i = 0; i < buf->number; ++i) {
-      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+      proc_info *info = get_info(self->processes, pids[i]);
+      glibtop_get_proc_mem(&info->mem, info->pid);
     }
+
+    g_array_sort(self->processes, g_barbar_mem_sort);
+
+    for (int i = 0; i < selected; ++i) {
+      proc_info *proc = &g_array_index(self->processes, proc_info, i);
+      get_proctime(proc, total);
+      glibtop_get_proc_io(&proc->io, proc->pid);
+    }
+
     break;
   case BARBAR_ORDER_CPU:
     for (int i = 0; i < buf->number; ++i) {
-      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+      proc_info *info = get_info(self->processes, pids[i]);
+      get_proctime(info, total);
+    }
+
+    g_array_sort(self->processes, g_barbar_mem_sort);
+
+    for (int i = 0; i < selected; ++i) {
+      proc_info *proc = &g_array_index(self->processes, proc_info, i);
+
+      glibtop_get_proc_mem(&proc->mem, proc->pid);
+      glibtop_get_proc_io(&proc->io, proc->pid);
     }
     break;
   case BARBAR_ORDER_IO:
     for (int i = 0; i < buf->number; ++i) {
-      // glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
+      proc_info *info = get_info(self->processes, pids[i]);
+      glibtop_get_proc_io(&info->io, info->pid);
     }
+
+    g_array_sort(self->processes, g_barbar_mem_sort);
+
+    for (int i = 0; i < selected; ++i) {
+      proc_info *proc = &g_array_index(self->processes, proc_info, i);
+
+      get_proctime(proc, total);
+      glibtop_get_proc_mem(&proc->mem, proc->pid);
+    }
+
     break;
+  }
+
+  for (int i = 0; i < selected; ++i) {
+    proc_info *proc = &g_array_index(self->processes, proc_info, i);
+
+    glibtop_get_proc_state(&proc->state, proc->pid);
   }
 }
 
@@ -371,40 +460,35 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
   glibtop_proclist buf;
   glibtop_cpu cpu;
   pid_t *pids;
-  GArray *array;
+  GArray *procs;
+  guint64 t; /* GLIBTOP_CPU_TOTAL		*/
 
   glibtop_get_cpu(&cpu);
 
   pids = glibtop_get_proclist(&buf, 0, 0);
 
-  struct delta *delta = calloc(sizeof(struct delta), buf.number);
+  proc_info *info = calloc(buf.number, sizeof(proc_info));
+  procs = g_array_new_take(info, buf.number, FALSE, sizeof(proc_info));
 
-  // total = ((unsigned long)cpu.total) ? ((double)cpu.total) : 1.0;
-  // guint64 total_delta = total - self->prev_total;
-  printf("num: %ld\n", buf.number);
-
-  // We get all the data for the metric we sort for
-  // We then get all the data for the rest of the metrics
-  for (int i = 0; i < buf.number; ++i) {
-    delta[i].pid = pids[i];
-
-    // get the proc time twice so we can calculate the usage
-    glibtop_get_proc_state(&delta[i].pstate, delta[i].pid);
-    glibtop_get_proc_time(&delta[i].ptime, delta[i].pid);
-    // glibtop_get_proc_mem();
-    // glibtop_get_proc_io();
+  for (int i = 0; i < procs->len; ++i) {
+    proc_info *proc = &g_array_index(procs, proc_info, i);
+    proc->pid = pids[i];
   }
-  array = g_array_new_take(delta, buf.number, FALSE, sizeof(struct delta));
 
-  // g_array_set_clear_func(array,);
+  t = cpu.total - self->previous_total;
+  self->previous_total = cpu.total;
+
+  get_metrics(self, procs, t);
+
+  // for (int i = 0; MA)
+  for (int i = 0; i < MIN(self->number, procs->len); i++) {
+    proc_info *proc = &g_array_index(procs, proc_info, i);
+    insert_row(self, proc, i);
+  }
+
+  g_array_free(procs, TRUE);
 
   g_free(pids);
-
-  // printf("interval: %d\n", self->interval);
-
-  g_timeout_add_once(self->interval, g_barbar_cpu_processes_delta, array);
-
-  // self->prev_total = total;
 
   return G_SOURCE_CONTINUE;
 }
@@ -417,7 +501,6 @@ static void g_barbar_cpu_processes_root(GtkWidget *widget) {
     g_source_remove(cpu->source_id);
   }
   g_barbar_cpu_processes_update(cpu);
-  // cpu->source_id = g_timeout_add_full(0, cpu->interval,
-  //                                     g_barbar_cpu_processes_update, cpu,
-  //                                     NULL);
+  cpu->source_id = g_timeout_add_full(0, cpu->interval,
+                                      g_barbar_cpu_processes_update, cpu, NULL);
 }
