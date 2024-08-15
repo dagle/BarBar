@@ -29,8 +29,6 @@ struct _BarBarCpuProcesses {
   // GList *lines;
 
   /*  */
-  // GtkWidget *headers;
-  guint32 tick;
 
   GArray *processes;
   GtkWidget *grid;
@@ -62,9 +60,7 @@ typedef struct proc_info {
   guint64 old_utime;
   guint64 old_stime;
 
-  // the value of tick isn't really important, just to be able to tell the diff
-  // between 2 values ticks.
-  guint32 tick;
+  gboolean mark;
 
 } proc_info;
 
@@ -261,11 +257,10 @@ static proc_info *get_info(GArray *processes, pid_t pid) {
   return info ? info : new_info(processes, pid);
 }
 
-static void proc_info_cleanup(GArray *processes, guint32 tick) {
+static void sweep(GArray *processes, guint32 tick) {
   for (int i = 0; i < processes->len; ++i) {
     proc_info *proc = &g_array_index(processes, proc_info, i);
-    if (proc->tick != tick) {
-      // TODO: remove process
+    if (proc->mark) {
     }
   }
 }
@@ -395,6 +390,10 @@ static void get_proctime(proc_info *proc, guint64 total) {
   proc->amount = (proc->ptime.rtime) / (double)total;
 }
 
+static void sweep(GArray *processes) {
+  //
+}
+
 static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
                         glibtop_proclist *buf, guint64 total) {
 
@@ -406,6 +405,7 @@ static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
       glibtop_get_proc_mem(&info->mem, info->pid);
     }
 
+    sweep(self->processes);
     g_array_sort(self->processes, g_barbar_mem_sort);
 
     for (int i = 0; i < selected; ++i) {
@@ -478,7 +478,7 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
   t = cpu.total - self->previous_total;
   self->previous_total = cpu.total;
 
-  get_metrics(self, procs, t);
+  get_metrics(self, pids, &buf, t);
 
   // for (int i = 0; MA)
   for (int i = 0; i < MIN(self->number, procs->len); i++) {
