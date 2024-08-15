@@ -18,9 +18,9 @@ struct _BarBarMem {
 enum {
   MEM_PROP_0,
 
-  MEM_PROP_PERCENT,
+  PROP_MEM_PERCENT,
 
-  // MEM_PROP_TOTAL,
+  PROP_MEM_TOTAL,
   // MEM_PROP_USED,
   // MEM_PROP_FREE,
   // MEM_PROP_SHARED,
@@ -62,7 +62,7 @@ static void g_barbar_mem_get_property(GObject *object, guint property_id,
   BarBarMem *mem = BARBAR_MEM(object);
 
   switch (property_id) {
-  case MEM_PROP_PERCENT:
+  case PROP_MEM_PERCENT:
     g_value_set_double(value, mem->percent);
     break;
   default:
@@ -87,7 +87,7 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
    *
    * How much of the memory is used.
    */
-  mem_props[MEM_PROP_PERCENT] =
+  mem_props[PROP_MEM_PERCENT] =
       g_param_spec_double("percent", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
   g_object_class_install_properties(gobject_class, MEM_NUM_PROPERTIES,
                                     mem_props);
@@ -122,7 +122,7 @@ static gboolean g_barbar_mem_tick(BarBarIntervalSensor *sensor) {
   self->percent =
       (1.0 - ((double)(mem.total - mem.user)) / ((double)mem.total));
 
-  g_object_notify_by_pspec(G_OBJECT(self), mem_props[MEM_PROP_PERCENT]);
+  g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_PERCENT]);
   g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
