@@ -101,10 +101,17 @@ static void g_barbar_swap_class_init(BarBarSwapClass *class) {
   /**
    * BarBarSwap:used:
    *
-   * How much of the swap is used.
+   * Total size of the swap.
    */
   swap_props[PROP_SWAP_USED] = g_param_spec_uint64(
       "used", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
+  /**
+   * BarBarSwap:free:
+   *
+   * Total size of the swap.
+   */
+  swap_props[PROP_SWAP_FREE] = g_param_spec_uint64(
+      "free", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, PROP_NUM_PROPERTIES,
                                     swap_props);

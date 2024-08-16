@@ -11,6 +11,7 @@
  */
 struct _BarBarMem {
   BarBarIntervalSensor parent_instance;
+  glibtop_mem mem;
 
   double percent;
 };
@@ -65,6 +66,9 @@ static void g_barbar_mem_get_property(GObject *object, guint property_id,
   case PROP_MEM_PERCENT:
     g_value_set_double(value, mem->percent);
     break;
+  case PROP_MEM_TOTAL:
+    g_value_set_uint64(value, mem->mem.total);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -89,6 +93,15 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
    */
   mem_props[PROP_MEM_PERCENT] =
       g_param_spec_double("percent", NULL, NULL, 0, 100, 0, G_PARAM_READABLE);
+
+  /**
+   * BarBarMem:total:
+   *
+   * How much memory exist on the system.
+   */
+  mem_props[PROP_MEM_TOTAL] = g_param_spec_uint64(
+      "total", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
+
   g_object_class_install_properties(gobject_class, MEM_NUM_PROPERTIES,
                                     mem_props);
   /**
@@ -115,12 +128,10 @@ static void g_barbar_mem_init(BarBarMem *self) {}
 static gboolean g_barbar_mem_tick(BarBarIntervalSensor *sensor) {
   BarBarMem *self = BARBAR_MEM(sensor);
 
-  glibtop_mem mem;
+  glibtop_get_mem(&self->mem);
 
-  glibtop_get_mem(&mem);
-
-  self->percent =
-      (1.0 - ((double)(mem.total - mem.user)) / ((double)mem.total));
+  self->percent = (1.0 - ((double)(self->mem.total - self->mem.user)) /
+                             ((double)self->mem.total));
 
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_PERCENT]);
   g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
