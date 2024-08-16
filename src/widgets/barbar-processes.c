@@ -95,6 +95,9 @@ enum {
 
 G_DEFINE_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, GTK_TYPE_WIDGET)
 
+static void g_barbar_processes_reset(BarBarCpuProcesses *self);
+static gboolean g_barbar_cpu_processes_update(gpointer data);
+
 GType g_barbar_procces_order_get_type(void) {
 
   static gsize barbar_process_order_type;
@@ -131,6 +134,9 @@ static void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu,
   cpu->number = number;
 
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_NUMBER]);
+  if (gtk_widget_get_parent(GTK_WIDGET(cpu)) != NULL) {
+    g_barbar_cpu_processes_update(cpu);
+  }
 }
 
 static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
@@ -157,6 +163,10 @@ static void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
   cpu->order = order;
 
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_ORDER]);
+  g_barbar_processes_reset(cpu);
+  if (gtk_widget_get_parent(GTK_WIDGET(cpu)) != NULL) {
+    g_barbar_cpu_processes_update(cpu);
+  }
 }
 
 static void g_barbar_cpu_processes_set_seperate_cpu(BarBarCpuProcesses *cpu,
@@ -170,6 +180,9 @@ static void g_barbar_cpu_processes_set_seperate_cpu(BarBarCpuProcesses *cpu,
   cpu->seperate_cpu = seperate;
 
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_SEPERATE_CPU]);
+  if (gtk_widget_get_parent(GTK_WIDGET(cpu)) != NULL) {
+    g_barbar_cpu_processes_update(cpu);
+  }
 }
 
 static void g_barbar_cpu_processes_set_property(GObject *object,
@@ -317,19 +330,16 @@ static void sweep(GList **processes) {
 }
 static void set_cpu_sort(GtkWidget *widget, gpointer data) {
   BarBarCpuProcesses *self = data;
-  // printf("cpu\n");
   g_barbar_cpu_processes_set_order(self, BARBAR_ORDER_CPU);
 }
 
 static void set_mem_sort(GtkWidget *widget, gpointer data) {
   BarBarCpuProcesses *self = data;
-  // printf("mem\n");
   g_barbar_cpu_processes_set_order(self, BARBAR_ORDER_MEM);
 }
 
 static void set_io_sort(GtkWidget *widget, gpointer data) {
   BarBarCpuProcesses *self = data;
-  // printf("io\n");
   g_barbar_cpu_processes_set_order(self, BARBAR_ORDER_IO);
 }
 
@@ -368,6 +378,7 @@ static void insert_row(BarBarCpuProcesses *self, proc_info *proc, int row) {
   char str[8];
   row++;
 
+  // TODO: IO doesn't really work atm.
   widget = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
   if (widget) {
     GtkWidget *process = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
@@ -384,7 +395,6 @@ static void insert_row(BarBarCpuProcesses *self, proc_info *proc, int row) {
     GtkWidget *io = gtk_grid_get_child_at(GTK_GRID(self->grid), 3, row);
     snprintf(str, 7, "%lu", proc->io.disk_wchar);
     gtk_label_set_text(GTK_LABEL(io), str);
-
   } else {
     GtkWidget *process = gtk_label_new(proc->state.cmd);
     gtk_widget_set_halign(process, GTK_ALIGN_START);
@@ -456,7 +466,13 @@ static gint g_barbar_io_sort(gconstpointer a, gconstpointer b) {
   const proc_info *proc_a = a;
   const proc_info *proc_b = b;
 
-  return proc_a->io.disk_wchar - proc_b->io.disk_wchar;
+  if (proc_b->io.disk_wchar > proc_a->io.disk_wchar) {
+    return 1;
+  }
+  if (proc_b->io.disk_wchar < proc_a->io.disk_wchar) {
+    return -1;
+  }
+  return 0;
 }
 
 static void get_proctime(BarBarCpuProcesses *self, proc_info *proc,
@@ -550,6 +566,7 @@ static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
 
       get_proctime(self, proc, total);
       get_mem(proc, self->memory);
+      // printf("%s - %lu\n", proc->state.cmd, proc->io.disk_wchar);
     }
 
     break;
@@ -564,8 +581,15 @@ static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
   }
   for (GList *l = self->processes; l != NULL; l = l->next) {
     proc_info *proc = l->data;
-    // printf("%s - %f\n", proc->state.cmd, proc->amount);
+    // printf("%s - %lu\n", proc->state.cmd, proc->io.disk_wchar);
   }
+}
+static void g_barbar_processes_reset(BarBarCpuProcesses *self) {
+  if (self->processes) {
+    g_list_free_full(self->processes, g_free);
+  }
+  self->processes = NULL;
+  self->previous_total = 0;
 }
 
 static gboolean g_barbar_cpu_processes_update(gpointer data) {
@@ -573,7 +597,6 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
   glibtop_proclist buf;
   glibtop_cpu cpu;
   pid_t *pids;
-  // GArray *procs;
   guint64 t; /* GLIBTOP_CPU_TOTAL		*/
 
   glibtop_get_cpu(&cpu);
@@ -599,7 +622,6 @@ static gboolean g_barbar_cpu_processes_update(gpointer data) {
 
 static void g_barbar_cpu_processes_root(GtkWidget *widget) {
   BarBarCpuProcesses *cpu = BARBAR_CPU_PROCESSES(widget);
-  glibtop_init();
 
   if (cpu->source_id > 0) {
     g_source_remove(cpu->source_id);

@@ -106,7 +106,7 @@ static void g_barbar_filesystem_class_init(BarBarFilesystemClass *class) {
    * Path to the filesystem
    */
   fs_props[PROP_DEVICE] = g_param_spec_string(
-      "path", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+      "path", NULL, NULL, "/", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   /**
    * BarBarFilesystem:percent:

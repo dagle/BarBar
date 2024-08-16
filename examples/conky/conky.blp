@@ -213,11 +213,11 @@ BarBar.Background background {
         }
       }
 
-      // TODO: fix
+      // TODO: pretty print temp
 
       [child]
       Gtk.Label {
-        label: "+33.0C";
+        label: bind temp.temperature;
         xalign: 1;
 
         layout {
@@ -296,7 +296,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "0/16Gb";
+        label: bind swap.total;
         xalign: 1;
 
         layout {
@@ -408,6 +408,18 @@ BarBar.Background background {
       // TODO: Add 2 graphs for IO
     }
 
+    [child]
+    BarBar.Graph {
+      // value: bind mem.percent;
+      min-height: 40;
+    }
+
+    [child]
+    BarBar.Graph {
+      // value: bind mem.percent;
+      min-height: 40;
+    }
+
     Gtk.Box {
       orientation: horizontal;
 
@@ -442,7 +454,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "0/16Gb";
+        label: bind gateway.value;
         xalign: 1;
 
         layout {
@@ -465,7 +477,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "0/16Gb";
+        label: bind net.interface;
         xalign: 1;
 
         layout {
@@ -488,7 +500,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "0/16Gb";
+        label: bind external.value;
         xalign: 1;
 
         layout {
@@ -544,9 +556,37 @@ BarBar.Background background {
     }
 
     [child]
+    BarBar.Graph {
+      // value: bind mem.percent;
+      min-height: 40;
+    }
+
+    [child]
+    BarBar.Graph {
+      // value: bind mem.percent;
+      min-height: 40;
+    }
+
+    Gtk.Box {
+      orientation: horizontal;
+
+      [child]
+      Gtk.Label {
+        xalign: 0;
+        label: "Procceses:";
+        name: "header";
+      }
+
+      [child]
+      Gtk.Separator {
+        hexpand: true;
+      }
+    }
+
+    [child]
     BarBar.CpuProcesses {
-      number: 5;
-      order: mem;
+      number: 3;
+      order: io;
       seperate-cpu: false;
     }
   }
@@ -602,4 +642,20 @@ BarBar.Cmd kernel {
 BarBar.Uptime uptime {
   interval: 1000;
   format: "%cy%(years )%ch%(hours )%02mm %02ss";
+}
+
+BarBar.Temperature temp {}
+
+BarBar.Filesystem fs {}
+
+BarBar.Swap swap {}
+
+BarBar.Network net {}
+
+BarBar.Cmd external {
+  cmd: "wget -q -O- https://ipecho.net/plain";
+}
+
+BarBar.Cmd gateway {
+  cmd: "gateway";
 }

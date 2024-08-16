@@ -61,13 +61,13 @@ static void g_barbar_swap_get_property(GObject *object, guint property_id,
     g_value_set_double(value, swap->percent);
     break;
   case PROP_SWAP_TOTAL:
-    g_value_set_uint64(value, swap->percent);
+    g_value_set_uint64(value, swap->swap.total);
     break;
   case PROP_SWAP_FREE:
-    g_value_set_uint64(value, swap->percent);
+    g_value_set_uint64(value, swap->swap.free);
     break;
   case PROP_SWAP_USED:
-    g_value_set_uint64(value, swap->percent);
+    g_value_set_uint64(value, swap->swap.used);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -144,6 +144,8 @@ static gboolean g_barbar_swap_tick(BarBarIntervalSensor *sensor) {
   self->percent = self->swap.used / (double)self->swap.total;
 
   g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_PERCENT]);
-  g_signal_emit(G_OBJECT(self), swap_signals[TICK], 0);
+  g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_TOTAL]);
+  g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_USED]);
+  g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_FREE]);
   return G_SOURCE_CONTINUE;
 }

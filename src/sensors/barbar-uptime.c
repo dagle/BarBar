@@ -152,7 +152,6 @@ static void g_barbar_uptime_class_init(BarBarUptimeClass *class) {
 static void g_barbar_uptime_init(BarBarUptime *uptime) {
   glibtop_uptime buf;
   uptime->format = g_strdup(DEFAULT_FORMAT);
-  glibtop_init();
 
   glibtop_get_uptime(&buf);
 

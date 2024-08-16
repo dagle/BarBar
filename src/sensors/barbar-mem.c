@@ -22,8 +22,8 @@ enum {
   PROP_MEM_PERCENT,
 
   PROP_MEM_TOTAL,
-  // MEM_PROP_USED,
-  // MEM_PROP_FREE,
+  PROP_MEM_USED,
+  PROP_MEM_FREE,
   // MEM_PROP_SHARED,
   // MEM_PROP_BUFFER,
   // MEM_PROP_CACHE,
@@ -69,6 +69,12 @@ static void g_barbar_mem_get_property(GObject *object, guint property_id,
   case PROP_MEM_TOTAL:
     g_value_set_uint64(value, mem->mem.total);
     break;
+  case PROP_MEM_USED:
+    g_value_set_uint64(value, mem->mem.used);
+    break;
+  case PROP_MEM_FREE:
+    g_value_set_uint64(value, mem->mem.free);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -101,6 +107,20 @@ static void g_barbar_mem_class_init(BarBarMemClass *class) {
    */
   mem_props[PROP_MEM_TOTAL] = g_param_spec_uint64(
       "total", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
+  /**
+   * BarBarMem:free:
+   *
+   * How much memory is currently free.
+   */
+  mem_props[PROP_MEM_FREE] = g_param_spec_uint64(
+      "free", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
+  /**
+   * BarBarMem:used:
+   *
+   * How much memory is currently used.
+   */
+  mem_props[PROP_MEM_USED] = g_param_spec_uint64(
+      "used", NULL, NULL, 0, G_MAXUINT64, 0, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, MEM_NUM_PROPERTIES,
                                     mem_props);
@@ -134,6 +154,8 @@ static gboolean g_barbar_mem_tick(BarBarIntervalSensor *sensor) {
                              ((double)self->mem.total));
 
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_PERCENT]);
+  g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_FREE]);
+  g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_USED]);
   g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
