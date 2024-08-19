@@ -1,4 +1,6 @@
 #include "barbar-network.h"
+#include "glib.h"
+#include "sensors/barbar-interval-sensor.h"
 #include <glibtop/netload.h>
 #include <glibtop/parameter.h>
 
@@ -22,13 +24,16 @@
  *
  */
 struct _BarBarNetwork {
-  BarBarSensor parent_instance;
+  BarBarIntervalSensor parent_instance;
 
   char *interface;
+  glibtop_netload netload;
+  char address[INET_ADDRSTRLEN];
+  char address6[INET6_ADDRSTRLEN];
   int family;
 
-  guint64 bytes_in;
-  guint64 bytes_out;
+  guint64 bytes_in_old;
+  guint64 bytes_out_old;
 
   guint64 up_speed;
   guint64 down_speed;
@@ -38,6 +43,8 @@ enum {
   PROP_0,
 
   PROP_INTERFACE,
+  PROP_ADDRESS,
+  PROP_ADDRESS6,
 
   PROP_UP_SPEED,
   PROP_DOWN_SPEED,
@@ -90,6 +97,12 @@ static void g_barbar_network_get_property(GObject *object, guint property_id,
   case PROP_INTERFACE:
     g_value_set_string(value, network->interface);
     break;
+  case PROP_ADDRESS:
+    g_value_set_string(value, network->address);
+    break;
+  case PROP_ADDRESS6:
+    g_value_set_string(value, network->address6);
+    break;
   case PROP_UP_SPEED:
     g_value_set_uint64(value, network->up_speed);
     break;
@@ -101,8 +114,6 @@ static void g_barbar_network_get_property(GObject *object, guint property_id,
   }
 }
 
-static void g_barbar_network_constructed(GObject *obj);
-
 static void g_barbar_network_class_init(BarBarNetworkClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   BarBarIntervalSensorClass *interval_class =
@@ -112,7 +123,6 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
 
   gobject_class->set_property = g_barbar_network_set_property;
   gobject_class->get_property = g_barbar_network_get_property;
-  gobject_class->constructed = g_barbar_network_constructed;
 
   /**
    * BarBarNetwork:interface:
@@ -123,6 +133,21 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
       "interface", "Interface", "Interface to measure speed on", NULL,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
+  /**
+   * BarBarNetwork:address:
+   *
+   * The ipv4 address
+   */
+  network_props[PROP_ADDRESS] =
+      g_param_spec_string("address", "Interface", NULL, NULL, G_PARAM_READABLE);
+
+  /**
+   * BarBarNetwork:address6:
+   *
+   * The ipv6 address
+   */
+  network_props[PROP_ADDRESS6] =
+      g_param_spec_string("address6", NULL, NULL, NULL, G_PARAM_READABLE);
   /**
    * BarBarNetwork:up-speed:
    *
@@ -161,13 +186,8 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
 }
 
 static void g_barbar_network_init(BarBarNetwork *self) {
-  self->bytes_out = 0;
-  self->bytes_in = 0;
-}
-
-static void g_barbar_network_constructed(GObject *obj) {
-  BarBarNetwork *self = BARBAR_NETWORK(obj);
-  G_OBJECT_CLASS(g_barbar_network_parent_class)->constructed(obj);
+  self->bytes_out_old = 0;
+  self->bytes_in_old = 0;
 }
 
 static char *hwaddress_format_for_display(glibtop_netload *buf) {
@@ -186,44 +206,40 @@ static char *hwaddress_format_for_display(glibtop_netload *buf) {
 
 static gboolean g_barbar_network_tick(BarBarIntervalSensor *sensor) {
   BarBarNetwork *net = BARBAR_NETWORK(sensor);
-
-  glibtop_netload netload;
-  struct in_addr addr, subnet;
-  char address_string[INET_ADDRSTRLEN], subnet_string[INET_ADDRSTRLEN];
-  char address6_string[INET6_ADDRSTRLEN], prefix6_string[INET6_ADDRSTRLEN];
+  struct in_addr addr;
 
   if (net->interface == NULL) {
+    g_printerr("No interface set for network sensor\n");
     return G_SOURCE_REMOVE;
   }
 
-  glibtop_get_netload(&netload, net->interface);
+  glibtop_get_netload(&net->netload, net->interface);
 
-  addr.s_addr = netload.address;
-  subnet.s_addr = netload.subnet;
+  addr.s_addr = net->netload.address;
 
-  inet_ntop(AF_INET, &addr, address_string, INET_ADDRSTRLEN);
-  inet_ntop(AF_INET, &subnet, subnet_string, INET_ADDRSTRLEN);
-  inet_ntop(AF_INET6, netload.address6, address6_string, INET6_ADDRSTRLEN);
-  inet_ntop(AF_INET6, netload.prefix6, prefix6_string, INET6_ADDRSTRLEN);
+  inet_ntop(AF_INET, &addr, net->address, INET_ADDRSTRLEN);
+  inet_ntop(AF_INET6, net->netload.address6, net->address6, INET6_ADDRSTRLEN);
 
-  if (!net->bytes_in) {
-    net->bytes_in = netload.bytes_in;
+  if (!net->bytes_in_old) {
+    net->bytes_in_old = net->netload.bytes_in;
   }
-  if (!net->bytes_in) {
-    net->bytes_out = netload.bytes_out;
+  if (!net->bytes_in_old) {
+    net->bytes_out_old = net->netload.bytes_out;
   }
   guint interval = g_barbar_interval_sensor_get_interval(sensor);
 
   guint tick = interval / 1000;
 
-  net->down_speed = (netload.bytes_in - net->bytes_in) / tick;
-  net->up_speed = (netload.bytes_out - net->bytes_out) / tick;
+  net->down_speed = (net->netload.bytes_in - net->bytes_in_old) / tick;
+  net->up_speed = (net->netload.bytes_out - net->bytes_out_old) / tick;
 
-  net->bytes_in = netload.bytes_in;
-  net->bytes_out = netload.bytes_out;
+  net->bytes_in_old = net->netload.bytes_in;
+  net->bytes_out_old = net->netload.bytes_out;
 
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_UP_SPEED]);
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_DOWN_SPEED]);
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_ADDRESS]);
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_ADDRESS6]);
 
   g_signal_emit(net, network_signals[TICK], 0);
 

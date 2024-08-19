@@ -5,7 +5,7 @@ BarBar.Background background {
   top-margin: 0;
   bottom-margin: 0;
   right-margin: 0;
-  left-margin: 1100;
+  left-margin: 1050;
 
   Gtk.Box {
     hexpand: true;
@@ -373,7 +373,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: "95,7G/1830G";
+        label: bind fs.percent;
         xalign: 1;
 
         layout {
@@ -404,8 +404,6 @@ BarBar.Background background {
           row: 1;
         }
       }
-
-      // TODO: Add 2 graphs for IO
     }
 
     [child]
@@ -438,7 +436,6 @@ BarBar.Background background {
 
     Gtk.Grid {
       hexpand: true;
-      // TODO: fix all of this
 
       [child]
       Gtk.Label {
@@ -477,7 +474,7 @@ BarBar.Background background {
       [child]
       Gtk.Label {
         hexpand: true;
-        label: bind net.interface;
+        label: bind net.address;
         xalign: 1;
 
         layout {
@@ -646,11 +643,16 @@ BarBar.Uptime uptime {
 
 BarBar.Temperature temp {}
 
-BarBar.Filesystem fs {}
+BarBar.Filesystem fs {
+  path: "/";
+}
 
 BarBar.Swap swap {}
 
-BarBar.Network net {}
+BarBar.Network net {
+  interface: "br0";
+  interval: 1000;
+}
 
 BarBar.Cmd external {
   cmd: "wget -q -O- https://ipecho.net/plain";
@@ -659,3 +661,5 @@ BarBar.Cmd external {
 BarBar.Cmd gateway {
   cmd: "gateway";
 }
+
+BarBar.Disk disk {}

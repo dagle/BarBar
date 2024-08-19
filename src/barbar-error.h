@@ -6,6 +6,7 @@ typedef enum {
   BARBAR_ERROR_DWL_IPC,
   BARBAR_ERROR_BAD_SWAY_IPC,
   BARBAR_ERROR_MPRIS,
+  BARBAR_ERROR_NO_INTERFACE,
 } BarBarError;
 
 #define BARBAR_ERROR (g_barbar_error_quark())

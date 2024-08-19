@@ -33,6 +33,7 @@ libbarbar_src = [
   'sensors/barbar-weather.c',
   'sensors/barbar-filesystem.c',
   'sensors/barbar-uptime.c',
+  'sensors/barbar-disk.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -101,6 +102,7 @@ libbarbar_headers = [
   'sensors/barbar-weather.h',
   'sensors/barbar-filesystem.h',
   'sensors/barbar-uptime.h',
+  'sensors/barbar-disk.h',
 
   'sensors/barbar-mpris.h',
 

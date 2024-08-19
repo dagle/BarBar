@@ -25,7 +25,7 @@ struct _BarBarFilesystem {
 enum {
   PROP_0,
 
-  PROP_DEVICE,
+  PROP_PATH,
   PROP_PERCENT,
   PROP_USAGE,
   PROP_CAPACITY,
@@ -52,7 +52,7 @@ static void g_barbar_filesystem_set_path(BarBarFilesystem *bar,
   g_free(bar->path);
   bar->path = g_strdup(path);
 
-  g_object_notify_by_pspec(G_OBJECT(bar), fs_props[PROP_DEVICE]);
+  g_object_notify_by_pspec(G_OBJECT(bar), fs_props[PROP_PATH]);
 }
 
 static void g_barbar_filesystem_set_property(GObject *object, guint property_id,
@@ -61,7 +61,7 @@ static void g_barbar_filesystem_set_property(GObject *object, guint property_id,
   BarBarFilesystem *fs = BARBAR_FILESYSTEM(object);
 
   switch (property_id) {
-  case PROP_DEVICE:
+  case PROP_PATH:
     g_barbar_filesystem_set_path(fs, g_value_get_string(value));
     break;
   default:
@@ -74,7 +74,7 @@ static void g_barbar_filesystem_get_property(GObject *object, guint property_id,
   BarBarFilesystem *fs = BARBAR_FILESYSTEM(object);
 
   switch (property_id) {
-  case PROP_DEVICE:
+  case PROP_PATH:
     g_value_set_string(value, fs->path);
     break;
   case PROP_PERCENT:
@@ -105,7 +105,7 @@ static void g_barbar_filesystem_class_init(BarBarFilesystemClass *class) {
    *
    * Path to the filesystem
    */
-  fs_props[PROP_DEVICE] = g_param_spec_string(
+  fs_props[PROP_PATH] = g_param_spec_string(
       "path", NULL, NULL, "/", G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   /**

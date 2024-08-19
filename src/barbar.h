@@ -8,6 +8,7 @@
 #include "sensors/barbar-clock.h"
 #include "sensors/barbar-cmd.h"
 #include "sensors/barbar-cpu.h"
+#include "sensors/barbar-disk.h"
 #include "sensors/barbar-filesystem.h"
 #include "sensors/barbar-gamemode.h"
 #include "sensors/barbar-inhibitor.h"
