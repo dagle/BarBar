@@ -292,12 +292,28 @@ BarBar.Background background {
       }
 
       // TODO: fix
+      // [child]
+      // Gtk.Label {
+      //   hexpand: true;
+      //   label: bind swap.total;
+      //   xalign: 1;
+      // 
+      //   layout {
+      //     column: 1;
+      //     row: 0;
+      //   }
+      // }
 
       [child]
-      Gtk.Label {
+      BarBar.Label {
+        sensor: swap;
         hexpand: true;
-        label: bind swap.total;
-        xalign: 1;
+        templ: "{{BarBarSwap.used}} / {{BarBarSwap.total}}";
+
+        [child]
+        Gtk.Label {
+          xalign: 1;
+        }
 
         layout {
           column: 1;
@@ -318,12 +334,16 @@ BarBar.Background background {
         }
       }
 
-      // TODO: fix
-
       [child]
-      Gtk.Label {
-        label: "3.6/64Gb";
-        xalign: 1;
+      BarBar.Label {
+        sensor: mem;
+        hexpand: true;
+        templ: "{{BarBarMem.used}} / {{BarBarMem.total}}";
+
+        [child]
+        Gtk.Label {
+          xalign: 1;
+        }
 
         layout {
           column: 1;
@@ -394,27 +414,47 @@ BarBar.Background background {
       }
 
       [child]
-      Gtk.Label {
+      BarBar.Label {
+        sensor: disk;
         hexpand: true;
-        label: "95,7G/1830G";
-        xalign: 1;
+        templ: "{{BarBarDisk.read}} / {{BarBarDisk.write}}";
+
+        [child]
+        Gtk.Label {
+          xalign: 1;
+        }
 
         layout {
           column: 1;
           row: 1;
         }
       }
+
+      // Gtk.Label {
+      //   hexpand: true;
+      //   label: "95,7G/1830G";
+      //   xalign: 1;
+      // 
+      //   layout {
+      //     column: 1;
+      //     row: 1;
+      //   }
+      // }
     }
 
     [child]
     BarBar.Graph {
-      // value: bind mem.percent;
+      // you should set the max-value to the max speed of your disk
+      // use hdparm to get this info
+      value: bind disk.read-speed;
       min-height: 40;
     }
 
     [child]
     BarBar.Graph {
-      // value: bind mem.percent;
+      // you should set the max-value to the max speed of your disk
+      // use hdparm to get this info
+      value: bind disk.write-speed;
       min-height: 40;
     }
 
@@ -506,61 +546,74 @@ BarBar.Background background {
         }
       }
 
-      // [child]
-      // Gtk.Label {
-      //   label: "Upload speed / Download Total:";
-      //   xalign: 0;
-      // 
-      //   layout {
-      //     column: 0;
-      //     row: 3;
-      //   }
-      // }
-      // 
-      // [child]
-      // Gtk.Label {
-      //   hexpand: true;
-      //   label: "0/16Gb";
-      //   xalign: 1;
-      // 
-      //   layout {
-      //     column: 1;
-      //     row: 3;
-      //   }
-      // }
-      // 
-      // [child]
-      // Gtk.Label {
-      //   label: "Upload speed / Download Speed:";
-      //   xalign: 0;
-      // 
-      //   layout {      //     column: 0;
-      //     row: 4;
-      //   }
-      // }
-      // 
-      // [child]
-      // Gtk.Label {
-      //   hexpand: true;
-      //   label: "0/16Gb";
-      //   xalign: 1;
-      // 
-      //   layout {
-      //     column: 1;
-      //     row: 4;
-      //   }
-      // }
+      [child]
+      Gtk.Label {
+        label: "Upload speed / Download Total:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 3;
+        }
+      }
+
+      [child]
+      BarBar.Label {
+        hexpand: true;
+        sensor: net;
+        templ: "{{BarBarNetwork.download}} / {{BarBarNetwork.upload}}";
+
+        [child]
+        Gtk.Label {
+          xalign: 1;
+        }
+
+        layout {
+          column: 1;
+          row: 3;
+        }
+      }
+
+      [child]
+      Gtk.Label {
+        label: "Upload speed / Download Speed:";
+        xalign: 0;
+
+        layout {
+          column: 0;
+          row: 4;
+        }
+      }
+
+      [child]
+      BarBar.Label {
+        hexpand: true;
+        sensor: net;
+        templ: "{{BarBarNetwork.down_speed}} / {{BarBarNetwork.up_speed}}";
+
+        [child]
+        Gtk.Label {
+          xalign: 1;
+        }
+
+        layout {
+          column: 1;
+          row: 4;
+        }
+      }
     }
 
     [child]
     BarBar.Graph {
-      // value: bind mem.percent;
+      // you should set the max-value to the max speed of your network
+      value: bind net.down-speed;
       min-height: 40;
     }
 
     [child]
     BarBar.Graph {
-      // value: bind mem.percent;
+      // you should set the max-value to the max speed of your network
+      value: bind net.up-speed;
       min-height: 40;
     }
 
@@ -650,7 +703,7 @@ BarBar.Filesystem fs {
 BarBar.Swap swap {}
 
 BarBar.Network net {
-  interface: "br0";
+  interface: "wlan0";
   interval: 1000;
 }
 
@@ -662,4 +715,6 @@ BarBar.Cmd gateway {
   cmd: "gateway";
 }
 
-BarBar.Disk disk {}
+BarBar.Disk disk {
+  device: "sda";
+}

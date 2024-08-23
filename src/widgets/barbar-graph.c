@@ -239,9 +239,9 @@ static void g_barbar_graph_get_property(GObject *object, guint property_id,
   }
 }
 
-static inline double get_y(double height, GList *link) {
+static inline double get_y(double height, double max_value, GList *link) {
   double *v = link->data;
-  return height - height * *v;
+  return height - height * (*v / max_value);
 }
 
 static void update_path_discrete(BarBarGraph *self) {
@@ -255,7 +255,7 @@ static void update_path_discrete(BarBarGraph *self) {
 
   double x = 0;
 
-  double y = get_y(self->height, link);
+  double y = get_y(self->height, self->max_value, link);
   double delta = self->width / self->capasity;
 
   gsk_path_builder_move_to(builder, 0, y);
@@ -263,7 +263,7 @@ static void update_path_discrete(BarBarGraph *self) {
   while (link) {
 
     gsk_path_builder_line_to(builder, x, next);
-    next = get_y(self->height, link);
+    next = get_y(self->height, self->max_value, link);
     gsk_path_builder_line_to(builder, x, next);
     link = link->next;
     if (link) {
@@ -293,14 +293,13 @@ static void update_path_continuous(BarBarGraph *self) {
 
   double x = 0;
 
-  double y = get_y(self->height, link);
+  double y = get_y(self->height, self->max_value, link);
   double delta = self->width / self->capasity;
 
   gsk_path_builder_move_to(builder, 0, y);
   while (link) {
-    double y;
+    double y = get_y(self->height, self->max_value, link);
 
-    y = get_y(self->height, link);
     gsk_path_builder_line_to(builder, x, y);
     link = link->next;
     if (link) {

@@ -147,5 +147,6 @@ static gboolean g_barbar_swap_tick(BarBarIntervalSensor *sensor) {
   g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_TOTAL]);
   g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_USED]);
   g_object_notify_by_pspec(G_OBJECT(self), swap_props[PROP_SWAP_FREE]);
+  g_signal_emit(G_OBJECT(self), swap_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }

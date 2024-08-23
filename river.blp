@@ -197,6 +197,23 @@ BarBar.Bar {
     Gtk.Label {
       label: bind pomodoro.current;
     }
+
+    [end]
+    Gtk.Box {
+      // play button
+      Gtk.Button {}
+
+      // stop button
+      Gtk.Button {}
+
+      BarBar.Label {
+        sensor: player;
+        templ: "{{BarBarPlayer.artist}} - {{BarBarPlayer.song}} | {{BarBarPlayer.position}}:{{BarBarPlayer.length}}";
+
+        [child]
+        Gtk.Label {}
+      }
+    }
   }
 }
 
@@ -286,3 +303,5 @@ BarBar.SystemdUnits units {
 BarBar.RiverMode mode {}
 
 BarBar.Weather weater {}
+
+BarBar.MprisPlayer player {}

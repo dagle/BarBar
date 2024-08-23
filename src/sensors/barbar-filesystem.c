@@ -17,9 +17,6 @@ struct _BarBarFilesystem {
   guint64 usage;
   guint32 blocksize;
   double percent;
-
-  guint interval;
-  guint source_id;
 };
 
 enum {

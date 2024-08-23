@@ -1,8 +1,8 @@
 project(
   'barbar', 'c',
   version: '1.0',
-  license: 'MIT',
   meson_version: '>= 1.0.0',
+  license: 'LGPL-2.1-or-later'
   # default_options: [
   # ],
 )

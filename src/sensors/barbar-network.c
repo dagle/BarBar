@@ -32,8 +32,8 @@ struct _BarBarNetwork {
   char address6[INET6_ADDRSTRLEN];
   int family;
 
-  guint64 bytes_in_old;
-  guint64 bytes_out_old;
+  guint64 bytes_in;
+  guint64 bytes_out;
 
   guint64 up_speed;
   guint64 down_speed;
@@ -46,6 +46,8 @@ enum {
   PROP_ADDRESS,
   PROP_ADDRESS6,
 
+  PROP_UPLOAD,
+  PROP_DOWNLOAD,
   PROP_UP_SPEED,
   PROP_DOWN_SPEED,
 
@@ -109,6 +111,12 @@ static void g_barbar_network_get_property(GObject *object, guint property_id,
   case PROP_DOWN_SPEED:
     g_value_set_uint64(value, network->down_speed);
     break;
+  case PROP_UPLOAD:
+    g_value_set_uint64(value, network->bytes_out);
+    break;
+  case PROP_DOWNLOAD:
+    g_value_set_uint64(value, network->bytes_in);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -162,6 +170,20 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
    */
   network_props[PROP_DOWN_SPEED] = g_param_spec_uint64(
       "down-speed", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
+  /**
+   * BarBarNetwork:upload:
+   *
+   * The total amount of uploaded data
+   */
+  network_props[PROP_UPLOAD] = g_param_spec_uint64(
+      "upload", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
+  /**
+   * BarBarNetwork:download:
+   *
+   * The total amount of downloaded data
+   */
+  network_props[PROP_DOWNLOAD] = g_param_spec_uint64(
+      "download", NULL, NULL, 0, UINT64_MAX, 0, G_PARAM_READABLE);
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     network_props);
 
@@ -186,8 +208,8 @@ static void g_barbar_network_class_init(BarBarNetworkClass *class) {
 }
 
 static void g_barbar_network_init(BarBarNetwork *self) {
-  self->bytes_out_old = 0;
-  self->bytes_in_old = 0;
+  self->bytes_out = 0;
+  self->bytes_in = 0;
 }
 
 static char *hwaddress_format_for_display(glibtop_netload *buf) {
@@ -220,26 +242,28 @@ static gboolean g_barbar_network_tick(BarBarIntervalSensor *sensor) {
   inet_ntop(AF_INET, &addr, net->address, INET_ADDRSTRLEN);
   inet_ntop(AF_INET6, net->netload.address6, net->address6, INET6_ADDRSTRLEN);
 
-  if (!net->bytes_in_old) {
-    net->bytes_in_old = net->netload.bytes_in;
+  if (!net->bytes_in) {
+    net->bytes_in = net->netload.bytes_in;
   }
-  if (!net->bytes_in_old) {
-    net->bytes_out_old = net->netload.bytes_out;
+  if (!net->bytes_out) {
+    net->bytes_out = net->netload.bytes_out;
   }
   guint interval = g_barbar_interval_sensor_get_interval(sensor);
 
   guint tick = interval / 1000;
 
-  net->down_speed = (net->netload.bytes_in - net->bytes_in_old) / tick;
-  net->up_speed = (net->netload.bytes_out - net->bytes_out_old) / tick;
+  net->down_speed = (net->netload.bytes_in - net->bytes_in) / tick;
+  net->up_speed = (net->netload.bytes_out - net->bytes_out) / tick;
 
-  net->bytes_in_old = net->netload.bytes_in;
-  net->bytes_out_old = net->netload.bytes_out;
+  net->bytes_in = net->netload.bytes_in;
+  net->bytes_out = net->netload.bytes_out;
 
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_UP_SPEED]);
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_DOWN_SPEED]);
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_ADDRESS]);
   g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_ADDRESS6]);
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_UPLOAD]);
+  g_object_notify_by_pspec(G_OBJECT(net), network_props[PROP_DOWNLOAD]);
 
   g_signal_emit(net, network_signals[TICK], 0);
 
