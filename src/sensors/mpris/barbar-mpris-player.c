@@ -1,52 +1,9 @@
 #include "sensors/mpris/barbar-mpris-player.h"
+#include "barbar-enum.h"
 #include "barbar-error.h"
 #include "mpris.h"
 #include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
-
-GType g_barbar_playback_status_get_type(void) {
-
-  static gsize barbar_playback_status_type;
-  if (g_once_init_enter(&barbar_playback_status_type)) {
-
-    static const GEnumValue pattern_types[] = {
-        {BARBAR_PLAYBACK_STATUS_PLAYING, "BARBAR_PLAYBACK_STATUS_PLAYING",
-         "playing"},
-        {BARBAR_PLAYBACK_STATUS_PAUSED, "BARBAR_PLAYBACK_STATUS_PAUSED",
-         "paused"},
-        {BARBAR_PLAYBACK_STATUS_STOPPED, "BARBAR_PLAYBACK_STATUS_STOPPED",
-         "stopped"},
-        {0, NULL, NULL},
-    };
-
-    GType type = 0;
-    type = g_enum_register_static("BarBarBarPlaybackStatus", pattern_types);
-    g_once_init_leave(&barbar_playback_status_type, type);
-  }
-  return barbar_playback_status_type;
-}
-
-GType g_barbar_loop_status_get_type(void) {
-
-  static gsize barbar_loop_status_type;
-  if (g_once_init_enter(&barbar_loop_status_type)) {
-
-    static const GEnumValue pattern_types[] = {
-        {BARBAR_PLAYBACK_LOOP_STATUS_NONE, "BARBAR_PLAYBACK_LOOP_STATUS_NONE",
-         "none"},
-        {BARBAR_PLAYBACK_LOOP_STATUS_TRACK, "BARBAR_PLAYBACK_LOOP_STATUS_TRACK",
-         "track"},
-        {BARBAR_PLAYBACK_LOOK_STATUS_PLAYLIST,
-         "BARBAR_PLAYBACK_LOOK_STATUS_PLAYLIST", "playlist"},
-        {0, NULL, NULL},
-    };
-
-    GType type = 0;
-    type = g_enum_register_static("BarBarBarLoopStatus", pattern_types);
-    g_once_init_leave(&barbar_loop_status_type, type);
-  }
-  return barbar_loop_status_type;
-}
 
 /**
  * BarBarMprisPlayer:

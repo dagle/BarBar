@@ -201,14 +201,23 @@ BarBar.Bar {
     [end]
     Gtk.Box {
       // play button
-      Gtk.Button {}
+      // BarBar.PlayButton {
+      // player: player;
+      // 
+      // }
+      Gtk.Button {
+        clicked => $g_barbar_player_toggle_play(player) swapped;
+      }
 
       // stop button
-      Gtk.Button {}
+      Gtk.Button {
+        icon-name: "media-playback-start-symbolic";
+        clicked => $g_barbar_player_stop(player) swapped;
+      }
 
       BarBar.Label {
         sensor: player;
-        templ: "{{BarBarPlayer.artist}} - {{BarBarPlayer.song}} | {{BarBarPlayer.position}}:{{BarBarPlayer.length}}";
+        templ: "{{BarBarPlayer.artist}} - {{BarBarPlayer.song}} | {{BarBarPlayer.position}} / {{BarBarPlayer.length}}";
 
         [child]
         Gtk.Label {}

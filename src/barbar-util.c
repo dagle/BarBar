@@ -25,6 +25,43 @@ GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget) {
 }
 
 /**
+ * g_barbar_time_to_string:
+ * @secs: The amount of seconds
+ * @remaining: If we should print the time as negative
+ * @force_hour: if should print hour even if it's 0
+ *
+ * Returns: (transfer full): A string for the time
+ */
+char *g_barbar_time_to_string(gint64 secs, gboolean remaining,
+                              gboolean force_hour) {
+  int sec, min, hour, _time;
+
+  // _time = (int)(secs / G_USEC_PER_SEC);
+  _time = secs;
+  if (remaining)
+    _time++;
+
+  sec = _time % 60;
+  _time = _time - sec;
+  min = (_time % (60 * 60)) / 60;
+  _time = _time - (min * 60);
+  hour = _time / (60 * 60);
+
+  if (hour > 0 || force_hour) {
+    if (!remaining) {
+      return g_strdup_printf("%d:%02d:%02d", hour, min, sec);
+    } else {
+      return g_strdup_printf("-%d:%02d:%02d", hour, min, sec);
+    }
+  }
+
+  if (remaining) {
+    return g_strdup_printf("-%d:%02d", min, sec);
+  }
+  return g_strdup_printf("%d:%02d", min, sec);
+}
+
+/**
  * g_barbar_default_style_provider:
  * @path: path relative in config to find config
  *

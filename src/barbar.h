@@ -2,6 +2,7 @@
 
 #include "barbar-background.h"
 #include "barbar-bar.h"
+#include "barbar-enum.h"
 #include "barbar-util.h"
 #include "sensors/barbar-backlight.h"
 #include "sensors/barbar-battery.h"

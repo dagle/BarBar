@@ -9,6 +9,7 @@ libbarbar_src = [
   'barbar-util.c',
   'barbar-timespan.c',
   'barbar-error.c',
+  'barbar-enum.c',
 
   'sensors/barbar-sensor.c',
   'sensors/barbar-interval-sensor.c',
@@ -79,6 +80,7 @@ libbarbar_headers = [
   'barbar-util.h',
   'barbar-timespan.h',
   'barbar-error.h',
+  'barbar-enum.h',
 
   'sensors/barbar-sensor.h',
   'sensors/barbar-interval-sensor.h',

@@ -54,10 +54,6 @@ enum {
   NUM_PROPERTIES,
 };
 
-struct _GraphWidgetClass {
-  GtkWidgetClass parent_class;
-};
-
 static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
