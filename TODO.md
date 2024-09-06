@@ -7,7 +7,7 @@ Maybe: Fan/fan-speeds, UPS, entropy, hddtemp, hwmon, i2c, machine info, gpu (nvi
 
 Finish up:
 - [ ] Go over all memory allocation and make sure everything is freed correctly
-- [ ] All the percentage bullshit. Just make a print function. print_props should be
+- [x] All the percentage bullshit. Just make a print function. print_props should be
 the base of that function.
 
 - [-] Tray
@@ -30,10 +30,8 @@ Bar-graph
 # cheat sheet example
 
 # libgtop
-- [ ] add device name or identifier to disks
-- [ ] add support for darwin, freebsd, openbsd and bsd
--- https://man.openbsd.org/sysctl.2#HW_DISKSTATS
--- https://man.freebsd.org/cgi/man.cgi?query=devstat&apropos=0&sektion=9&manpath=FreeBSD+7.2-RELEASE&format=html
+- [ ] rewrite it to a more modern version
+
 # Desktop file
 
 - [x] Create an icon
@@ -44,11 +42,11 @@ Bar-graph
 
 - [ ] Default css
 # A generic interface to a list in sensors?
-# Mpris
 
-- [ ] Write your own playerctl that better fits your needs
-- [ ] be able to listen to multiple players
-- [ ] send/create updates correctly
+# Mpris
+- [-] Write your own playerctl that better fits your needs
+- [-] be able to listen to multiple players
+- [-] send/create updates correctly
 
 # modules
 
@@ -78,13 +76,6 @@ Bar-graph
 # Transition Layout Manager
 
 - [ ] Investigate this
-
-# widgets
-## mediacontrol
-- If playerctl is rewritten as a sensor (from scratch),
-implementing this should be extremely easy.
-- [ ] An initial widget
-- [ ] Make the widget respect size.
 
 ## diagram
 

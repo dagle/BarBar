@@ -42,29 +42,20 @@ static void g_barbar_sway_language_set_identifier(BarBarSwayLanguage *sway,
                                                   const gchar *identifier) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
-  if (!g_strcmp0(sway->identifier, identifier)) {
-    return;
+  if (g_set_str(&sway->identifier, identifier)) {
+    g_object_notify_by_pspec(G_OBJECT(sway),
+                             sway_language_props[PROP_IDENTIFIER]);
   }
-
-  g_free(sway->identifier);
-  sway->identifier = strdup(identifier);
-
-  g_object_notify_by_pspec(G_OBJECT(sway),
-                           sway_language_props[PROP_IDENTIFIER]);
 }
 
 static void g_barbar_sway_language_set_keyboard(BarBarSwayLanguage *sway,
                                                 const gchar *keyboard) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
-  if (!g_strcmp0(sway->keyboard, keyboard)) {
-    return;
+  if (g_set_str(&sway->keyboard, keyboard)) {
+    g_object_notify_by_pspec(G_OBJECT(sway),
+                             sway_language_props[PROP_KEYBOARD]);
   }
-
-  g_free(sway->keyboard);
-  sway->keyboard = g_strdup(keyboard);
-
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_KEYBOARD]);
 }
 
 static void g_barbar_sway_language_set_language(BarBarSwayLanguage *sway,

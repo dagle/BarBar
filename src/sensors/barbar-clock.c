@@ -64,14 +64,9 @@ static void g_barbar_clock_set_tz(BarBarClock *clock, const char *identifier) {
 static void g_barbar_clock_set_format(BarBarClock *clock, const char *format) {
   g_return_if_fail(BARBAR_IS_CLOCK(clock));
 
-  if (!g_strcmp0(clock->format, format)) {
-    return;
+  if (g_set_str(&clock->format, format)) {
+    g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_FORMAT]);
   }
-
-  g_free(clock->format);
-  clock->format = g_strdup(format);
-
-  g_object_notify_by_pspec(G_OBJECT(clock), clock_props[PROP_FORMAT]);
 }
 
 static void g_barbar_clock_set_interval(BarBarClock *clock, guint interval) {

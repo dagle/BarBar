@@ -198,6 +198,7 @@ char *g_barbar_format_time_span(GTimeSpan span, const char *format) {
   int c;
 
   // convert to seconds, we don't care about miliseconds
+  // TODO: maybe don't do this here but have a helper function?
   span = span / USEC_PER_SECOND;
 
   struct units units;

@@ -51,14 +51,9 @@ static void g_barbar_uptime_set_format(BarBarUptime *uptime,
                                        const char *format) {
   g_return_if_fail(BARBAR_IS_UPTIME(uptime));
 
-  if (!g_strcmp0(uptime->format, format)) {
-    return;
+  if (g_set_str(&uptime->format, format)) {
+    g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_FORMAT]);
   }
-
-  g_free(uptime->format);
-  uptime->format = g_strdup(format);
-
-  g_object_notify_by_pspec(G_OBJECT(uptime), uptime_props[PROP_FORMAT]);
 }
 
 static void g_barbar_uptime_set_property(GObject *object, guint property_id,

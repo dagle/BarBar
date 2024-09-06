@@ -1,6 +1,7 @@
 #include "sensors/mpris/barbar-mpris-player.h"
 #include "barbar-enum.h"
 #include "barbar-error.h"
+#include "glib.h"
 #include "mpris.h"
 #include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
@@ -18,12 +19,13 @@ struct _BarBarMprisPlayer {
   gchar *bus_name;
   GBusType bus_type;
 
-  gint64 length;
+  guint64 length;
   gchar *title;
   gchar *artist;
 
   BarBarMprisPlaybackStatus playback;
   BarBarMprisLoopStatus loop;
+  gboolean shuffle;
   gint64 position;
   double volume;
 };
@@ -40,7 +42,7 @@ enum {
   PROP_VOLUME,
   PROP_METADATA,
   PROP_POSITION,
-  PROP_LENGTH,
+  PROP_LENGTH, // this field can be empty.
   PROP_TITLE,
   PROP_ARTIST, // artist can be anything, not just the real artist. Can also be
                // null
@@ -71,8 +73,29 @@ static guint connection_signals[LAST_SIGNAL] = {0};
 static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
                                                     GCancellable *cancellable,
                                                     GError **err);
+static GInitableIface *initable_parent_iface;
 
-G_DEFINE_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT);
+static void g_barbar_mpris_player_initable_iface_init(GInitableIface *iface) {
+  initable_parent_iface = g_type_interface_peek_parent(iface);
+  iface->init = g_barbar_mpris_player_initable_init;
+}
+
+G_DEFINE_TYPE_WITH_CODE(
+    BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT,
+    G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE,
+                          g_barbar_mpris_player_initable_iface_init));
+
+static void
+g_barbar_mpris_player_set_playback_status_(BarBarMprisPlayer *player,
+                                           BarBarMprisPlaybackStatus playback) {
+  if (player->playback == playback) {
+    return;
+  }
+
+  player->playback = playback;
+  g_object_notify_by_pspec(G_OBJECT(player),
+                           mpris_player_props[PROP_PLAYBACK_STATUS]);
+}
 
 static void
 g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
@@ -85,19 +108,46 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
   }
 
   player->playback = playback;
+
+  switch (player->playback) {
+  case BARBAR_PLAYBACK_STATUS_PLAYING:
+    mpris_org_mpris_media_player2_player_call_play(player, NULL);
+    break;
+  case BARBAR_PLAYBACK_STATUS_PAUSED:
+    mpris_org_mpris_media_player2_player_call_pause(player, NULL);
+    break;
+  case BARBAR_PLAYBACK_STATUS_STOPPED:
+    mpris_org_mpris_media_player2_player_call_stop(player, NULL);
+    break;
+  }
   g_object_notify_by_pspec(G_OBJECT(player),
                            mpris_player_props[PROP_PLAYBACK_STATUS]);
 }
-static void g_barbar_mpris_player_set_loop_status(BarBarMprisPlayer *player,
-                                                  BarBarMprisLoopStatus loop) {
-
-  g_return_if_fail(BARBAR_IS_MPRIS_PLAYER(player));
+static void g_barbar_mpris_player_set_loop_status_(BarBarMprisPlayer *player,
+                                                   BarBarMprisLoopStatus loop) {
 
   if (player->loop == loop) {
     return;
   }
 
   player->loop = loop;
+  g_object_notify_by_pspec(G_OBJECT(player),
+                           mpris_player_props[PROP_LOOP_STATUS]);
+}
+
+static void g_barbar_mpris_player_set_loop_status(BarBarMprisPlayer *player,
+                                                  BarBarMprisLoopStatus loop) {
+
+  if (player->loop == loop) {
+    return;
+  }
+
+  player->loop = loop;
+
+  char *status = g_enum_to_string(BARBAR_TYPE_LOOP_STATUS, loop);
+  mpris_org_mpris_media_player2_player_set_playback_status(player->proxy,
+                                                           status);
+  g_free(status);
   g_object_notify_by_pspec(G_OBJECT(player),
                            mpris_player_props[PROP_LOOP_STATUS]);
 }
@@ -329,10 +379,112 @@ static void g_barbar_seeked(GDBusProxy *_proxy, gint64 position,
   player->position = position;
 }
 
-static void on_some_property_notify(GObject *proxy, GParamSpec *pspec,
-                                    gpointer user_data) {
+static void g_barbar_mpris_player_set_artist(BarBarMprisPlayer *player,
+                                             const char *artist) {
+  if (g_set_str(&player->artist, artist)) {
+    g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_ARTIST]);
+  }
+}
+static void g_barbar_mpris_player_set_title(BarBarMprisPlayer *player,
+                                            const char *title) {}
+static void g_barbar_mpris_player_set_length_(BarBarMprisPlayer *player,
+                                              GVariant *length) {
+  guint len;
+  if (g_variant_type_equal(g_variant_get_type(length), G_VARIANT_TYPE_INT64)) {
+    len = g_variant_get_int64(length);
+  } else if (g_variant_type_equal(g_variant_get_type(length),
+                                  G_VARIANT_TYPE_UINT64)) {
+    len = g_variant_get_uint64(length);
+  } else if (g_variant_type_equal(g_variant_get_type(length),
+                                  G_VARIANT_TYPE_DOUBLE)) {
+    len = g_variant_get_double(length);
+  } else {
+    // some error
+    return;
+  }
+
+  if (len == player->length) {
+    return;
+  }
+
+  player->length = len;
+  g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_LENGTH]);
+}
+
+static void playerctl_player_properties_changed_callback(
+    GDBusProxy *_proxy, GVariant *changed_properties,
+    const gchar *const *invalidated_properties, gpointer user_data) {
 
   BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(user_data);
+
+  GVariant *metadata;
+  GVariant *playback_status;
+  GVariant *loop_status;
+  GVariant *volume;
+  GVariant *shuffle;
+  GVariant *title;
+  GVariant *length;
+  GVariant *artist;
+
+  shuffle = g_variant_lookup_value(changed_properties, "Shuffle", NULL);
+  if (shuffle) {
+    gboolean shuffle_value = g_variant_get_boolean(shuffle);
+    // g_barbar_mpris_player_set_shuffle();
+    g_variant_unref(shuffle);
+  }
+
+  loop_status = g_variant_lookup_value(changed_properties, "LoopStatus", NULL);
+  if (loop_status) {
+    const char *loop_value = g_variant_get_string(loop_status, NULL);
+    BarBarMprisLoopStatus status;
+    if (g_barbar_loop_status_enum(loop_value, &status)) {
+      g_barbar_mpris_player_set_loop_status_(player, status);
+    }
+    g_variant_unref(loop_status);
+  }
+
+  playback_status =
+      g_variant_lookup_value(changed_properties, "PlaybackStatus", NULL);
+  if (playback_status) {
+    const char *playback_value = g_variant_get_string(loop_status, NULL);
+    BarBarMprisPlaybackStatus status;
+    if (g_barbar_playback_status_enum(playback_value, &status)) {
+      g_barbar_mpris_player_set_playback_status_(player, status);
+    }
+    g_variant_unref(playback_status);
+  }
+
+  volume = g_variant_lookup_value(changed_properties, "Volume", NULL);
+  if (volume) {
+    gdouble volume_value = g_variant_get_double(volume);
+    // g_barbar_mpris_player_set_volume(player, );
+    g_variant_unref(volume);
+  }
+
+  metadata = g_variant_lookup_value(changed_properties, "Metadata", NULL);
+  if (metadata) {
+    artist = g_variant_lookup_value(metadata, "xesam:artist", NULL);
+    if (artist) {
+      const char *artist_value = g_variant_get_string(artist, NULL);
+      g_barbar_mpris_player_set_artist(player, artist_value);
+    }
+
+    title = g_variant_lookup_value(metadata, "xesam:title", NULL);
+    if (title) {
+      const char *title_value = g_variant_get_string(title, NULL);
+      g_barbar_mpris_player_set_title(player, title_vaule);
+    }
+
+    length = g_variant_lookup_value(metadata, "mpris:length", NULL);
+    if (length) {
+      g_barbar_mpris_player_set_length_(player, length);
+    }
+
+    g_clear_pointer(&artist, g_variant_unref);
+    g_clear_pointer(&title, g_variant_unref);
+    g_clear_pointer(&length, g_variant_unref);
+    g_variant_unref(metadata);
+  }
 }
 
 static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
@@ -366,12 +518,9 @@ static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
 
   g_barbar_mpris_player_initial_values(player);
   g_signal_connect(player->proxy, "g-properties-changed",
-                   G_CALLBACK(on_some_property_notify), player);
+                   G_CALLBACK(playerctl_player_properties_changed_callback),
+                   player);
 
-  // g_signal_connect(player->proxy, "g-properties-changed",
-  //                  G_CALLBACK(playerctl_player_properties_changed_callback),
-  //                  player);
-  //
   g_signal_connect(player->proxy, "seeked", G_CALLBACK(g_barbar_seeked),
                    player);
   //

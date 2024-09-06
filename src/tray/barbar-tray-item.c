@@ -138,13 +138,8 @@ void barbar_tray_item_set_icon_theme(BarBarTrayItem *item, const char *name) {
 }
 
 void barbar_tray_item_set_icon_name(BarBarTrayItem *item, const char *name) {
-  if (!g_strcmp0(item->icon_name, name)) {
-    return;
+  if (g_set_str(&item->icon_name, name)) {
   }
-
-  g_free(item->icon_name);
-
-  item->icon_name = g_strdup(name);
 }
 
 void barbar_tray_item_set_icon_pixmap(BarBarTrayItem *item, GVariant *var) {

@@ -24,25 +24,23 @@
 
 #pragma once
 
+#include "barbar-sensor.h"
+// #include "geoclue-agent-interface.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <libgeoclue-2.0/geoclue.h>
 
 G_BEGIN_DECLS
 
-GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget);
+#define BARBAR_TYPE_LOCATION (g_barbar_location_get_type())
 
-void g_barbar_default_style_provider(const char *path);
+G_DECLARE_FINAL_TYPE(GClueServiceAgent, g_barbar_service_agent, BARBAR,
+                     SERVICE_AGENT, GClueAgentSkeleton);
 
-GtkBuilder *g_barbar_default_builder(const char *path, GError **err);
+#define BARBAR_TYPE_LOCATION (g_barbar_location_get_type())
 
-GtkBuilder *barbar_default_blueprint(const char *path, GError *err);
-
-char *g_barbar_print_percent(gpointer *ptr, double percent, guint decimal,
-                             gboolean sign);
-
-char *g_barbar_print_bytes(gpointer *ptr, const char *format, ...);
-char *g_barbar_printf(gpointer *ptr, const char *format, ...);
-char *g_barbar_print_autosized(guint64 bytes, uint decimals);
+G_DECLARE_FINAL_TYPE(BarBarLocation, g_barbar_location, BARBAR, LOCATION,
+                     BarBarSensor)
 
 G_END_DECLS

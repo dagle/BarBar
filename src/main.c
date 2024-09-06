@@ -1,3 +1,4 @@
+#include "barbar-util.h"
 #include "barbar.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
@@ -113,6 +114,10 @@ static void activate(GtkApplication *app, void *data) {
                                   g_barbar_event_switcher_previous);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   g_barbar_toggle_stack);
+  // gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+  //                                 g_barbar_print_bytes);
+  // gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+  //                                 g_barbar_print_percent);
 
   g_barbar_default_style_provider("barbar/style.css");
 

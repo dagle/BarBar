@@ -151,12 +151,20 @@ static void update(gpointer data, BarBarSensor *sensor) {
 
   // TODO: can we optimize this?
   TmplSymbol *symbol;
+  // TmplSymbol *barbar;
   g_autoptr(TmplScope) scope;
   scope = tmpl_scope_new();
 
   symbol = tmpl_scope_get(scope, className);
 
   tmpl_symbol_assign_object(symbol, sensor);
+  gboolean ok = tmpl_scope_require(scope, "BarBar", "1.0");
+
+  // barbar = tmpl_scope_get(scope, "BarBar");
+  // GValue value = G_VALUE_INIT;
+  // g_value_set_pointer(&value, (gpointer)example_function);
+  // tmpl_symbol_assign_value(symbol2, &value);
+  // g_value_unset(&value);
 
   char *str;
   if (!(str = tmpl_template_expand_string(label->tmpl, scope, &error))) {

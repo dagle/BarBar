@@ -1,3 +1,5 @@
+#include "glib.h"
+#include "glibconfig.h"
 #include <barbar-util.h>
 #include <gtk4-layer-shell.h>
 
@@ -25,40 +27,212 @@ GtkWindow *g_barbar_get_parent_layer_window(GtkWidget *widget) {
 }
 
 /**
- * g_barbar_time_to_string:
- * @secs: The amount of seconds
- * @remaining: If we should print the time as negative
- * @force_hour: if should print hour even if it's 0
+ * g_barbar_print_percent:
+ * @ptr: dummy pointer
+ * @percent: value we want to format
+ * @decimal: number of decimal places.
+ * @sign: if we should add the "%" or not
  *
- * Returns: (transfer full): A string for the time
+ * Returns: (transfer full): A string of the percent
  */
-char *g_barbar_time_to_string(gint64 secs, gboolean remaining,
-                              gboolean force_hour) {
-  int sec, min, hour, _time;
+char *g_barbar_print_percent(gpointer *ptr, double percent, guint decimal,
+                             gboolean sign) {
+  percent = 100 * percent;
+  if (sign) {
+    return g_strdup_printf("%.*f%%", decimal, percent);
+  } else {
+    return g_strdup_printf("%.*f", decimal, percent);
+  }
+}
 
-  // _time = (int)(secs / G_USEC_PER_SEC);
-  _time = secs;
-  if (remaining)
-    _time++;
+static void _g_barbar_print_autosized(GString *str, guint64 bytes,
+                                      uint decimals) {
+  double dbytes;
+  if (bytes >= (1024 * 1024 * 1024)) {
+    dbytes = bytes / (1024.0 * 1024 * 1024);
+    g_string_append_printf(str, "%.*fGb", decimals, dbytes);
+  } else if (bytes >= (1024 * 1024)) {
+    dbytes = bytes / (1024.0 * 1024);
+    g_string_append_printf(str, "%.*fMb", decimals, dbytes);
+  } else if (bytes >= (1024)) {
+    dbytes = bytes / (1024.0);
+    g_string_append_printf(str, "%.*fkb", decimals, dbytes);
+  } else {
+    g_string_append_printf(str, "%lub", bytes);
+  }
+}
 
-  sec = _time % 60;
-  _time = _time - sec;
-  min = (_time % (60 * 60)) / 60;
-  _time = _time - (min * 60);
-  hour = _time / (60 * 60);
+/**
+ * g_barbar_print_autosized:
+ * @bytes: the bytes we want to convert
+ * @decimals: how many decimals we want
+ *
+ * Returns: (transfer full): A string with the bytes formated and unit
+ */
+char *g_barbar_print_autosized(guint64 bytes, uint decimals) {
+  GString *str = g_string_new("");
+  _g_barbar_print_autosized(str, bytes, decimals);
+  return g_string_free_and_steal(str);
+}
 
-  if (hour > 0 || force_hour) {
-    if (!remaining) {
-      return g_strdup_printf("%d:%02d:%02d", hour, min, sec);
-    } else {
-      return g_strdup_printf("-%d:%02d:%02d", hour, min, sec);
+/**
+ * g_barbar_printf:
+ * @ptr: a dummy pointer
+ * @format: how to format the string.
+ * @...: arguments
+ *
+ * A version of printf usable in expressions.
+ *
+ * Returns: (transfer full): A new string.
+ */
+G_MODULE_EXPORT char *g_barbar_printf(gpointer *ptr, const char *format, ...) {
+  gchar *buffer;
+  va_list args;
+
+  va_start(args, format);
+  buffer = g_strdup_vprintf(format, args);
+  va_end(args);
+
+  return buffer;
+}
+
+/**
+ * g_barbar_print_bytes:
+ * @ptr: a dummy pointer
+ * @format: value we want to format
+ * @...: variables we want to convert
+ *
+ * Converts and prints number of bytes.
+ *
+ * %k converts to kilobytes
+ * %m converts to megabytes
+ * %t converts to terabytes
+ * %a does auto convertion, also includes the unit in the string
+ *
+ * By default it does binary convertion, so a kilo byte is 1024 bytes (aka a
+ * kibibyte) If upper case is specified, we do a SI convertion (a kb is 1000
+ * bytes).
+ *
+ * Returns: (transfer full): A formated string
+ */
+G_MODULE_EXPORT char *g_barbar_print_bytes(gpointer *ptr, const char *format,
+                                           ...) {
+  va_list args;
+  va_start(args, format);
+
+  GString *str = g_string_new("");
+
+  while (*format != '\0') {
+    long int decimals = 2;
+    const char *begin = strchr(format, '%');
+    if (begin == NULL) {
+      g_string_append(str, format);
+      break;
     }
+
+    if (begin != format) {
+      g_string_append_len(str, format, begin - format);
+    }
+
+    begin++; // Move past '%'
+    if (*begin == '.') {
+      char *endptr;
+
+      begin++;
+      decimals = strtol(begin, &endptr, 10);
+
+      if (!endptr) {
+        return g_string_free_and_steal(str);
+      }
+      begin = endptr;
+    }
+
+    switch (*begin) {
+    case 'k': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / 1024.0;
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'K': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / 1000.0;
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'm': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1024.0 * 1024);
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'M': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1000.0 * 1000);
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'g': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1024.0 * 1024 * 1024);
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'G': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1000.0 * 1000 * 1000);
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 't': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1024.0 * 1024 * 1024);
+      d = d / 1024;
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'T': {
+      guint64 i = va_arg(args, guint64);
+      double d;
+      d = i / (1000.0 * 1000 * 1000);
+      d = d / 1000;
+      g_string_append_printf(str, "%.*f", (int)decimals, d);
+      break;
+    }
+    case 'z': {
+      break;
+    }
+    case 'a': {
+      guint64 i = va_arg(args, guint64);
+      _g_barbar_print_autosized(str, i, decimals);
+      break;
+    }
+    case 'A': {
+      const int unit;
+      int i = va_arg(args, int);
+      if (i >= 1000000000) {
+      }
+      break;
+    }
+    default:
+      putchar('%');    // Print '%' character if no matching specifier found
+      putchar(*begin); // Print the character following '%'
+      break;
+    }
+
+    begin++;
+    format = begin;
   }
 
-  if (remaining) {
-    return g_strdup_printf("-%d:%02d", min, sec);
-  }
-  return g_strdup_printf("%d:%02d", min, sec);
+  va_end(args);
+  return g_string_free_and_steal(str);
 }
 
 /**
@@ -116,12 +290,12 @@ GtkBuilder *g_barbar_default_builder(const char *path, GError **err) {
  *
  * Returns: (transfer full): returns a builder
  */
-GtkBuilder *barbar_default_blueprint(const char *path, GError *err) {
+GtkBuilder *g_barbar_default_blueprint(const char *path, GError *err) {
   // TODO:
   return NULL;
 }
 
-G_MODULE_EXPORT void custom_printf(const char *format, ...) {
+G_MODULE_EXPORT void g_barbar_custom_printf(const char *format, ...) {
   va_list args;
   va_start(args, format);
 

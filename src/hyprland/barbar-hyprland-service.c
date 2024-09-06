@@ -75,14 +75,10 @@ static void g_babrab_hyprland_service_set_submap(BarBarHyprlandService *service,
                                                  const char *submap) {
   g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
 
-  if (!g_strcmp0(service->submap, submap)) {
-    return;
+  if (g_set_str(&service->submap, submap)) {
+    g_object_notify_by_pspec(G_OBJECT(service),
+                             hypr_service_props[PROP_SUBMAP]);
   }
-
-  g_free(service->submap);
-  service->submap = g_strdup(submap);
-
-  g_object_notify_by_pspec(G_OBJECT(service), hypr_service_props[PROP_SUBMAP]);
 }
 
 static void
@@ -90,29 +86,20 @@ g_babrab_hyprland_service_set_keyboard(BarBarHyprlandService *service,
                                        const char *keyboard) {
   g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
 
-  if (!g_strcmp0(service->keyboard, keyboard)) {
-    return;
+  if (g_set_str(&service->keyboard, keyboard)) {
+    g_object_notify_by_pspec(G_OBJECT(service),
+                             hypr_service_props[PROP_KEYBOARD]);
   }
-
-  g_free(service->keyboard);
-  service->keyboard = g_strdup(keyboard);
-
-  g_object_notify_by_pspec(G_OBJECT(service),
-                           hypr_service_props[PROP_KEYBOARD]);
 }
 
 static void g_babrab_hyprland_service_set_layout(BarBarHyprlandService *service,
                                                  const char *layout) {
   g_return_if_fail(BARBAR_IS_HYPRLAND_SERVICE(service));
 
-  if (!g_strcmp0(service->layout, layout)) {
-    return;
+  if (g_set_str(&service->layout, layout)) {
+    g_object_notify_by_pspec(G_OBJECT(service),
+                             hypr_service_props[PROP_LAYOUT]);
   }
-
-  g_free(service->submap);
-  service->layout = g_strdup(layout);
-
-  g_object_notify_by_pspec(G_OBJECT(service), hypr_service_props[PROP_LAYOUT]);
 }
 
 static GObject *

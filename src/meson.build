@@ -107,6 +107,7 @@ libbarbar_headers = [
   'sensors/barbar-disk.h',
 
   'sensors/barbar-mpris.h',
+  'sensors/barbar-mpris-.h',
 
   'river/barbar-river-layout.h',
   'river/barbar-river-tags.h',

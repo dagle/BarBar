@@ -171,7 +171,6 @@ void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
 gboolean g_barbar_sway_ipc_send_finish(GOutputStream *stream,
                                        GAsyncResult *result, GError **error) {
   GTask *task;
-  // SwaySendIpc *ipc;
 
   g_return_val_if_fail(G_IS_OUTPUT_STREAM(stream), FALSE);
   g_return_val_if_fail(g_task_is_valid(result, stream), FALSE);

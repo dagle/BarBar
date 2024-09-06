@@ -1,5 +1,7 @@
 #include "barbar-github-activity.h"
+#include "glib-object.h"
 #include "gtk/gtk.h"
+#include "libsoup/soup-types.h"
 #include "widgets/barbar-activity-graph.h"
 #include <glib.h>
 #include <json-glib/json-glib.h>
@@ -11,13 +13,18 @@
 /**
  * BarBarGitHubActivity:
  *
- * An activity graph, often used to display github activity
+ * An activity graph for github. Uses activity graph to display it.
+ *
+ * You need to supply a user-name and an api key to be able to
+ * query the api. You can generate an api key from the github settings.
+ *
  */
 struct _BarBarGithubActivity {
   GtkWidget parent_instance;
 
   char *user_name;
   char *auth_token;
+  char *payload;
   gboolean native_colors;
   SoupSession *session;
   GtkWidget *activity_graph;
@@ -25,6 +32,13 @@ struct _BarBarGithubActivity {
   guint interval;
   guint source_id;
 };
+
+const char *url = "https://api.github.com/graphql";
+
+const char *query =
+    "query($userName:String!) { user(login: $userName) { "
+    "contributionsCollection { contributionCalendar { totalContributions "
+    "weeks { contributionDays { contributionLevel color } } } } } }";
 
 enum ContributionLevel {
   NONE,
@@ -51,7 +65,6 @@ int parse_contrubiton_level(const char *str) {
   return NONE;
 }
 
-// this should inherit the ActivityGraph class or buildable
 enum {
   PROP_0,
 
@@ -84,7 +97,7 @@ static void g_barbar_github_activity_tag_add_child(GtkBuildable *buildable,
 
   BarBarGithubActivity *self = BARBAR_GITHUB_ACTIVITY(buildable);
 
-  if (GTK_IS_WIDGET(child)) {
+  if (BARBAR_IS_ACTIVITY_GRAPH(child)) {
     self->activity_graph = GTK_WIDGET(child);
   } else {
     parent_buildable_iface->add_child(buildable, builder, child, type);
@@ -128,26 +141,20 @@ static void g_barbar_github_activity_set_user_name(BarBarGithubActivity *hub,
                                                    const char *user_name) {
   g_return_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub));
 
-  if (!g_strcmp0(hub->user_name, user_name)) {
-    return;
+  if (g_set_str(&hub->user_name, user_name)) {
+    g_clear_pointer(&hub->payload, g_free);
+    g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_USER_NAME]);
   }
-
-  hub->user_name = g_strdup(user_name);
-
-  g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_USER_NAME]);
 }
 
 static void g_barbar_github_activity_set_auth_token(BarBarGithubActivity *hub,
                                                     const char *auth_token) {
   g_return_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub));
 
-  if (!g_strcmp0(hub->auth_token, auth_token)) {
-    return;
+  if (g_set_str(&hub->auth_token, auth_token)) {
+    g_clear_pointer(&hub->payload, g_free);
+    g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_AUTH_TOKEN]);
   }
-
-  hub->auth_token = g_strdup(auth_token);
-
-  g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_AUTH_TOKEN]);
 }
 
 static void g_barbar_github_activity_set_property(GObject *object,
@@ -156,7 +163,6 @@ static void g_barbar_github_activity_set_property(GObject *object,
                                                   GParamSpec *pspec) {
 
   BarBarGithubActivity *hub = BARBAR_GITHUB_ACTIVITY(object);
-  // printf("apa: %d\n", property_id);
 
   switch (property_id) {
   case PROP_INTERVAL:
@@ -200,6 +206,24 @@ static void g_barbar_github_activity_get_property(GObject *object,
   }
 }
 
+struct cbdata {
+  BarBarGithubActivity *activity;
+  SoupMessage *msg;
+};
+
+static struct cbdata *cbdata_new(BarBarGithubActivity *activity,
+                                 SoupMessage *msg) {
+  struct cbdata *cbdata = malloc(sizeof(struct cbdata));
+  cbdata->activity = activity;
+  cbdata->msg = msg;
+  return cbdata;
+}
+
+static void cbdata_free(struct cbdata *cbdata) {
+  g_object_unref(cbdata->msg);
+  g_free(cbdata);
+}
+
 static void on_response(SoupSession *session, GAsyncResult *res,
                         gpointer user_data);
 
@@ -208,26 +232,16 @@ static gboolean fetch_data(gpointer data) {
   SoupMessage *msg;
   SoupMessageHeaders *headers;
 
-  const char *url = "https://api.github.com/graphql";
-
-  // make this dynamic, should we be able to hoover etc?
-  // const char *query =
-  //     "query($userName:String!) { user(login: $userName) { "
-  //     "contributionsCollection { contributionCalendar { totalContributions "
-  //     "weeks { contributionDays { contributionCount date color "
-  //     "contributionLevel } } } } } }";
-  const char *query =
-      "query($userName:String!) { user(login: $userName) { "
-      "contributionsCollection { contributionCalendar { totalContributions "
-      "weeks { contributionDays { contributionLevel color } } } } } }";
-
-  gchar *payload = g_strdup_printf(
-      "{\"query\": \"%s\", \"variables\": {\"userName\": \"%s\"}}", query,
-      self->user_name);
+  if (!self->payload) {
+    self->payload = g_strdup_printf(
+        "{\"query\": \"%s\", \"variables\": {\"userName\": \"%s\"}}", query,
+        self->user_name);
+  }
 
   msg = soup_message_new(SOUP_METHOD_POST, url);
   soup_message_set_request_body_from_bytes(
-      msg, "application/json", g_bytes_new(payload, strlen(payload)));
+      msg, "application/json",
+      g_bytes_new(self->payload, strlen(self->payload)));
   headers = soup_message_get_request_headers(msg);
 
   soup_message_headers_append(headers, "Authorization",
@@ -237,15 +251,17 @@ static gboolean fetch_data(gpointer data) {
                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64; "
                               "rv:126.0) Gecko/20100101 Firefox/126.0");
 
+  struct cbdata *cbdata = cbdata_new(self, msg);
   soup_session_send_and_read_async(self->session, msg, 0, NULL,
-                                   (GAsyncReadyCallback)on_response, self);
+                                   (GAsyncReadyCallback)on_response, cbdata);
   return G_SOURCE_CONTINUE;
 }
 
 static void on_response(SoupSession *session, GAsyncResult *res,
                         gpointer user_data) {
 
-  BarBarGithubActivity *hub = BARBAR_GITHUB_ACTIVITY(user_data);
+  struct cbdata *cbdata = (struct cbdata *)user_data;
+  BarBarGithubActivity *hub = BARBAR_GITHUB_ACTIVITY(cbdata->activity);
 
   JsonParser *parser;
   GError *error = NULL;
@@ -255,16 +271,17 @@ static void on_response(SoupSession *session, GAsyncResult *res,
   if (error) {
     g_printerr("Error: %s\n", error->message);
     g_error_free(error);
+    cbdata_free(cbdata);
   } else {
     gsize size;
     const gchar *data = g_bytes_get_data(bytes, &size);
 
-    // printf("data: %.*s\n", (int)size, data);
     parser = json_parser_new();
     ret = json_parser_load_from_data(parser, data, size, &error);
     if (!ret) {
       g_printerr("Failed to parse json: %s\n", error->message);
       g_error_free(error);
+      cbdata_free(cbdata);
       return;
     }
     JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -321,9 +338,9 @@ static void on_response(SoupSession *session, GAsyncResult *res,
     json_reader_end_member(reader);
     json_reader_end_member(reader);
     json_reader_end_member(reader);
-    // printf("totalContributions: %d\n", identifier);
   }
   g_bytes_unref(bytes);
+  cbdata_free(cbdata);
 }
 
 void g_barbar_github_activity_root(GtkWidget *widget) {
@@ -351,13 +368,14 @@ void g_barbar_github_activity_root(GtkWidget *widget) {
   // NULL);
 }
 
-static void g_barbar_github_activity_set_finalize(GObject *object) {
+static void g_barbar_github_activity_finalize(GObject *object) {
   BarBarGithubActivity *hub = BARBAR_GITHUB_ACTIVITY(object);
 
   g_free(hub->user_name);
   g_free(hub->auth_token);
+  g_free(hub->payload);
 
-  g_object_unref(hub->session);
+  g_clear_pointer(&hub->session, g_object_unref);
 
   G_OBJECT_CLASS(g_barbar_github_activity_parent_class)->finalize(object);
 }
@@ -369,7 +387,7 @@ g_barbar_github_activity_class_init(BarBarGithubActivityClass *class) {
 
   widget_class->root = g_barbar_github_activity_root;
 
-  gobject_class->finalize = g_barbar_github_activity_set_finalize;
+  gobject_class->finalize = g_barbar_github_activity_finalize;
   gobject_class->set_property = g_barbar_github_activity_set_property;
   gobject_class->get_property = g_barbar_github_activity_get_property;
 

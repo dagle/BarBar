@@ -77,12 +77,9 @@ static void g_barbar_weather_set_contact_info(BarBarWeather *self,
                                               const gchar *contact_info) {
   g_return_if_fail(BARBAR_IS_WEATHER(self));
 
-  if (!g_strcmp0(self->contact_info, contact_info)) {
-    return;
+  if (g_set_str(&self->contact_info, contact_info)) {
+    g_object_notify_by_pspec(G_OBJECT(self), weather_props[PROP_CONTACT_INFO]);
   }
-
-  g_free(self->contact_info);
-  self->contact_info = g_strdup(contact_info);
 }
 
 static void g_barbar_weather_set_property(GObject *object, guint property_id,

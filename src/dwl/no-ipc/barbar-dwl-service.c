@@ -246,14 +246,9 @@ static void g_barbar_dwl_service_set_pipe(BarBarDwlService *self,
                                           const char *file_path) {
   g_return_if_fail(BARBAR_IS_DWL_SERVICE(self));
 
-  if (!g_strcmp0(self->file_path, file_path)) {
-    return;
+  if (g_set_str(&self->file_path, file_path)) {
+    g_object_notify_by_pspec(G_OBJECT(self), dwl_service_props[PROP_FILEPATH]);
   }
-
-  g_free(self->file_path);
-  self->file_path = g_strdup(file_path);
-
-  g_object_notify_by_pspec(G_OBJECT(self), dwl_service_props[PROP_FILEPATH]);
 }
 
 static void g_barbar_dwl_service_set_property(GObject *object,

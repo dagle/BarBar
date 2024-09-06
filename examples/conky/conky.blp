@@ -193,7 +193,7 @@ BarBar.Background background {
       Gtk.Label {
         hexpand: true;
         halign: end;
-        label: "800Mhz";
+        label: "1.7Ghz";
         xalign: 1;
 
         layout {
@@ -213,11 +213,9 @@ BarBar.Background background {
         }
       }
 
-      // TODO: pretty print temp
-
       [child]
       Gtk.Label {
-        label: bind temp.temperature;
+        label: bind $g_barbar_printf("%.1fC", temp.temperature) as <string>;
         xalign: 1;
 
         layout {
@@ -241,7 +239,7 @@ BarBar.Background background {
 
       [child]
       Gtk.Label {
-        label: bind cpu.percent;
+        label: bind $g_barbar_print_percent(cpu.percent, 2, 1) as <string>;
         xalign: 1;
 
         layout {
@@ -291,37 +289,17 @@ BarBar.Background background {
         }
       }
 
-      // TODO: fix
-      // [child]
-      // Gtk.Label {
-      //   hexpand: true;
-      //   label: bind swap.total;
-      //   xalign: 1;
-      // 
-      //   layout {
-      //     column: 1;
-      //     row: 0;
-      //   }
-      // }
-
       [child]
-      BarBar.Label {
-        sensor: swap;
+      Gtk.Label {
+        label: bind $g_barbar_print_bytes("%.2gG / %.0gG", swap.used, swap.total) as <string>;
         hexpand: true;
-        templ: "{{BarBarSwap.used}} / {{BarBarSwap.total}}";
-
-        [child]
-        Gtk.Label {
-          xalign: 1;
-        }
+        xalign: 1;
 
         layout {
           column: 1;
           row: 0;
         }
       }
-
-      // TODO: fix
 
       [child]
       Gtk.Label {
@@ -335,15 +313,11 @@ BarBar.Background background {
       }
 
       [child]
-      BarBar.Label {
-        sensor: mem;
+      Gtk.Label {
+        // label: bind $g_barbar_printf("%lu / %lu", mem.used, mem.total) as <string>;
+        label: bind $g_barbar_print_bytes("%.2gG / %.0gG", mem.used, mem.total) as <string>;
         hexpand: true;
-        templ: "{{BarBarMem.used}} / {{BarBarMem.total}}";
-
-        [child]
-        Gtk.Label {
-          xalign: 1;
-        }
+        xalign: 1;
 
         layout {
           column: 1;
@@ -388,12 +362,10 @@ BarBar.Background background {
         }
       }
 
-      // TODO: fix all
-
       [child]
       Gtk.Label {
         hexpand: true;
-        label: bind fs.percent;
+        label: bind $g_barbar_print_percent(fs.percent, 2, 1) as <string>;
         xalign: 1;
 
         layout {
@@ -414,32 +386,16 @@ BarBar.Background background {
       }
 
       [child]
-      BarBar.Label {
-        sensor: disk;
+      Gtk.Label {
+        label: bind $g_barbar_print_bytes("%.2a / %.2a", disk.read, disk.write) as <string>;
         hexpand: true;
-        templ: "{{BarBarDisk.read}} / {{BarBarDisk.write}}";
-
-        [child]
-        Gtk.Label {
-          xalign: 1;
-        }
+        xalign: 1;
 
         layout {
           column: 1;
           row: 1;
         }
       }
-
-      // Gtk.Label {
-      //   hexpand: true;
-      //   label: "95,7G/1830G";
-      //   xalign: 1;
-      // 
-      //   layout {
-      //     column: 1;
-      //     row: 1;
-      //   }
-      // }
     }
 
     [child]
@@ -558,15 +514,10 @@ BarBar.Background background {
       }
 
       [child]
-      BarBar.Label {
+      Gtk.Label {
+        label: bind $g_barbar_print_bytes("%.2a / %.2a", net.download, net.upload) as <string>;
         hexpand: true;
-        sensor: net;
-        templ: "{{BarBarNetwork.download}} / {{BarBarNetwork.upload}}";
-
-        [child]
-        Gtk.Label {
-          xalign: 1;
-        }
+        xalign: 1;
 
         layout {
           column: 1;
@@ -586,15 +537,10 @@ BarBar.Background background {
       }
 
       [child]
-      BarBar.Label {
+      Gtk.Label {
+        label: bind $g_barbar_print_bytes("%.2a / %.2a", net.down-speed, net.up-speed) as <string>;
         hexpand: true;
-        sensor: net;
-        templ: "{{BarBarNetwork.down_speed}} / {{BarBarNetwork.up_speed}}";
-
-        [child]
-        Gtk.Label {
-          xalign: 1;
-        }
+        xalign: 1;
 
         layout {
           column: 1;
@@ -632,13 +578,6 @@ BarBar.Background background {
         hexpand: true;
       }
     }
-
-    [child]
-    BarBar.CpuProcesses {
-      number: 3;
-      order: io;
-      seperate-cpu: false;
-    }
   }
 
   // Gtk.LevelBar {
@@ -659,6 +598,44 @@ BarBar.Background background {
   // }
   // BarBar.TopCpu {
   // }
+}
+
+BarBar.Background background-left {
+  top-margin: 0;
+  bottom-margin: 0;
+  right-margin: 1125;
+  left-margin: 0;
+
+  Gtk.Box {
+    hexpand: true;
+    orientation: vertical;
+
+    Gtk.Box {
+      orientation: horizontal;
+
+      [child]
+      Gtk.Label {
+        xalign: 0;
+        label: "Github";
+        name: "dark";
+      }
+
+      [child]
+      Gtk.Separator {
+        hexpand: true;
+        name: "dark";
+      }
+    }
+
+    [child]
+    BarBar.GithubActivity {
+      user-name: "dagle";
+      auth-token: "";
+
+      [child]
+      BarBar.ActivityGraph {}
+    }
+  }
 }
 
 BarBar.Cpu cpu {

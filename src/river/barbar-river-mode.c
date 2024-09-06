@@ -47,15 +47,9 @@ static void g_barbar_river_mode_set_mode(BarBarRiverMode *river,
                                          const char *mode) {
   g_return_if_fail(BARBAR_IS_RIVER_MODE(river));
 
-  if (!g_strcmp0(river->mode, mode)) {
-    return;
+  if (g_set_str(&river->mode, mode)) {
+    g_object_notify_by_pspec(G_OBJECT(river), river_mode_props[PROP_MODE]);
   }
-
-  g_free(river->mode);
-
-  river->mode = g_strdup(mode);
-
-  g_object_notify_by_pspec(G_OBJECT(river), river_mode_props[PROP_MODE]);
 }
 
 static void g_barbar_river_mode_set_property(GObject *object, guint property_id,

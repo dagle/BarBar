@@ -66,9 +66,10 @@ static void g_barbar_mem_get_property(GObject *object, guint property_id,
   case PROP_MEM_PERCENT:
     g_value_set_double(value, mem->percent);
     break;
-  case PROP_MEM_TOTAL:
+  case PROP_MEM_TOTAL: {
     g_value_set_uint64(value, mem->mem.total);
     break;
+  }
   case PROP_MEM_USED:
     g_value_set_uint64(value, mem->mem.used);
     break;
@@ -156,6 +157,7 @@ static gboolean g_barbar_mem_tick(BarBarIntervalSensor *sensor) {
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_PERCENT]);
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_FREE]);
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_USED]);
+  g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_TOTAL]);
   g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
