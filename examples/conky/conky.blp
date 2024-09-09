@@ -5,7 +5,7 @@ BarBar.Background background {
   top-margin: 0;
   bottom-margin: 0;
   right-margin: 0;
-  left-margin: 1050;
+  left-margin: 950;
 
   Gtk.Box {
     hexpand: true;
@@ -578,26 +578,12 @@ BarBar.Background background {
         hexpand: true;
       }
     }
-  }
 
-  // Gtk.LevelBar {
-  //   orientation: vertical;
-  //   value: bind cpu.percent;
-  // }
-  // BarBar.Rotary {
-  //   value: bind cpu.percent;
-  // }
-  // Gtk.Label clock {}
-  // Gtk.Label date {}
-  // Gtk.Label system {}
-  // Gtk.Label cpu {}
-  // BarBar.TopCpu {
-  // }
-  // Gtk.Label mem {}
-  // BarBar.TopMem {
-  // }
-  // BarBar.TopCpu {
-  // }
+    BarBar.CpuProcesses {
+      number: 5;
+      order: cpu;
+    }
+  }
 }
 
 BarBar.Background background-left {
@@ -680,7 +666,7 @@ BarBar.Filesystem fs {
 BarBar.Swap swap {}
 
 BarBar.Network net {
-  interface: "wlan0";
+  interface: "br0";
   interval: 1000;
 }
 

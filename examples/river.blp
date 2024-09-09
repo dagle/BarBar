@@ -4,6 +4,7 @@ using BarBar 1.0;
 // Barbar.Bar is a window
 BarBar.Bar {
   bar-pos: top;
+  screen-num: 1;
   // we can specify a screen or the current screen is in use
   // screen-num: 1
   Gtk.ActionBar {
@@ -28,7 +29,7 @@ BarBar.Bar {
     [start]
     BarBar.RiverLayout {}
 
-    // if we want an item that reveals it self wen hovering, we can simple do this.
+    // if we want an item that reveals it self when hovering, we can simple do this.
 
     [start]
     Gtk.Box {
@@ -239,7 +240,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "wlan0";
+  interface: "br0";
 }
 
 BarBar.Backlight backlight {}
