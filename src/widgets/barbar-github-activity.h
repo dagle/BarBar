@@ -35,6 +35,17 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarGithubActivity, g_barbar_github_activity, BARBAR,
                      GITHUB_ACTIVITY, GtkWidget)
 
-/*GtkWidget *g_barbar_github_activity_new(void);*/
+GtkWidget *g_barbar_github_activity_new(const char *username,
+                                        const char *auth_token);
+
+void g_barbar_github_activity_set_user_name(BarBarGithubActivity *hub,
+                                            const char *user_name);
+
+const char *g_barbar_github_activity_get_user_name(BarBarGithubActivity *hub);
+
+void g_barbar_github_activity_set_auth_token(BarBarGithubActivity *hub,
+                                             const char *auth_token);
+
+const char *g_barbar_github_activity_get_auth_token(BarBarGithubActivity *hub);
 
 G_END_DECLS

@@ -1,11 +1,13 @@
 #include "barbar-sway-mode.h"
+#include "sensors/barbar-sensor.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 
 /**
  * BarBarSwayMode:
  *
- * A sensor to display the sensor mode we currently are in.
+ * A sensor to display the mode we currently are in.
+ * See sway(5) for more info
  *
  */
 struct _BarBarSwayMode {
@@ -35,15 +37,21 @@ static void g_barbar_sway_mode_set_mode(BarBarSwayMode *sway,
                                         const char *mode) {
   g_return_if_fail(BARBAR_IS_SWAY_MODE(sway));
 
-  if (!g_strcmp0(sway->mode, mode)) {
-    return;
+  if (g_set_str(&sway->mode, mode)) {
+    g_object_notify_by_pspec(G_OBJECT(sway), sway_props[PROP_MODE]);
   }
+}
 
-  g_free(sway->mode);
+/**
+ * g_barbar_sway_mode_get_mode:
+ * @sway: a `BarBarSwayMode`
+ *
+ * Returns: (transfer none): get the current mode
+ */
+const char *g_barbar_sway_mode_get_mode(BarBarSwayMode *sway) {
+  g_return_val_if_fail(BARBAR_IS_SWAY_MODE(sway), NULL);
 
-  sway->mode = g_strdup(mode);
-
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_props[PROP_MODE]);
+  return sway->mode;
 }
 
 static void g_barbar_sway_mode_set_property(GObject *object, guint property_id,
@@ -212,4 +220,16 @@ static void g_barbar_sway_mode_start(BarBarSensor *sensor) {
 
   g_barbar_sway_ipc_oneshot(SWAY_GET_BINDING_STATE, TRUE, NULL,
                             binding_state_cb, sway, "");
+}
+
+/**
+ * g_barbar_sway_mode_new:
+ *
+ * Returs: (transfer full): a new sensor
+ */
+BarBarSensor *g_barbar_sway_mode_new(void) {
+  BarBarSwayMode *sensor;
+
+  sensor = g_object_new(BARBAR_TYPE_SWAY_MODE, NULL);
+  return BARBAR_SENSOR(sensor);
 }

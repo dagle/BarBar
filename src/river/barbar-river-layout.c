@@ -256,3 +256,16 @@ static void g_barbar_river_layout_start(GtkWidget *widget) {
 
   river->status_manager = NULL;
 }
+
+/**
+ * g_barbar_river_layout_new:
+ *
+ * Returns: (transfer full): A `GtkWidget`
+ */
+GtkWidget *g_barbar_river_layout_new(void) {
+  BarBarRiverLayout *self;
+
+  self = g_object_new(BARBAR_TYPE_RIVER_LAYOUT, NULL);
+
+  return GTK_WIDGET(self);
+}

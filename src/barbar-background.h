@@ -27,6 +27,7 @@
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <gtk4-layer-shell.h>
 
 G_BEGIN_DECLS
 
@@ -36,5 +37,10 @@ G_DECLARE_FINAL_TYPE(BarBarBackground, g_barbar_background, BARBAR, BACKGROUND,
                      GtkWindow)
 
 GtkWidget *g_barbar_background_new(void);
+
+void g_barbar_background_set_margin(BarBarBackground *bg,
+                                    GtkLayerShellEdge edge, uint margin);
+
+void g_barbar_background_set_screen_num(BarBarBackground *bg, uint num);
 
 G_END_DECLS

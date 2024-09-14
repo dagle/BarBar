@@ -31,9 +31,9 @@ void g_sway_async_send_free(SwaySendIpc *send) {
 typedef struct SwayIpcCmd {
   GSocketClient *socket_client;
   GSocketConnection *connection;
+  BarBarSwayMessageType type;
   char *message;
   char *response;
-  guint32 type;
   gsize length;
   gboolean cb;
 } SwayIpcCmd;
@@ -52,7 +52,7 @@ static void cmd_close(GObject *source, GAsyncResult *res, gpointer data) {
   g_io_stream_close_finish(G_IO_STREAM(source), res, &error);
 
   if (error) {
-    g_printerr("Couldn't close socket: %s\n", error->message);
+    g_warning("Couldn't close socket: %s\n", error->message);
     g_error_free(error);
   }
   g_sway_ipc_cmd_free(ipc);
@@ -142,7 +142,31 @@ gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream,
   return ret;
 }
 
-void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
+/**
+ * g_barbar_sway_ipc_send_finish:
+ * @stream: input #GOutputStream
+ * @result: a #GAsyncResult
+ * @error: a #GError, or %NULL
+ *
+ * Finishes an asynchronous sway ipc send that was started
+ * with g_barbar_sway_ipc_send_async().
+ *
+ * Returns: %TRUE if the ipc was successfully communicated (the ipc content can
+ * still contain an error). If %FALSE and @error is present, it will be set
+ * appropriately.
+ */
+gboolean g_barbar_sway_ipc_send_finish(GOutputStream *stream,
+                                       GAsyncResult *result, GError **error) {
+  GTask *task;
+
+  g_return_val_if_fail(G_IS_OUTPUT_STREAM(stream), FALSE);
+  g_return_val_if_fail(g_task_is_valid(result, stream), FALSE);
+
+  task = G_TASK(result);
+  return g_task_propagate_boolean(task, error);
+}
+
+static void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
   GOutputStream *stream = G_OUTPUT_STREAM(source);
   gsize bytes;
   GError *error = NULL;
@@ -167,19 +191,21 @@ void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
   g_task_return_boolean(task, TRUE);
   g_object_unref(task);
 }
-
-gboolean g_barbar_sway_ipc_send_finish(GOutputStream *stream,
-                                       GAsyncResult *result, GError **error) {
-  GTask *task;
-
-  g_return_val_if_fail(G_IS_OUTPUT_STREAM(stream), FALSE);
-  g_return_val_if_fail(g_task_is_valid(result, stream), FALSE);
-
-  task = G_TASK(result);
-  return g_task_propagate_boolean(task, error);
-}
-
-void g_barbar_sway_ipc_send_async(GOutputStream *output_stream, guint type,
+/**
+ * g_barbar_sway_ipc_send_async:
+ * @output_stream: output #GOutputStream
+ * @type: type of message to send
+ * @payload: null terminated string
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @callback: (scope async): a #GAsyncReadyCallback
+ *     to call when the request is satisfied
+ * @data: the data to pass to callback function
+ *
+ * Sends async message to sway. Use g_barbar_sway_ipc_send_finish() in the
+ * callback handler to get the return status.
+ */
+void g_barbar_sway_ipc_send_async(GOutputStream *output_stream,
+                                  BarBarSwayMessageType type,
                                   const char *payload,
                                   GCancellable *cancellable,
                                   GAsyncReadyCallback callback, gpointer data) {
@@ -206,10 +232,10 @@ void g_barbar_sway_ipc_send_async(GOutputStream *output_stream, guint type,
   ipc->message = message;
 
   g_output_stream_write_all_async(output_stream, message, length, 0,
-                                  cancellable, callback, task);
+                                  cancellable, ipc_callback, task);
 }
 
-void printf_cb(GObject *source, GAsyncResult *res, gpointer data) {
+static void printf_cb(GObject *source, GAsyncResult *res, gpointer data) {
   GOutputStream *stream = G_OUTPUT_STREAM(source);
   GError *error = NULL;
   GTask *task = data;
@@ -228,6 +254,18 @@ void printf_cb(GObject *source, GAsyncResult *res, gpointer data) {
   g_object_unref(task);
 }
 
+/**
+ * g_barbar_sway_ipc_send_printf_finish:
+ * @stream: input #GOutputStream
+ * @result: a #GAsyncResult
+ * @error: a #GError, or %NULL
+ *
+ * Finishes an asynchronous sway ipc send that was started
+ * with g_barbar_sway_ipc_send_vprintf_async().
+ *
+ * Returns: the amount of bytes written if the ipc was successfully
+ * communicated. On error it returns < 0 and error will be set appropriately.
+ */
 gsize g_barbar_sway_ipc_send_printf_finish(GOutputStream *stream,
                                            GAsyncResult *result,
                                            GError **error) {
@@ -240,8 +278,24 @@ gsize g_barbar_sway_ipc_send_printf_finish(GOutputStream *stream,
   return g_task_propagate_int(task, error);
 }
 
+/**
+ * g_barbar_sway_ipc_send_vprintf_async:
+ * @output_stream: output #GOutputStream
+ * @type: type of message to send
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @callback: (scope async): a #GAsyncReadyCallback
+ *     to call when the request is satisfied
+ * @format: a format string to create our new string.
+ * @data: the data to pass to callback function
+ * @args: va_list of args to format
+ *
+ * Sends async message to sway, using a formated string and a va_list. Use
+ * g_barbar_sway_ipc_send_printf_finish() in the callback handler to get the
+ * return status.
+ */
 void g_barbar_sway_ipc_send_vprintf_async(GOutputStream *output_stream,
-                                          guint type, GCancellable *cancellable,
+                                          BarBarSwayMessageType type,
+                                          GCancellable *cancellable,
                                           GAsyncReadyCallback callback,
                                           gpointer data, const char *format,
                                           va_list args) {
@@ -256,8 +310,23 @@ void g_barbar_sway_ipc_send_vprintf_async(GOutputStream *output_stream,
                                printf_cb, task);
 }
 
+/**
+ * g_barbar_sway_ipc_send_printf_async:
+ * @output_stream: output #GOutputStream
+ * @type: type of message to send
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @callback: (scope async): a #GAsyncReadyCallback
+ *     to call when the request is satisfied
+ * @data: the data to pass to callback function
+ * @...: the parameters to insert into the format string
+ *
+ * Sends async message to sway, using a printf() formated string and arguments.
+ * Use g_barbar_sway_ipc_send_printf_finish() in the callback handler to get the
+ * return status.
+ */
 void g_barbar_sway_ipc_send_printf_async(GOutputStream *output_stream,
-                                         guint type, GCancellable *cancellable,
+                                         BarBarSwayMessageType type,
+                                         GCancellable *cancellable,
                                          GAsyncReadyCallback callback,
                                          gpointer data, const char *format,
                                          ...) {
@@ -527,7 +596,7 @@ static void cmd_output_cb(GObject *object, GAsyncResult *res, gpointer data) {
   g_object_unref(task);
 }
 
-static void cmd_cb(GObject *source, GAsyncResult *res, gpointer data) {
+static void send_cb(GObject *source, GAsyncResult *res, gpointer data) {
   GOutputStream *stream = G_OUTPUT_STREAM(source);
   GTask *task = data;
   GError *error = NULL;
@@ -542,10 +611,9 @@ static void cmd_cb(GObject *source, GAsyncResult *res, gpointer data) {
     return;
   }
 
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc->socket_client));
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc->connection));
 
-  // if we have no callback, we return early and don't read the output.
-  if (ipc->cb || g_task_get_check_cancellable(task)) {
+  if (!ipc->cb || g_cancellable_is_cancelled(g_task_get_cancellable(task))) {
     g_task_return_boolean(task, TRUE);
     g_object_unref(task);
     return;
@@ -555,7 +623,7 @@ static void cmd_cb(GObject *source, GAsyncResult *res, gpointer data) {
                                cmd_output_cb, task);
 }
 
-static void cmd_connect(GObject *source, GAsyncResult *res, gpointer data) {
+static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
   GTask *task = data;
   GError *error = NULL;
   GSocketClient *socket_client = G_SOCKET_CLIENT(source);
@@ -569,10 +637,10 @@ static void cmd_connect(GObject *source, GAsyncResult *res, gpointer data) {
     g_object_unref(task);
     return;
   }
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(socket_client));
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(ipc->connection));
 
-  g_barbar_sway_ipc_send_async(output_stream, SWAY_RUN_COMMAND, ipc->message,
-                               g_task_get_cancellable(task), cmd_cb, task);
+  g_barbar_sway_ipc_send_async(output_stream, ipc->type, ipc->message,
+                               g_task_get_cancellable(task), send_cb, task);
 }
 
 /**
@@ -631,6 +699,7 @@ gboolean g_barbar_sway_ipc_oneshot_finish(GAsyncResult *result, guint32 *type,
 
 /**
  * g_barbar_sway_ipc_oneshot:
+ * @type: type of message to send
  * @result: If we care about the result, if not we won't try to read the input
  * is not needed
  * @cancellable: (nullable): a #GCancellable, or %NULL
@@ -668,6 +737,7 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
 
   ipc->socket_client = g_socket_client_new();
   ipc->cb = callback != NULL || result;
+  ipc->type = type;
   GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   va_start(args, format);
@@ -678,55 +748,5 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
 
   g_socket_client_connect_async(ipc->socket_client,
                                 G_SOCKET_CONNECTABLE(address), cancellable,
-                                cmd_connect, task);
-}
-
-static void g_barbar_request_send_cb(GObject *source, GAsyncResult *res,
-                                     gpointer data) {
-  GOutputStream *stream = G_OUTPUT_STREAM(source);
-  GTask *task = data;
-  GError *error = NULL;
-  SwayIpcCmd *ipc = g_task_get_task_data(task);
-  GInputStream *input_stream;
-
-  g_barbar_sway_ipc_send_finish(stream, res, &error);
-
-  if (error) {
-    g_task_return_error(task, error);
-    g_object_unref(task);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc->socket_client));
-
-  // if we have no callback, we return early and don't read the output.
-  if (ipc->cb || g_task_get_check_cancellable(task)) {
-    g_task_return_boolean(task, TRUE);
-    g_object_unref(task);
-    return;
-  }
-
-  g_barbar_sway_ipc_read_async(input_stream, g_task_get_cancellable(task),
-                               cmd_output_cb, task);
-}
-
-void g_barbar_sway_ipc_request(GSocketConnection *ipc,
-                               BarBarSwayMessageType type,
-                               GCancellable *cancellable,
-                               GAsyncReadyCallback callback, gpointer data,
-                               const char *format, ...) {
-  va_list args;
-
-  GOutputStream *output_stream;
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(ipc));
-
-  GTask *task;
-
-  task = g_task_new(ipc, cancellable, callback, data);
-
-  va_start(args, format);
-  // ipc->message = g_strdup_vprintf(format, args);
-  g_barbar_sway_ipc_send_vprintf_async(output_stream, SWAY_RUN_COMMAND,
-                                       cancellable, cmd_cb, task, format, args);
-  va_end(args);
+                                connect_cb, task);
 }

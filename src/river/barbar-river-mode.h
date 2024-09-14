@@ -27,6 +27,7 @@
 #include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -34,5 +35,11 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarRiverMode, g_barbar_river_mode, BARBAR, RIVER_MODE,
                      BarBarSensor)
+
+void g_barbar_river_mode_set_mode(BarBarRiverMode *river, const char *mode);
+
+const char *g_barbar_river_mode_get_mode(BarBarRiverMode *river);
+
+GtkWidget *g_barbar_river_mode_new(void);
 
 G_END_DECLS

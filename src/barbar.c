@@ -1,6 +1,4 @@
 #include "barbar.h"
-#include "barbar-github-activity.h"
-#include "widgets/barbar-eventswitcher.h"
 #include <glibtop.h>
 
 void g_barbar_init(void) {
@@ -38,7 +36,6 @@ void g_barbar_init(void) {
   g_barbar_label_get_type();
   g_barbar_sensor_widget_get_type();
   g_barbar_value_icon_get_type();
-  g_barbar_separator_get_type();
   g_barbar_cpu_processes_get_type();
   g_barbar_event_switcher_get_type();
 

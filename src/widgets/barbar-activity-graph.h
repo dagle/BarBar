@@ -37,7 +37,7 @@ G_DECLARE_FINAL_TYPE(BarBarActivityGraph, g_barbar_activity_graph, BARBAR,
 GtkWidget *g_barbar_activity_graph_new(int cols, int rows);
 
 void g_barbar_activity_graph_set_activity(BarBarActivityGraph *graph, int col,
-                                          int row, int activity);
+                                          int row, int level);
 
 void g_barbar_activity_graph_set_activity_linear(BarBarActivityGraph *graph,
                                                  int num, int activity);

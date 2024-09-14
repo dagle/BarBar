@@ -2,6 +2,7 @@
 #include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
+#include <ctype.h>
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -11,9 +12,6 @@
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
-
-// TODO:  We need to match against names and not just numbers
-// because if the namespace is named, it isn't a number
 
 /**
  * BarBarSwayWorkspace:
@@ -78,10 +76,9 @@ static void g_barbar_sway_workspace_set_output(BarBarSwayWorkspace *sway,
                                                const gchar *output) {
   g_return_if_fail(BARBAR_IS_SWAY_WORKSPACE(sway));
 
-  g_free(sway->output_name);
-
-  sway->output_name = g_strdup(output);
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_workspace_props[PROP_OUTPUT]);
+  if (g_set_str(&sway->output_name, output)) {
+    g_object_notify_by_pspec(G_OBJECT(sway), sway_workspace_props[PROP_OUTPUT]);
+  }
 }
 
 static void g_barbar_sway_workspace_set_property(GObject *object,
@@ -133,6 +130,11 @@ g_barbar_sway_workspace_class_init(BarBarSwayWorkspaceClass *class) {
   gobject_class->get_property = g_barbar_sway_workspace_get_property;
   gobject_class->finalize = g_barbar_sway_workspace_finalize;
 
+  /**
+   * BarBarSwayWorkspace:output:
+   *
+   * What screen this is monitoring
+   */
   sway_workspace_props[PROP_OUTPUT] =
       g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
 
@@ -397,10 +399,24 @@ static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
 }
 
 static gint compare_func(gconstpointer a, gconstpointer b) {
-  const struct workspace *wrka = a;
-  const struct workspace *wrkb = b;
+  const struct entry *wrka = a;
+  const struct entry *wrkb = b;
 
   return wrka->num - wrkb->num;
+}
+
+static int g_barbar_sway_workspace_to_num(const char *name) {
+  if (isdigit(name[0]) != 0) {
+    errno = 0;
+    char *endptr = NULL;
+    long long parsed_num = strtoll(name, &endptr, 10);
+    if (errno != 0 || parsed_num > INT32_MAX || parsed_num < 0 ||
+        endptr == name) {
+      return -1;
+    }
+    return (int)parsed_num;
+  }
+  return -1;
 }
 
 GtkWidget *g_barbar_sway_add_button(BarBarSwayWorkspace *sway,
@@ -416,7 +432,7 @@ GtkWidget *g_barbar_sway_add_button(BarBarSwayWorkspace *sway,
 
   for (list = sway->workspaces; list; list = list->next) {
     struct entry *e = list->data;
-    if (e->num == entry->num) {
+    if (e->id == entry->id) {
       break;
     }
   }
@@ -505,6 +521,22 @@ static void g_barbar_sway_workspace_start(GtkWidget *widget) {
 
   GTK_WIDGET_CLASS(g_barbar_sway_workspace_parent_class)->root(widget);
 
+  sway->sub =
+      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
+
   g_barbar_sway_ipc_oneshot(SWAY_GET_WORKSPACES, TRUE, NULL, workspaces_cb,
                             sway, "");
+}
+
+/**
+ * g_barbar_sway_workspace_new:
+ *
+ * Returns: (transfer full): a new `BarBarSwayWorkspace`
+ */
+GtkWidget *g_barbar_sway_workspace_new(void) {
+  BarBarSwayWorkspace *ws;
+
+  ws = g_object_new(BARBAR_TYPE_SWAY_WORKSPACE, NULL);
+
+  return GTK_WIDGET(ws);
 }

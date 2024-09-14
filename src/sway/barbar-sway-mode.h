@@ -30,9 +30,13 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_SWAY_MODE (g_barbar_sway_language_get_type())
+#define BARBAR_TYPE_SWAY_MODE (g_barbar_sway_mode_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarSwayMode, g_barbar_sway_mode, BARBAR, SWAY_MODE,
                      BarBarSensor)
+
+BarBarSensor *g_barbar_sway_mode_new(void);
+
+const char *g_barbar_sway_mode_get_mode(BarBarSwayMode *sway);
 
 G_END_DECLS

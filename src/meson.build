@@ -22,7 +22,6 @@ libbarbar_src = [
   'sensors/barbar-backlight.c',
   'sensors/barbar-cmd.c',
   'sensors/barbar-temperature.c',
-  'sensors/barbar-mpris.c',
   'sensors/barbar-inhibitor.c',
   'sensors/barbar-sensorcontext.c',
   'sensors/barbar-wireplumber.c',
@@ -35,6 +34,9 @@ libbarbar_src = [
   'sensors/barbar-filesystem.c',
   'sensors/barbar-uptime.c',
   'sensors/barbar-disk.c',
+
+  'sensors/barbar-mpris.c',
+  # 'sensors/mpris/barbar-mpris-player.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -59,13 +61,12 @@ libbarbar_src = [
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
   'widgets/barbar-valueicon.c',
-  'widgets/barbar-separator.c', # delete
   'widgets/barbar-processes.c',
   'widgets/barbar-activity-graph.c',
   'widgets/barbar-box.c',
   'widgets/barbar-eventswitcher.c',
 
-  'barbar-github-activity.c',
+  'widgets/barbar-github-activity.c',
 
   'tray/barbar-watcher.c',
   'tray/barbar-tray.c',
@@ -107,7 +108,7 @@ libbarbar_headers = [
   'sensors/barbar-disk.h',
 
   'sensors/barbar-mpris.h',
-  #'sensors/barbar-mpris-.h',
+  # 'sensors/mpris/barbar-mpris-player.h',
 
   'river/barbar-river-layout.h',
   'river/barbar-river-tags.h',
@@ -118,14 +119,13 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
-  'widgets/barbar-separator.h',
   'widgets/barbar-processes.h',
   'widgets/barbar-activity-graph.h',
   'widgets/barbar-box.h',
   'widgets/barbar-valueicon.h',
   'widgets/barbar-eventswitcher.h',
 
-  'barbar-github-activity.h',
+  'widgets/barbar-github-activity.h',
 
   # 'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-service.h',
@@ -285,7 +285,7 @@ if get_option('introspection')
     nsversion: '1.0',
     symbol_prefix: ['g_barbar', 'barbar'],
     identifier_prefix : ['BarBar'],
-    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0'],
+    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0', 'Gtk4LayerShell-1.0' ],
     dependencies: deps,
     extra_args: gir_args,
     fatal_warnings: true,

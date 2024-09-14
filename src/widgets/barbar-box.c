@@ -3,7 +3,8 @@
 /**
  * BarBarBox:
  *
- * A empty widget used to describe a box. It's mostly use to just
+ * An empty widget used to describe a box. It's used to
+ * bind dicorations.
  */
 struct _BarBarBox {
   GtkWidget parent_instance;
@@ -29,19 +30,46 @@ static GParamSpec *properties[NUM_PROPERTIES] = {
 G_DEFINE_TYPE(BarBarBox, g_barbar_box, GTK_TYPE_WIDGET)
 
 // Maybe this is horrible design
-void g_barbar_box_set_level(BarBarBox *box, uint value) {
+/**
+ * g_barbar_box_set_level:
+ * @box: a `BarBarBox`
+ * @level: a level
+ *
+ * Update the css class to be the same as the label, so if you set level 12
+ * the css class will be set to level-12
+ *
+ */
+void g_barbar_box_set_level(BarBarBox *box, uint level) {
   g_return_if_fail(BARBAR_IS_BOX(box));
+  char level_str[9];
 
-  if (box->level == value) {
+  if (box->level == level) {
     return;
   }
 
-  box->level = value;
+  box->level = level;
+
+  uint old_level = g_barbar_box_get_level(box);
+  g_snprintf(level_str, sizeof(level_str), "level-%d", old_level);
+
+  if (gtk_widget_has_css_class(GTK_WIDGET(box), level_str)) {
+    gtk_widget_remove_css_class(GTK_WIDGET(box), level_str);
+  }
+
+  g_snprintf(level_str, sizeof(level_str), "level-%d", level);
+  gtk_widget_add_css_class(GTK_WIDGET(box), level_str);
 
   g_object_notify_by_pspec(G_OBJECT(box), properties[PROP_LEVEL]);
 }
 
-uint g_barbar_box_get_value(BarBarBox *box) { return box->level; }
+/**
+ * g_barbar_box_get_level:
+ * @box: a `BarBarBox`
+ *
+ * get the level of the box, levels are used to color boxes differently
+ *
+ */
+uint g_barbar_box_get_level(BarBarBox *box) { return box->level; }
 
 static void g_barbar_box_measure(GtkWidget *widget, GtkOrientation orientation,
                                  int for_size, int *minimum, int *natural,
@@ -55,7 +83,7 @@ static void g_barbar_box_measure(GtkWidget *widget, GtkOrientation orientation,
   }
 }
 
-static void g_barbar_box_set_size(BarBarBox *box, guint size) {
+void g_barbar_box_set_size(BarBarBox *box, guint size) {
   g_return_if_fail(BARBAR_IS_BOX(box));
 
   if (box->size == size) {

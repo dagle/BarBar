@@ -62,7 +62,12 @@ G_DEFINE_TYPE(BarBarGraph, g_barbar_graph, GTK_TYPE_WIDGET)
 
 static void g_barbar_graph_start(GtkWidget *widget);
 
-static void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
+/**
+ * g_barbar_graph_set_stroke_width:
+ * @self: a `BarBarGraph`
+ * @stroke: Size of the stroke
+ */
+void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->stroke_size == stroke) {
@@ -73,7 +78,16 @@ static void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
   self->stroke = gsk_stroke_new(stroke);
 }
 
-static void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
+/**
+ * g_barbar_graph_set_fill:
+ * @self: a `BarBarGraph`
+ * @fill: i it should be filled
+ *
+ * Sets if the graph should be filled or not. Filling
+ * means that we color the area between the line and the
+ * buttom of the graph
+ */
+void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->fill == fill) {
@@ -84,7 +98,14 @@ static void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
   // we need to update here? Just wait for the next tick for now
 }
 
-static void g_barbar_graph_history_length(BarBarGraph *self, guint length) {
+/**
+ * g_barbar_graph_history_entries:
+ * @self: a `BarBarGraph`
+ * @length: length
+ *
+ * Sets how many entries there should be in the graph (maximum).
+ */
+void g_barbar_graph_history_entries(BarBarGraph *self, guint length) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->capasity == length) {
@@ -102,7 +123,15 @@ static void g_barbar_graph_history_length(BarBarGraph *self, guint length) {
   self->capasity = length;
 }
 
-static void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
+/**
+ * g_barbar_graph_set_min_value:
+ * @self: a `BarBarGraph`
+ * @min: min value
+ *
+ * Sets the lowest value of a graph. This value can also
+ * be change by setting main value that is lower than the min value
+ */
+void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->min_value == min) {
@@ -112,7 +141,15 @@ static void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
   self->min_value = min;
 }
 
-static void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
+/**
+ * g_barbar_graph_set_max_value:
+ * @self: a `BarBarGraph`
+ * @max: max value
+ *
+ * Sets the maximum value of a graph. This value can also
+ * be change by setting main value that is higher than the max value
+ */
+void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->max_value == max) {
@@ -122,7 +159,14 @@ static void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
   self->max_value = max;
 }
 
-static void g_barbar_graph_set_value(BarBarGraph *self, double value) {
+/**
+ * g_barbar_graph_set_value:
+ * @self: a `BarBarGraph`
+ * @value: a value
+ *
+ * Sets the current value of a graph.
+ */
+void g_barbar_graph_set_value(BarBarGraph *self, double value) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->current == value) {
@@ -138,7 +182,15 @@ static void g_barbar_graph_set_value(BarBarGraph *self, double value) {
   self->current = value;
 }
 
-static void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
+/**
+ * g_barbar_graph_set_min_height:
+ * @self: a `BarBarGraph`
+ * @height: height
+ *
+ * Set how small the vertical height should be, at minimum. If not
+ * set it will be as small as required.
+ */
+void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->height == height) {
@@ -148,7 +200,15 @@ static void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
   self->height = height;
 }
 
-static void g_barbar_graph_set_min_width(BarBarGraph *self, guint width) {
+/**
+ * g_barbar_graph_set_min_width:
+ * @self: a `BarBarGraph`
+ * @width: width
+ *
+ * Set how small the horizontal width should be, at minimum. If not
+ * set it will be as small as required.
+ */
+void g_barbar_graph_set_min_width(BarBarGraph *self, guint width) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->width == width) {
@@ -157,7 +217,14 @@ static void g_barbar_graph_set_min_width(BarBarGraph *self, guint width) {
   self->width = width;
 }
 
-static void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
+/**
+ * g_barbar_graph_set_interval:
+ * @self: a `BarBarGraph`
+ * @interval: interval
+ *
+ * How often the graph should tick and move a value to it's history
+ */
+void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->interval == interval) {
@@ -166,7 +233,15 @@ static void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
   self->interval = interval;
 }
 
-static void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete) {
+/**
+ * g_barbar_graph_set_discrete:
+ * @self: a `BarBarGraph`
+ * @discrete: if we should operate in descrite mode
+ *
+ * Changes between discrete and continues mode.
+ * If set to discete mode the graph will draw using a series of bars.
+ */
+void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   if (self->discrete == discrete) {
@@ -197,7 +272,7 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
     g_barbar_graph_set_fill(graph, g_value_get_boolean(value));
     break;
   case PROP_HISTORY_LENGTH:
-    g_barbar_graph_history_length(graph, g_value_get_uint(value));
+    g_barbar_graph_history_entries(graph, g_value_get_uint(value));
     break;
   case PROP_MIN_VALUE:
     g_barbar_graph_set_min_value(graph, g_value_get_double(value));

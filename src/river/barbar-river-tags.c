@@ -1,5 +1,6 @@
 #include "river/barbar-river-tags.h"
 #include "glib-object.h"
+#include "gtk/gtkshortcut.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -52,8 +53,7 @@ static GtkBuildableIface *parent_buildable_iface;
 
 static void
 g_barbar_river_tag_buildable_interface_init(GtkBuildableIface *iface);
-static void g_barbar_river_tag_add_button(BarBarRiverTag *self,
-                                          GtkWidget *child);
+
 static void g_barbar_river_tag_root(GtkWidget *widget);
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data);
@@ -87,8 +87,23 @@ g_barbar_river_tag_buildable_interface_init(GtkBuildableIface *iface) {
   iface->add_child = g_barbar_river_tag_add_child;
 }
 
-static void g_barbar_river_tag_set_tagnums(BarBarRiverTag *river,
-                                           guint tagnums) {
+/**
+ * g_barbar_river_tag_get_tagnums:
+ * @river: a `BarBarRiverTag`
+ *
+ * Returns: number of tags
+ */
+guint g_barbar_river_tag_get_tagnums(BarBarRiverTag *river) {
+  return river->nums;
+}
+
+/**
+ * g_barbar_river_tag_set_tagnums:
+ * @river: a `BarBarRiverTag`
+ * @tagnums: number of tags we should support
+ *
+ */
+void g_barbar_river_tag_set_tagnums(BarBarRiverTag *river, guint tagnums) {
   g_return_if_fail(BARBAR_IS_RIVER_TAG(river));
 
   if (river->nums == tagnums) {
@@ -311,26 +326,71 @@ static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                           NULL);
 }
 
-static void g_barbar_river_tag_add_button(BarBarRiverTag *self,
-                                          GtkWidget *child) {
+/**
+ * g_barbar_river_tag_get_button:
+ * @river: a `BarBarRiverTag`
+ * @idx: index
+ *
+ * Returns: (transfer none): returns the button at index or NULL
+ */
+GtkWidget *g_barbar_river_tag_get_button(BarBarRiverTag *river, uint idx) {
+  g_return_val_if_fail(BARBAR_IS_RIVER_TAG(river), NULL);
+  g_return_val_if_fail(river->nums < idx, NULL);
+
+  return river->buttons[idx];
+}
+
+/**
+ * g_barbar_river_tag_set_button:
+ * @river: a `BarBarRiverTag`
+ * @idx: index
+ * @child: a child widget
+ *
+ * Tries to set the set a button. Will fail if idx is larger then number of
+ * buttons.
+ *
+ */
+void g_barbar_river_tag_set_button(BarBarRiverTag *river, uint idx,
+                                   GtkWidget *child) {
+  g_return_if_fail(BARBAR_IS_RIVER_TAG(river));
+  g_return_if_fail(river->nums < idx);
+
+  if (!river->buttons[idx]) {
+    river->buttons[idx] = gtk_button_new();
+    gtk_widget_set_parent(river->buttons[idx], GTK_WIDGET(river));
+    g_signal_connect(river->buttons[idx], "clicked", G_CALLBACK(clicked),
+                     river);
+  }
+  gtk_button_set_child(GTK_BUTTON(river->buttons[idx]), child);
+}
+
+/**
+ * g_barbar_river_tag_add_button:
+ * @river: a `BarBarRiverTag`
+ * @child: a `GtkWidegt` child
+ *
+ * Adds a gtk widget to the widgets and extends it if it's full
+ * it will try to populate a new tag.
+ */
+void g_barbar_river_tag_add_button(BarBarRiverTag *river, GtkWidget *child) {
   GtkWidget *btn;
 
   uint32_t i = 0;
   for (; i < 32; i++) {
-    if (self->buttons[i]) {
+    if (river->buttons[i]) {
       continue;
     }
     btn = gtk_button_new();
     gtk_button_set_child(GTK_BUTTON(btn), child);
-    gtk_widget_set_parent(btn, GTK_WIDGET(self));
-    g_signal_connect(btn, "clicked", G_CALLBACK(clicked), self);
-    self->buttons[i] = btn;
+    gtk_widget_set_parent(btn, GTK_WIDGET(river));
+    g_signal_connect(btn, "clicked", G_CALLBACK(clicked), river);
+    river->buttons[i] = btn;
     break;
   }
   i++;
-  if (self->nums < i) {
-    self->nums = i;
-    g_object_notify_by_pspec(G_OBJECT(self), river_tags_props[PROP_TAGNUMS]);
+  if (river->nums < i) {
+    river->nums = i;
+    g_object_notify_by_pspec(G_OBJECT(river), river_tags_props[PROP_TAGNUMS]);
   }
 }
 
@@ -402,4 +462,17 @@ static void g_barbar_river_tag_root(GtkWidget *widget) {
   zriver_status_manager_v1_destroy(river->status_manager);
 
   river->status_manager = NULL;
+}
+
+/**
+ * g_barbar_river_tag_new:
+ *
+ * Returs: (transfer none): a `BarBarRiverTag`
+ */
+GtkWidget *g_barbar_river_tag_new(void) {
+  BarBarRiverTag *self;
+
+  self = g_object_new(BARBAR_TYPE_RIVER_TAG, NULL);
+
+  return GTK_WIDGET(self);
 }

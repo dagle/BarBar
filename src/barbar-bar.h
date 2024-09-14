@@ -24,9 +24,11 @@
 
 #pragma once
 
+#include "barbar-enum.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <gtk4-layer-shell.h>
 
 G_BEGIN_DECLS
 
@@ -35,5 +37,14 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarBar, g_barbar_bar, BARBAR, BAR, GtkWindow)
 
 GtkWidget *g_barbar_bar_new(void);
+
+void g_barbar_bar_set_pos(BarBarBar *bar, BarBarBarPosition pos);
+
+void g_barbar_bar_set_screen_num(BarBarBar *bar, uint num);
+
+void g_barbar_bar_set_height(BarBarBar *bar, uint height);
+
+void g_barbar_bar_set_margin(BarBarBar *bar, GtkLayerShellEdge edge,
+                             uint margin);
 
 G_END_DECLS

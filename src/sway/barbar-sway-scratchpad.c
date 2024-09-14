@@ -62,20 +62,23 @@ static void g_barbar_sway_scratchpad_get_property(GObject *object,
   case PROP_APP:
     g_value_set_string(value, sway->app);
     break;
+  case PROP_COUNT:
+    g_value_set_uint(value, sway->count);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-// static void g_barbar_sway_mode_finalize(GObject *object) {
-//   BarBarSwayMode *mode = BARBAR_SWAY_MODE(object);
-//
-//   g_free(mode->mode);
-//   g_clear_object(&mode->sub);
-//
-//   G_OBJECT_CLASS(g_barbar_sway_mode_parent_class)->finalize(object);
-// }
-//
+static void g_barbar_sway_mode_finalize(GObject *object) {
+  BarBarSwayScratchpad *pad = BARBAR_SWAY_SCRATCHPAD(object);
+
+  g_free(pad->app);
+  g_clear_pointer(&pad->sub, g_object_unref);
+
+  G_OBJECT_CLASS(g_barbar_sway_scratchpad_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_sway_scratchpad_class_init(BarBarSwayScratchpadClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -85,12 +88,12 @@ g_barbar_sway_scratchpad_class_init(BarBarSwayScratchpadClass *class) {
   //
   gobject_class->set_property = g_barbar_sway_scratchpad_set_property;
   gobject_class->get_property = g_barbar_sway_scratchpad_get_property;
-  // gobject_class->finalize = g_barbar_sway_mode_finalize;
+  gobject_class->finalize = g_barbar_sway_mode_finalize;
 
   /**
    * BarBarSwayScratchpad:app:
    *
-   * Name of the app in scratchpad area
+   * Name of the currently active app in scratchpad area
    */
   sway_props[PROP_APP] =
       g_param_spec_string("app", NULL, NULL, NULL, G_PARAM_READABLE);
@@ -98,10 +101,10 @@ g_barbar_sway_scratchpad_class_init(BarBarSwayScratchpadClass *class) {
   /**
    * BarBarSwayScratchpad:app:
    *
-   * The current sway mode
+   * The how many apps in the scratchpad
    */
   sway_props[PROP_COUNT] =
-      g_param_spec_uint("app", NULL, NULL, 0, 1000, 0, G_PARAM_READABLE);
+      g_param_spec_uint("count", NULL, NULL, 0, 1000, 0, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, sway_props);
 
@@ -126,15 +129,63 @@ g_barbar_sway_scratchpad_class_init(BarBarSwayScratchpadClass *class) {
 
 static void g_barbar_sway_scratchpad_init(BarBarSwayScratchpad *self) {}
 
-static void g_barbar_sway_handle_scratchpad(BarBarSwayScratchpad *sway,
-                                            gchar *payload, gssize len) {}
-
 static void event_listner(BarBarSwaySubscribe *sub, guint type,
                           const char *payload, guint len, gpointer data) {
   BarBarSwayScratchpad *sway = BARBAR_SWAY_SCRATCHPAD(data);
 
   g_barbar_sway_ipc_oneshot(SWAY_GET_TREE, TRUE, NULL, scratchpad_state_cb,
                             sway, "");
+}
+
+static void g_barbar_sway_handle_scratchpad(BarBarSwayScratchpad *sway,
+                                            gchar *payload, gssize len) {
+  JsonParser *parser;
+  gboolean ret;
+  GError *err = NULL;
+
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, payload, len, &err);
+
+  if (!ret) {
+    g_printerr("Sway language: Failed to parse json: %s", err->message);
+    g_error_free(err);
+    g_object_unref(parser);
+    return;
+  }
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+  gint i = json_reader_count_elements(reader);
+
+  for (int j = 0; j < i; j++) {
+    json_reader_read_element(reader, j);
+    json_reader_read_member(reader, "type");
+    const char *type = json_reader_get_string_value(reader);
+    json_reader_end_member(reader);
+    if (!g_strcmp0(type, "keyboard")) {
+      json_reader_read_member(reader, "identifier");
+      const char *identifier = json_reader_get_string_value(reader);
+      json_reader_end_member(reader);
+      if (!sway->identifier) {
+        g_barbar_sway_language_set_identifier(sway, identifier);
+      }
+      if (!g_strcmp0(sway->identifier, identifier)) {
+        json_reader_read_member(reader, "name");
+        const char *name = json_reader_get_string_value(reader);
+        g_barbar_sway_language_set_keyboard(sway, name);
+        json_reader_end_member(reader);
+
+        json_reader_read_member(reader, "xkb_active_layout_name");
+        const char *layout = json_reader_get_string_value(reader);
+        g_barbar_sway_language_set_layout(sway, layout);
+        json_reader_end_member(reader);
+        json_reader_end_element(reader);
+        break;
+      }
+    }
+    json_reader_end_element(reader);
+  }
+  g_object_unref(reader);
+  g_object_unref(parser);
 }
 
 static void scratchpad_state_cb(GObject *object, GAsyncResult *res,
@@ -169,9 +220,34 @@ static void get_window(BarBarSwayScratchpad *self) {
   GOutputStream *output_stream;
 }
 
-static void scratchpad_setup_cb(GObject *object, GAsyncResult *res,
-                                gpointer data) {
+// static void scratchpad_setup_cb(GObject *object, GAsyncResult *res,
+//                                 gpointer data) {
+//
+//   BarBarSwayScratchpad *sway = BARBAR_SWAY_SCRATCHPAD(data);
+//   GError *error = NULL;
+//   char *str = NULL;
+//   gsize len;
+//
+//   gboolean ret =
+//       g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
+//
+//   if (error) {
+//     g_printerr("Sway mode: Failed to get current mode: %s\n",
+//     error->message); g_error_free(error); return;
+//   }
+//
+//   if (ret) {
+//     g_barbar_sway_handle_scratchpad(sway, str, len);
+//
+//     g_signal_connect(sway->sub, "event", G_CALLBACK(event_listner), sway);
+//     g_barbar_sway_subscribe_connect(sway->sub, &error);
+//   }
+//
+//   g_free(str);
+// }
+//
 
+static void tree_cb(GObject *object, GAsyncResult *res, gpointer data) {
   BarBarSwayScratchpad *sway = BARBAR_SWAY_SCRATCHPAD(data);
   GError *error = NULL;
   char *str = NULL;
@@ -181,7 +257,7 @@ static void scratchpad_setup_cb(GObject *object, GAsyncResult *res,
       g_barbar_sway_ipc_oneshot_finish(res, NULL, &str, &len, &error);
 
   if (error) {
-    g_printerr("Sway mode: Failed to get current mode: %s\n", error->message);
+    g_printerr("Failed to get scratchpad: %s\n", error->message);
     g_error_free(error);
     return;
   }
@@ -198,36 +274,21 @@ static void scratchpad_setup_cb(GObject *object, GAsyncResult *res,
 
 static void g_barbar_sway_scratchpad_start(BarBarSensor *sensor) {
   BarBarSwayScratchpad *sway = BARBAR_SWAY_SCRATCHPAD(sensor);
-  GError *error = NULL;
-  GInputStream *input_stream;
-  GOutputStream *output_stream;
-
-  sway->ipc = g_barbar_sway_ipc_connect(&error);
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
 
   sway->sub =
-      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"window\"]"));
+      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
 
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(sway->ipc));
+  g_barbar_sway_ipc_oneshot(SWAY_GET_TREE, TRUE, NULL, tree_cb, sway, "");
+}
 
-  g_barbar_sway_ipc_send(output_stream, SWAY_GET_WORKSPACES, "", &error);
+/**
+ * g_barbar_sway_scratchpad_new:
+ *
+ * Returs: (transfer full): a new sensor
+ */
+BarBarSensor *g_barbar_sway_scratchpad_new(void) {
+  BarBarSwayScratchpad *sensor;
 
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  if (error != NULL) {
-    g_printerr("Sway workspace: Couldn't connect to the sway ipc %s",
-               error->message);
-    return;
-  }
-
-  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(sway->ipc));
-  g_barbar_sway_ipc_read_async(input_stream, NULL, scratchpad_state_cb, sway);
+  sensor = g_object_new(BARBAR_TYPE_SWAY_SCRATCHPAD, NULL);
+  return BARBAR_SENSOR(sensor);
 }

@@ -123,8 +123,14 @@ static GParamSpec *processes_props[NUM_PROPERTIES] = {
 
 static void g_barbar_cpu_processes_root(GtkWidget *widget);
 
-static void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu,
-                                              guint number) {
+/**
+ * g_barbar_cpu_processes_set_number:
+ * @cpu: a `BarBarRiverProcesses`
+ * @number: number of processes
+ *
+ * Sets the amount of processes we should display.
+ */
+void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu, guint number) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
 
   if (cpu->number == number) {
@@ -138,9 +144,14 @@ static void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu,
     g_barbar_cpu_processes_update(cpu);
   }
 }
-
-static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
-                                                guint interval) {
+/**
+ * g_barbar_cpu_processes_set_interval:
+ * @cpu: a `BarBarRiverProcesses`
+ * @interval: how often we should update
+ *
+ */
+void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
+                                         guint interval) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
 
   if (cpu->interval == interval) {
@@ -152,8 +163,15 @@ static void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
   g_object_notify_by_pspec(G_OBJECT(cpu), processes_props[PROP_INTERVAL]);
 }
 
-static void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
-                                             BarBarProcessOrder order) {
+/**
+ * g_barbar_cpu_processes_set_order:
+ * @cpu: a `BarBarRiverProcesses`
+ * @order: What metric to sort processes
+ *
+ * Sorts processes by order
+ */
+void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
+                                      BarBarProcessOrder order) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
 
   if (cpu->order == order) {
@@ -169,8 +187,18 @@ static void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
   }
 }
 
-static void g_barbar_cpu_processes_set_seperate_cpu(BarBarCpuProcesses *cpu,
-                                                    gboolean seperate) {
+/**
+ * g_barbar_cpu_processes_set_seperate_cpu:
+ * @cpu: a `BarBarRiverProcesses`
+ * @seperate: if cpus should be seprated
+ *
+ * Sets if cpus should be seperated. If your computer has 4 cpus and a process
+ * uses 100% of one core, it will be reported as 100%. If turned off, it will
+ * reported as 25%.
+ *
+ */
+void g_barbar_cpu_processes_set_seperate_cpu(BarBarCpuProcesses *cpu,
+                                             gboolean seperate) {
   g_return_if_fail(BARBAR_IS_CPU_PROCESSES(cpu));
 
   if (cpu->seperate_cpu == seperate) {
@@ -241,6 +269,9 @@ static void g_barbar_cpu_processes_class_init(BarBarCpuProcessesClass *class) {
 
   /**
    * BarBarCpuProcesses:headers:
+   *
+   * If headers of the widget should be displayed.
+   * Displaying information of what is displayed in each column.
    *
    */
   processes_props[PROP_HEADERS] =
@@ -378,7 +409,6 @@ static void insert_row(BarBarCpuProcesses *self, proc_info *proc, int row) {
   char str[8];
   row++;
 
-  // TODO: IO doesn't really work atm.
   widget = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
   if (widget) {
     GtkWidget *process = gtk_grid_get_child_at(GTK_GRID(self->grid), 0, row);
@@ -566,7 +596,6 @@ static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
 
       get_proctime(self, proc, total);
       get_mem(proc, self->memory);
-      // printf("%s - %lu\n", proc->state.cmd, proc->io.disk_wchar);
     }
 
     break;
@@ -574,14 +603,8 @@ static void get_metrics(BarBarCpuProcesses *self, pid_t *pids,
 
   j = 0;
   for (GList *l = self->processes; l != NULL; l = l->next) {
-    // for (GList *l = self->processes; l != NULL && j < selected;
-    //      l = l->next, j++) {
     proc_info *proc = l->data;
     glibtop_get_proc_state(&proc->state, proc->pid);
-  }
-  for (GList *l = self->processes; l != NULL; l = l->next) {
-    proc_info *proc = l->data;
-    // printf("%s - %lu\n", proc->state.cmd, proc->io.disk_wchar);
   }
 }
 static void g_barbar_processes_reset(BarBarCpuProcesses *self) {
@@ -629,4 +652,17 @@ static void g_barbar_cpu_processes_root(GtkWidget *widget) {
   g_barbar_cpu_processes_update(cpu);
   cpu->source_id = g_timeout_add_full(0, cpu->interval,
                                       g_barbar_cpu_processes_update, cpu, NULL);
+}
+
+/**
+ * g_barbar_cpu_processes_new:
+ *
+ * Creates a new `BarBarRiverProcesses`
+ */
+GtkWidget *g_barbar_cpu_processes_new(void) {
+  BarBarCpuProcesses *self;
+
+  self = g_object_new(BARBAR_TYPE_CPU_PROCESSES, NULL);
+
+  return GTK_WIDGET(self);
 }

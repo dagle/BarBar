@@ -19,13 +19,26 @@
 #pragma once
 
 #include "sensors/barbar-sensor.h"
+#include "sensors/barbar-sensorcontext.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_MPRIS_CONTROLS (g_barbar_mpris_controls_get_type())
+#define BARBAR_TYPE_SENSOR_WIDGET (g_barbar_sensor_widget_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarSensorWidget, g_barbar_sensor_widget, BARBAR,
                      SENSOR_WIDGET, GtkWidget)
+
+void g_barbar_sensor_wiget_set_child(BarBarSensorWidget *widget,
+                                     GtkWidget *child);
+
+GtkWidget *g_barbar_sensor_wiget_get_child(BarBarSensorWidget *widget);
+
+void g_barbar_sensor_wiget_set_sensor(BarBarSensorWidget *widget,
+                                      BarBarSensorContext *sensor);
+BarBarSensorContext *
+g_barbar_sensor_wiget_get_sensor(BarBarSensorWidget *widget);
+
+GtkWidget *g_barbar_sensor_widget_new(BarBarSensor *sensor, GtkWidget *widget);
 
 G_END_DECLS

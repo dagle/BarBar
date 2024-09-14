@@ -37,6 +37,11 @@ G_DECLARE_FINAL_TYPE(BarBarSwaySubscribe, g_barbar_sway_subscribe, BARBAR,
 
 GObject *g_barbar_sway_subscribe_new(const char *interest);
 
+void g_barbar_sway_susbscribe_set_interest(BarBarSwaySubscribe *sub,
+                                           const char *interest);
+
+const char *g_barbar_sway_susbscribe_get_interest(BarBarSwaySubscribe *sub);
+
 void g_barbar_sway_subscribe_connect(BarBarSwaySubscribe *self, GError **error);
 
 G_END_DECLS

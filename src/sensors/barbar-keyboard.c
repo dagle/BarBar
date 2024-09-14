@@ -1,4 +1,5 @@
 #include "barbar-keyboard.h"
+#include "glib-object.h"
 #include <gtk/gtk.h>
 
 /**

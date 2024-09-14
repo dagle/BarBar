@@ -9,8 +9,6 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-// TODO: in the future this should be a sensor
-
 /**
  * BarBarRiverView:
  *
@@ -32,7 +30,7 @@ struct _BarBarRiverView {
 enum {
   PROP_0,
 
-  PROP_VIEW,
+  PROP_LABEL,
 
   NUM_PROPERTIES,
 };
@@ -49,12 +47,9 @@ static void g_barbar_river_view_set_property(GObject *object, guint property_id,
                                              const GValue *value,
                                              GParamSpec *pspec) {
 
-  BarBarRiverView *rv = BARBAR_RIVER_VIEW(object);
+  // BarBarRiverView *rv = BARBAR_RIVER_VIEW(object);
 
   switch (property_id) {
-  // case PROP_LAYOUT:
-  //   g_barbar_river_layout_set_layout(rl, g_value_get_string(value));
-  //   break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -66,8 +61,8 @@ static void g_barbar_river_view_get_property(GObject *object, guint property_id,
   BarBarRiverView *rv = BARBAR_RIVER_VIEW(object);
 
   switch (property_id) {
-  case PROP_VIEW:
-    g_value_set_string(value, "hello");
+  case PROP_LABEL:
+    g_value_set_object(value, rv->label);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -92,8 +87,13 @@ static void g_barbar_river_view_class_init(BarBarRiverViewClass *class) {
 
   widget_class->root = g_barbar_river_view_start;
 
-  river_view_props[PROP_VIEW] =
-      g_param_spec_string("view", NULL, NULL, NULL, G_PARAM_READABLE);
+  /**
+   * BarBarRiverView:label:
+   *
+   * The gtk label widget
+   */
+  river_view_props[PROP_LABEL] = g_param_spec_object(
+      "label", NULL, NULL, GTK_TYPE_LABEL, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_view_props);
@@ -198,8 +198,7 @@ static void g_barbar_river_view_start(GtkWidget *widget) {
   GtkWindow *window =
       GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
   if (window == NULL || !gtk_layer_is_layer_window(window)) {
-    // print an error
-    printf("Parent window not found!\n");
+    g_warning("Parent window not found!\n");
     return;
   }
   monitor = gtk_layer_get_monitor(window);
@@ -225,4 +224,17 @@ static void g_barbar_river_view_start(GtkWidget *widget) {
   zriver_status_manager_v1_destroy(river->status_manager);
 
   river->status_manager = NULL;
+}
+
+/**
+ * g_barbar_river_view_new:
+ *
+ * Returns: (transfer full): A `GtkWidget`
+ */
+GtkWidget *g_barbar_river_view_new(void) {
+  BarBarRiverView *self;
+
+  self = g_object_new(BARBAR_TYPE_RIVER_VIEW, NULL);
+
+  return GTK_WIDGET(self);
 }

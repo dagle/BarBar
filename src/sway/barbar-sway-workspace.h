@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarSwayWorkspace, g_barbar_sway_workspace, BARBAR,
                      SWAY_WORKSPACE, GtkWidget)
 
+GtkWidget *g_barbar_sway_workspace_new(void);
+
 G_END_DECLS

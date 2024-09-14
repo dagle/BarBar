@@ -1,33 +1,18 @@
-/*
- * Copyright © 2024 Per Odlund
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *
- */
+#include "barbar-sensorwidget.h"
+#include "gtk/gtkshortcut.h"
 
 /**
  * BarBarSensorWidget:
  *
- * A gtk sensors works like a gtkbin but also contains a sensor.
+ * A `BarBarSensorWidget` works like a gtkbin but also contains a sensor.
  * The reason for this is that the widget needs to be mapped before
- * we can start the sensor and the sensor and the widget is coupled.
+ * we can start the sensor and the sensor and the widget needs to
+ * be coupled. An example of this is an inhibitor that is connected
+ * to a screen but the widget it self could be anything. Doing it like
+ * this, the sensor can then find information about the screen it's
+ * connected to.
  *
  */
-
-#include "barbar-sensorwidget.h"
-#include "sensors/barbar-sensorcontext.h"
-
 struct _BarBarSensorWidget {
   GtkWidget parent_instance;
 
@@ -51,8 +36,15 @@ static GParamSpec *sw_props[NUM_PROPERTIES] = {
 
 static void g_barbar_sensor_widget_map(GtkWidget *widget);
 
-static void g_barbar_sensor_wiget_set_child(BarBarSensorWidget *widget,
-                                            GtkWidget *child) {
+/**
+ * g_barbar_sensor_wiget_set_child:
+ * @widget: a `BarBarSensorWidget`
+ * @child: a `GtkWidget`
+ *
+ * Connects a widget to the sensor.
+ */
+void g_barbar_sensor_wiget_set_child(BarBarSensorWidget *widget,
+                                     GtkWidget *child) {
   g_return_if_fail(BARBAR_IS_SENSOR_WIDGET(widget));
   g_return_if_fail(GTK_IS_WIDGET(child));
 
@@ -64,9 +56,27 @@ static void g_barbar_sensor_wiget_set_child(BarBarSensorWidget *widget,
 
   g_object_notify_by_pspec(G_OBJECT(widget), sw_props[PROP_CHILD]);
 }
+/**
+ * g_barbar_sensor_wiget_get_child:
+ * @widget: a `BarBarSensorWidget`
+ *
+ * Returns: (transfer none): `GtkWidget`
+ */
+GtkWidget *g_barbar_sensor_wiget_get_child(BarBarSensorWidget *widget) {
+  g_return_val_if_fail(BARBAR_IS_SENSOR_WIDGET(widget), NULL);
 
-static void g_barbar_sensor_wiget_set_sensor(BarBarSensorWidget *widget,
-                                             BarBarSensorContext *sensor) {
+  return widget->child;
+}
+
+/**
+ * g_barbar_sensor_wiget_set_sensor:
+ * @widget: a `BarBarSensorWidget`
+ * @sensor: a `BarBarSensorContext`
+ *
+ * Connects a sensors to the widget.
+ */
+void g_barbar_sensor_wiget_set_sensor(BarBarSensorWidget *widget,
+                                      BarBarSensorContext *sensor) {
   g_return_if_fail(BARBAR_IS_SENSOR_WIDGET(widget));
   g_return_if_fail(BARBAR_IS_SENSOR_CONTEXT(sensor));
 
@@ -77,6 +87,19 @@ static void g_barbar_sensor_wiget_set_sensor(BarBarSensorWidget *widget,
   widget->sensor = g_object_ref(sensor);
 
   g_object_notify_by_pspec(G_OBJECT(widget), sw_props[PROP_SENSOR]);
+}
+
+/**
+ * g_barbar_sensor_wiget_get_sensor:
+ * @widget: a `BarBarSensorWidget`
+ *
+ * Returns: (transfer none): `BarBarSensorContext`
+ */
+BarBarSensorContext *
+g_barbar_sensor_wiget_get_sensor(BarBarSensorWidget *widget) {
+  g_return_val_if_fail(BARBAR_IS_SENSOR_WIDGET(widget), NULL);
+
+  return widget->sensor;
 }
 
 static void g_barbar_sensor_widget_set_property(GObject *object,
@@ -156,4 +179,20 @@ static void g_barbar_sensor_widget_map(GtkWidget *widget) {
   if (sw->sensor) {
     g_barbar_sensor_context_start(sw->sensor, widget);
   }
+}
+
+/**
+ * g_barbar_sensor_widget_new:
+ *
+ * Creates a new `BarBarSensorWidget`
+ *
+ * Returns: (transfer full): A `GtkWidget`
+ */
+GtkWidget *g_barbar_sensor_widget_new(BarBarSensor *sensor, GtkWidget *widget) {
+  BarBarSensorWidget *self;
+
+  self = g_object_new(BARBAR_TYPE_SENSOR_WIDGET, "sensor", sensor, "child",
+                      widget, NULL);
+
+  return GTK_WIDGET(self);
 }

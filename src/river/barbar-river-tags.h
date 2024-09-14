@@ -35,4 +35,17 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarRiverTag, g_barbar_river_tag, BARBAR, RIVER_TAG,
                      GtkWidget)
 
+void g_barbar_river_tag_set_tagnums(BarBarRiverTag *river, guint tagnums);
+
+guint g_barbar_river_tag_get_tagnums(BarBarRiverTag *river);
+
+GtkWidget *g_barbar_river_tag_get_button(BarBarRiverTag *river, uint idx);
+
+void g_barbar_river_tag_set_button(BarBarRiverTag *river, uint idx,
+                                   GtkWidget *child);
+
+void g_barbar_river_tag_add_button(BarBarRiverTag *river, GtkWidget *child);
+
+GtkWidget *g_barbar_river_tag_new(void);
+
 G_END_DECLS

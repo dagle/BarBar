@@ -29,4 +29,24 @@
 
 G_DECLARE_FINAL_TYPE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH, GtkWidget)
 
+void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke);
+
+void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill);
+
+void g_barbar_graph_history_entries(BarBarGraph *self, guint length);
+
+void g_barbar_graph_set_min_value(BarBarGraph *self, double min);
+
+void g_barbar_graph_set_max_value(BarBarGraph *self, double max);
+
+void g_barbar_graph_set_value(BarBarGraph *self, double value);
+
+void g_barbar_graph_set_min_height(BarBarGraph *self, guint height);
+
+void g_barbar_graph_set_min_width(BarBarGraph *self, guint width);
+
+void g_barbar_graph_set_interval(BarBarGraph *self, guint interval);
+
+void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete);
+
 GtkWidget *g_barbar_graph_new(void);

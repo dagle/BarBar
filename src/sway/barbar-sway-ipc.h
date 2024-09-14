@@ -69,13 +69,15 @@ typedef struct _BarBarSwayIpc BarBarSwayIpc;
 
 GSocketConnection *g_barbar_sway_ipc_connect(GError **error);
 
-gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream, guint type,
-                                const char *payload, GError **error);
+gboolean g_barbar_sway_ipc_send(GOutputStream *output_stream,
+                                BarBarSwayMessageType type, const char *payload,
+                                GError **error);
 
 gssize g_barbar_sway_ipc_read(GInputStream *input_stream, guint32 *type,
                               gchar **payload, gsize *length, GError **error);
 
-void g_barbar_sway_ipc_send_async(GOutputStream *output_stream, guint type,
+void g_barbar_sway_ipc_send_async(GOutputStream *output_stream,
+                                  BarBarSwayMessageType type,
                                   const char *payload,
                                   GCancellable *cancellable,
                                   GAsyncReadyCallback callback, gpointer data);
@@ -88,13 +90,15 @@ gsize g_barbar_sway_ipc_send_printf_finish(GOutputStream *stream,
                                            GError **error);
 
 void g_barbar_sway_ipc_send_vprintf_async(GOutputStream *output_stream,
-                                          guint type, GCancellable *cancellable,
+                                          BarBarSwayMessageType type,
+                                          GCancellable *cancellable,
                                           GAsyncReadyCallback callback,
                                           gpointer data, const char *format,
                                           va_list args);
 
 void g_barbar_sway_ipc_send_printf_async(GOutputStream *output_stream,
-                                         guint type, GCancellable *cancellable,
+                                         BarBarSwayMessageType type,
+                                         GCancellable *cancellable,
                                          GAsyncReadyCallback callback,
                                          gpointer data, const char *format,
                                          ...);

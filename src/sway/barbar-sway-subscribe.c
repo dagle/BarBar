@@ -25,14 +25,33 @@ static GParamSpec *sway_sub_props[NUM_PROPERTIES] = {
 static guint event_signal;
 static guint event_string_signal;
 
-static void g_barbar_sway_susbscribe_set_interest(BarBarSwaySubscribe *sub,
-                                                  const char *interest) {
+/**
+ * g_barbar_sway_susbscribe_set_interest:
+ * @sub: a `BarBarSwaySubscribe`
+ * @interest: interest
+ *
+ * Set what events we should be listening to
+ */
+void g_barbar_sway_susbscribe_set_interest(BarBarSwaySubscribe *sub,
+                                           const char *interest) {
   g_return_if_fail(BARBAR_IS_SWAY_SUBSCRIBE(sub));
 
-  g_free(sub->interest);
-  sub->interest = g_strdup(interest);
+  if (g_set_str(&sub->interest, interest)) {
 
-  g_object_notify_by_pspec(G_OBJECT(sub), sway_sub_props[PROP_INTEREST]);
+    g_object_notify_by_pspec(G_OBJECT(sub), sway_sub_props[PROP_INTEREST]);
+  }
+}
+
+/**
+ * g_barbar_sway_susbscribe_get_interest:
+ * @sub: a `BarBarSwaySubscribe`
+ *
+ * Returns: (transfer none): get the events we are listening for
+ */
+const char *g_barbar_sway_susbscribe_get_interest(BarBarSwaySubscribe *sub) {
+  g_return_val_if_fail(BARBAR_IS_SWAY_SUBSCRIBE(sub), NULL);
+
+  return sub->interest;
 }
 
 static void g_barbar_sway_subscribe_set_property(GObject *object,
@@ -62,7 +81,7 @@ static void g_barbar_sway_subscribe_get_property(GObject *object,
   }
 }
 
-void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
+static void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
   GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwaySubscribe *self = BARBAR_SWAY_SUBSCRIBE(data);
   GError *error = NULL;
@@ -83,7 +102,7 @@ void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
   g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
 }
 
-void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
+static void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
   GInputStream *stream = G_INPUT_STREAM(object);
   BarBarSwaySubscribe *self = BARBAR_SWAY_SUBSCRIBE(data);
   GError *error = NULL;
@@ -132,12 +151,15 @@ g_barbar_sway_subscribe_class_init(BarBarSwaySubscribeClass *class) {
 }
 static void g_barbar_sway_subscribe_init(BarBarSwaySubscribe *self) {}
 
-GObject *g_barbar_sway_subscribe_new(const char *interest) {
-  GObject *object =
-      g_object_new(BARBAR_TYPE_SWAY_SUBSCRIBE, "interest", interest, NULL);
-  return object;
-}
-
+/**
+ * g_barbar_sway_subscribe_connect:
+ * @self: a `BarBarSwaySubscribe`
+ * @error: (out) (optional):  a #GError, or %NULL
+ *
+ * Tries to connect to a sway subscribtion. Will set error on error.
+ * After connected it will start to emit messages.
+ *
+ */
 void g_barbar_sway_subscribe_connect(BarBarSwaySubscribe *self,
                                      GError **error) {
   GError *err = NULL;
@@ -161,4 +183,17 @@ void g_barbar_sway_subscribe_connect(BarBarSwaySubscribe *self,
 
   input_stream = g_io_stream_get_input_stream(G_IO_STREAM(self->ipc));
   g_barbar_sway_ipc_read_async(input_stream, NULL, sub_cb, self);
+}
+
+/**
+ * g_barbar_sway_subscribe_new:
+ *
+ * creates a new object where we can listen for events
+ *
+ * Returns: A new `BarBarSwaySubscribe` object
+ */
+GObject *g_barbar_sway_subscribe_new(const char *interest) {
+  GObject *object =
+      g_object_new(BARBAR_TYPE_SWAY_SUBSCRIBE, "interest", interest, NULL);
+  return object;
 }

@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarSwayLanguage, g_barbar_sway_language, BARBAR,
                      SWAY_LANGUAGE, BarBarSensor)
 
+BarBarSensor *g_barbar_sway_language_new(void);
+
 G_END_DECLS

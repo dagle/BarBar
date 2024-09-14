@@ -1,7 +1,5 @@
 #include "barbar-background.h"
-#include <gtk/gtk.h>
 
-#include <gtk4-layer-shell.h>
 /**
  * BarBarBackground:
  *
@@ -13,10 +11,8 @@
 struct _BarBarBackground {
   GtkWindow parent_instance;
 
-  int left_margin;
-  int right_margin;
-  int top_margin;
-  int bottom_margin;
+  int margins[GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER];
+
   uint screen_num;
 
   int height;
@@ -41,6 +37,70 @@ static GParamSpec *background_props[NUM_PROPERTIES] = {
     NULL,
 };
 
+/**
+ * g_barbar_background_set_margin:
+ * @bg: a `BarBarBackground`
+ * @edge: from what edge the margin should basd
+ * @margin: how big margin we should have
+ *
+ * Creates a margin between the background and an edge of the screen.
+ * Mainly used to limit how large space of the background
+ */
+void g_barbar_background_set_margin(BarBarBackground *bg,
+                                    GtkLayerShellEdge edge, uint margin) {
+  g_return_if_fail(BARBAR_IS_BACKGROUND(bg));
+  GtkWindow *gtk_window = GTK_WINDOW(bg);
+
+  if (bg->margins[edge] == margin) {
+    return;
+  }
+  bg->margins[edge] = margin;
+
+  gtk_layer_set_margin(gtk_window, edge, margin);
+  g_object_notify_by_pspec(G_OBJECT(bg),
+                           background_props[PROP_LEFT_MARGIN + edge]);
+}
+
+static void g_barbar_bar_set_screen_num_internal(BarBarBackground *bg,
+                                                 uint num) {
+  GdkDisplay *gdk_display = gdk_display_get_default();
+  GListModel *monitors = gdk_display_get_monitors(gdk_display);
+  GtkWindow *gtk_window = GTK_WINDOW(bg);
+  uint screen_num;
+
+  screen_num = bg->screen_num;
+  if (bg->screen_num > g_list_model_get_n_items(monitors)) {
+    g_printerr("Screen index %d doesn't exist, setting background on screen 0",
+               bg->screen_num);
+    screen_num = 0;
+  }
+
+  GdkMonitor *monitor = g_list_model_get_item(monitors, screen_num);
+  if (monitor) {
+    gtk_layer_set_monitor(gtk_window, monitor);
+  }
+}
+
+/**
+ * g_barbar_background_set_screen_num:
+ * @bg: a `BarBarBackground`
+ * @num: screen index
+ *
+ * What screen to display the background on.
+ */
+void g_barbar_background_set_screen_num(BarBarBackground *bg, uint num) {
+  g_return_if_fail(BARBAR_IS_BACKGROUND(bg));
+
+  if (bg->screen_num == num) {
+    return;
+  }
+  bg->screen_num = num;
+
+  g_barbar_bar_set_screen_num_internal(bg, num);
+
+  g_object_notify_by_pspec(G_OBJECT(bg), background_props[PROP_SCREEN_NUM]);
+}
+
 static void g_barbar_background_set_property(GObject *object, guint property_id,
                                              const GValue *value,
                                              GParamSpec *pspec) {
@@ -48,19 +108,23 @@ static void g_barbar_background_set_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_LEFT_MARGIN:
-    background->left_margin = g_value_get_uint(value);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_LEFT,
+                                   g_value_get_uint(value));
     break;
   case PROP_RIGHT_MARGIN:
-    background->right_margin = g_value_get_uint(value);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_RIGHT,
+                                   g_value_get_uint(value));
     break;
   case PROP_TOP_MARGIN:
-    background->top_margin = g_value_get_uint(value);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_TOP,
+                                   g_value_get_uint(value));
     break;
   case PROP_BOTTOM_MARGIN:
-    background->bottom_margin = g_value_get_uint(value);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_BOTTOM,
+                                   g_value_get_uint(value));
     break;
   case PROP_SCREEN_NUM:
-    background->screen_num = g_value_get_uint(value);
+    g_barbar_background_set_screen_num(background, g_value_get_uint(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -74,16 +138,20 @@ static void g_barbar_background_get_property(GObject *object, guint property_id,
 
   switch (property_id) {
   case PROP_LEFT_MARGIN:
-    g_value_set_uint(value, background->left_margin);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_LEFT,
+                                   g_value_get_uint(value));
     break;
   case PROP_RIGHT_MARGIN:
-    g_value_set_uint(value, background->right_margin);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_RIGHT,
+                                   g_value_get_uint(value));
     break;
   case PROP_TOP_MARGIN:
-    g_value_set_uint(value, background->top_margin);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_TOP,
+                                   g_value_get_uint(value));
     break;
   case PROP_BOTTOM_MARGIN:
-    g_value_set_uint(value, background->bottom_margin);
+    g_barbar_background_set_margin(background, GTK_LAYER_SHELL_EDGE_BOTTOM,
+                                   g_value_get_uint(value));
     break;
   case PROP_SCREEN_NUM:
     g_value_set_uint(value, background->screen_num);
@@ -92,7 +160,6 @@ static void g_barbar_background_get_property(GObject *object, guint property_id,
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
-
 static void g_barbar_background_constructed(GObject *object);
 
 static void g_barbar_background_class_init(BarBarBackgroundClass *class) {
@@ -156,6 +223,12 @@ static void g_barbar_background_init(BarBarBackground *self) {
   GtkWindow *gtk_window = GTK_WINDOW(self);
 
   gtk_layer_init_for_window(gtk_window);
+  gtk_layer_set_namespace(gtk_window, "background");
+  gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_BACKGROUND);
+  gtk_layer_auto_exclusive_zone_enable(gtk_window);
+  for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
+    gtk_layer_set_anchor(gtk_window, i, TRUE);
+  }
 }
 
 static void g_barbar_background_constructed(GObject *object) {
@@ -164,33 +237,14 @@ static void g_barbar_background_constructed(GObject *object) {
 
   GtkWindow *gtk_window = GTK_WINDOW(object);
 
-  gtk_layer_set_namespace(gtk_window, "background");
-  gtk_layer_set_layer(gtk_window, GTK_LAYER_SHELL_LAYER_BACKGROUND);
-  gtk_layer_auto_exclusive_zone_enable(gtk_window);
-
-  // something like this, make it possible to identify the monitor by name
-  GdkDisplay *gdk_display = gdk_display_get_default();
-  GListModel *monitors = gdk_display_get_monitors(gdk_display);
-  if (background->screen_num <= g_list_model_get_n_items(monitors)) {
-    GdkMonitor *monitor =
-        g_list_model_get_item(monitors, background->screen_num);
-    if (monitor) {
-      gtk_layer_set_monitor(gtk_window, monitor);
-    }
-  }
-
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_LEFT,
-                       background->left_margin);
+                       background->margins[GTK_LAYER_SHELL_EDGE_LEFT]);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_RIGHT,
-                       background->right_margin);
+                       background->margins[GTK_LAYER_SHELL_EDGE_RIGHT]);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_TOP,
-                       background->top_margin);
+                       background->margins[GTK_LAYER_SHELL_EDGE_TOP]);
   gtk_layer_set_margin(gtk_window, GTK_LAYER_SHELL_EDGE_BOTTOM,
-                       background->bottom_margin);
-
-  for (int i = 0; i < GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER; i++) {
-    gtk_layer_set_anchor(gtk_window, i, TRUE);
-  }
+                       background->margins[GTK_LAYER_SHELL_EDGE_BOTTOM]);
 }
 
 /**

@@ -137,8 +137,14 @@ g_barbar_github_activity_set_native_colors(BarBarGithubActivity *hub,
   g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_NATIVE_COLORS]);
 }
 
-static void g_barbar_github_activity_set_user_name(BarBarGithubActivity *hub,
-                                                   const char *user_name) {
+/**
+ * g_barbar_github_activity_set_user_name
+ * @hub: a `BarBarGithubActivity`
+ * @user_name: your github user name
+ *
+ */
+void g_barbar_github_activity_set_user_name(BarBarGithubActivity *hub,
+                                            const char *user_name) {
   g_return_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub));
 
   if (g_set_str(&hub->user_name, user_name)) {
@@ -147,14 +153,46 @@ static void g_barbar_github_activity_set_user_name(BarBarGithubActivity *hub,
   }
 }
 
-static void g_barbar_github_activity_set_auth_token(BarBarGithubActivity *hub,
-                                                    const char *auth_token) {
+/**
+ * g_barbar_github_activity_get_user_name
+ * @hub: a `BarBarGithubActivity`
+ *
+ * Returns: (transfer none): the github username or %NULL
+ */
+const char *g_barbar_github_activity_get_user_name(BarBarGithubActivity *hub) {
+  g_return_val_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub), NULL);
+
+  return hub->user_name;
+}
+
+/**
+ * g_barbar_github_activity_set_auth_token
+ * @hub: a `BarBarGithubActivity`
+ * @auth_token: the github token you generated
+ *
+ * Sets the auth token we can use connect, kind like a password. For more info:
+ * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+ */
+void g_barbar_github_activity_set_auth_token(BarBarGithubActivity *hub,
+                                             const char *auth_token) {
   g_return_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub));
 
   if (g_set_str(&hub->auth_token, auth_token)) {
     g_clear_pointer(&hub->payload, g_free);
     g_object_notify_by_pspec(G_OBJECT(hub), properties[PROP_AUTH_TOKEN]);
   }
+}
+
+/**
+ * g_barbar_github_activity_get_auth_token
+ * @hub: a `BarBarGithubActivity`
+ *
+ * Returns: (transfer none): the github auth token or %NULL
+ */
+const char *g_barbar_github_activity_get_auth_token(BarBarGithubActivity *hub) {
+  g_return_val_if_fail(BARBAR_IS_GITHUB_ACTIVITY(hub), NULL);
+
+  return hub->auth_token;
 }
 
 static void g_barbar_github_activity_set_property(GObject *object,
@@ -364,8 +402,7 @@ void g_barbar_github_activity_root(GtkWidget *widget) {
 
   fetch_data(hub);
 
-  // hub->source_id = g_timeout_add_full(0, hub->interval, fetch_data, hub,
-  // NULL);
+  hub->source_id = g_timeout_add_full(0, hub->interval, fetch_data, hub, NULL);
 }
 
 static void g_barbar_github_activity_finalize(GObject *object) {
@@ -433,4 +470,19 @@ g_barbar_github_activity_class_init(BarBarGithubActivityClass *class) {
 
 static void g_barbar_github_activity_init(BarBarGithubActivity *self) {
   self->session = soup_session_new();
+}
+
+/**
+ * g_barbar_github_activity_new:
+ * @username: github username
+ * @auth_token: github auth token.
+ */
+GtkWidget *g_barbar_github_activity_new(const char *username,
+                                        const char *auth_token) {
+  BarBarGithubActivity *self;
+
+  self = g_object_new(BARBAR_TYPE_GITHUB_ACTIVITY, "user-name", username,
+                      "auth-token", auth_token, NULL);
+
+  return GTK_WIDGET(self);
 }

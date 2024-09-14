@@ -52,4 +52,16 @@ GType g_barbar_procces_order_get_type(void);
 G_DECLARE_FINAL_TYPE(BarBarCpuProcesses, g_barbar_cpu_processes, BARBAR,
                      CPU_PROCESSES, GtkWidget)
 
+GtkWidget *g_barbar_cpu_processes_new(void);
+
+void g_barbar_cpu_processes_set_number(BarBarCpuProcesses *cpu, guint number);
+
+void g_barbar_cpu_processes_set_interval(BarBarCpuProcesses *cpu,
+                                         guint interval);
+
+void g_barbar_cpu_processes_set_order(BarBarCpuProcesses *cpu,
+                                      BarBarProcessOrder order);
+
+void g_barbar_cpu_processes_set_seperate_cpu(BarBarCpuProcesses *cpu,
+                                             gboolean seperate);
 G_END_DECLS

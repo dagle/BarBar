@@ -621,6 +621,28 @@ BarBar.Background background-left {
       [child]
       BarBar.ActivityGraph {}
     }
+
+    BarBar.EventSwitcher switcher {
+      Gtk.GestureClick left {
+        button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
+        released => $g_barbar_event_switcher_next(switcher) swapped;
+      }
+
+      Gtk.GestureClick right {
+        button: 3;
+        released => $g_barbar_event_switcher_previous(switcher) swapped;
+      }
+
+      Gtk.Stack stack {
+        Gtk.Label {
+          label: "apa";
+        }
+
+        Gtk.Label {
+          label: "bepa";
+        }
+      }
+    }
   }
 }
 
@@ -666,7 +688,7 @@ BarBar.Filesystem fs {
 BarBar.Swap swap {}
 
 BarBar.Network net {
-  interface: "br0";
+  interface: "wlan0";
   interval: 1000;
 }
 

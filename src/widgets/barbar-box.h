@@ -36,6 +36,7 @@ G_DECLARE_FINAL_TYPE(BarBarBox, g_barbar_box, BARBAR, BOX, GtkWidget)
 
 GtkWidget *g_barbar_box_new(uint size);
 void g_barbar_box_set_level(BarBarBox *box, uint level);
-uint g_barbar_box_get_value(BarBarBox *box);
+uint g_barbar_box_get_level(BarBarBox *box);
+void g_barbar_box_set_size(BarBarBox *box, guint size);
 
 G_END_DECLS

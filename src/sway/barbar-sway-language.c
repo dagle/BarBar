@@ -2,6 +2,7 @@
 #include "glib-object.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
+#include <string.h>
 
 /**
  * BarBarSwayLanguage:
@@ -25,7 +26,7 @@ enum {
   PROP_IDENTIFIER,
   PROP_KEYBOARD,
   PROP_LANGUAGE,
-  PROP_VARIANT,
+  PROP_LAYOUT,
 
   NUM_PROPERTIES,
 };
@@ -102,7 +103,7 @@ static void g_barbar_sway_language_set_variant(BarBarSwayLanguage *sway,
   if (variant == NULL) {
     sway->variant = NULL;
 
-    g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_VARIANT]);
+    g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LAYOUT]);
     return;
   }
 
@@ -117,7 +118,7 @@ static void g_barbar_sway_language_set_variant(BarBarSwayLanguage *sway,
   g_free(sway->variant);
   sway->variant = str;
 
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_VARIANT]);
+  g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LAYOUT]);
 }
 
 static void g_barbar_sway_language_set_layout(BarBarSwayLanguage *sway,
@@ -126,10 +127,15 @@ static void g_barbar_sway_language_set_layout(BarBarSwayLanguage *sway,
     return;
   }
 
-  gchar **split = g_strsplit(layout, "()", -1);
+  // printf("layout: %s\n", layout);
+  gchar **split = g_strsplit(layout, " (", -1);
 
-  g_barbar_sway_language_set_language(sway, split[1]);
-  g_barbar_sway_language_set_variant(sway, split[2]);
+  g_barbar_sway_language_set_language(sway, split[0]);
+  if (split[1]) {
+    uint len = MAX(0, strlen(split[1]) - 1);
+    split[1][len] = '\0';
+  }
+  g_barbar_sway_language_set_variant(sway, split[1]);
 
   g_strfreev(split);
 }
@@ -165,7 +171,7 @@ static void g_barbar_sway_language_get_property(GObject *object,
   case PROP_KEYBOARD:
     g_value_set_string(value, sway->keyboard);
     break;
-  case PROP_VARIANT:
+  case PROP_LAYOUT:
     g_value_set_string(value, sway->variant);
     break;
   default:
@@ -201,7 +207,7 @@ static void g_barbar_sway_language_class_init(BarBarSwayLanguageClass *class) {
       g_param_spec_string("keyboard", NULL, NULL, NULL, G_PARAM_READABLE);
   sway_language_props[PROP_LANGUAGE] =
       g_param_spec_string("language", NULL, NULL, NULL, G_PARAM_READABLE);
-  sway_language_props[PROP_VARIANT] =
+  sway_language_props[PROP_LAYOUT] =
       g_param_spec_string("layout", NULL, NULL, NULL, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
@@ -241,19 +247,19 @@ static void g_barbar_sway_handle_inputs(BarBarSwayLanguage *sway,
       if (!sway->identifier) {
         g_barbar_sway_language_set_identifier(sway, identifier);
       }
-      if (!g_strcmp0(sway->identifier, identifier)) {
-        json_reader_read_member(reader, "name");
-        const char *name = json_reader_get_string_value(reader);
-        g_barbar_sway_language_set_keyboard(sway, name);
-        json_reader_end_member(reader);
+      // if (!g_strcmp0(sway->identifier, identifier)) {
+      json_reader_read_member(reader, "name");
+      const char *name = json_reader_get_string_value(reader);
+      g_barbar_sway_language_set_keyboard(sway, name);
+      json_reader_end_member(reader);
 
-        json_reader_read_member(reader, "xkb_active_layout_name");
-        const char *layout = json_reader_get_string_value(reader);
-        g_barbar_sway_language_set_layout(sway, layout);
-        json_reader_end_member(reader);
-        json_reader_end_element(reader);
-        break;
-      }
+      json_reader_read_member(reader, "xkb_active_layout_name");
+      const char *layout = json_reader_get_string_value(reader);
+      g_barbar_sway_language_set_layout(sway, layout);
+      json_reader_end_member(reader);
+      json_reader_end_element(reader);
+      break;
+      // }
     }
     json_reader_end_element(reader);
   }
@@ -344,5 +350,19 @@ static void input_cb(GObject *object, GAsyncResult *res, gpointer data) {
 static void g_barbar_sway_language_start(BarBarSensor *sensor) {
   BarBarSwayLanguage *sway = BARBAR_SWAY_LANGUAGE(sensor);
 
+  sway->sub = BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"mode\"]"));
+
   g_barbar_sway_ipc_oneshot(SWAY_GET_INPUTS, TRUE, NULL, input_cb, sway, "");
+}
+
+/**
+ * g_barbar_sway_language_new:
+ *
+ * Returs: (transfer full): a new sensor
+ */
+BarBarSensor *g_barbar_sway_language_new(void) {
+  BarBarSwayLanguage *sensor;
+
+  sensor = g_object_new(BARBAR_TYPE_SWAY_LANGUAGE, NULL);
+  return BARBAR_SENSOR(sensor);
 }

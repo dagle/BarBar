@@ -57,10 +57,9 @@
 #include "widgets/barbar-processes.h"
 #include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
-#include "widgets/barbar-separator.h"
 #include "widgets/barbar-valueicon.h"
 
-#include "barbar-github-activity.h"
+#include "widgets/barbar-github-activity.h"
 
 #include "tray/barbar-dbusmenu.h"
 #include "tray/barbar-tray-item.h"

@@ -1,5 +1,6 @@
 #include "sway/barbar-sway-window.h"
 #include "glib-object.h"
+#include "glib.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -12,6 +13,11 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+/**
+ * BarBarSwayWindow:
+ *
+ * A widget to display the current window on the screen.
+ */
 struct _BarBarSwayWindow {
   GtkWidget parent_instance;
 
@@ -97,6 +103,11 @@ static void g_barbar_sway_window_class_init(BarBarSwayWindowClass *class) {
 
   widget_class->root = g_barbar_sway_window_start;
 
+  /**
+   * BarBarSwayWorkspace:output:
+   *
+   * What screen this is monitoring
+   */
   sway_window_props[PROP_OUTPUT] =
       g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
 
@@ -138,19 +149,63 @@ static void g_barbar_sway_handle_window_change(const char *payload,
   // if (!strcmp(change, "init")) {
   //   g_barbar_sway_workspace_add(sway, reader);
   // }
-  json_reader_read_member(reader, "container");
+  json_reader_read_member(reader, "current");
+  json_reader_read_member(reader, "nodes");
+  int n = json_reader_count_elements(reader);
+  for (int i = 0; i < n; i++) {
+    json_reader_read_element(reader, i);
+
+    json_reader_read_member(reader, "focused");
+    gboolean focused = json_reader_get_boolean_value(reader);
+    json_reader_end_member(reader);
+    if (focused) {
+      // json_reader_read_member(reader, "output");
+      // const output = json_reader_get_boolean_value(reader);
+      // json_reader_end_member(reader);
+      json_reader_read_member(reader, "name");
+      const char *name = json_reader_get_string_value(reader);
+      gtk_label_set_text(GTK_LABEL(sway->label), name);
+      json_reader_end_member(reader);
+    }
+
+    json_reader_end_element(reader);
+  }
+}
+
+static void g_barbar_sway_set_focused_update(BarBarSwayWindow *sway,
+                                             JsonReader *reader) {
   json_reader_read_member(reader, "focused");
   gboolean focused = json_reader_get_boolean_value(reader);
   json_reader_end_member(reader);
+
   if (focused) {
     json_reader_read_member(reader, "name");
     const char *name = json_reader_get_string_value(reader);
     json_reader_end_member(reader);
+
+    // json_reader_read_member(reader, "name");
+    // const char *name = json_reader_get_string_value(reader);
+    // json_reader_end_member(reader);
+
     gtk_label_set_text(GTK_LABEL(sway->label), name);
+  } else {
+    if (!json_reader_read_member(reader, "nodes")) {
+      return;
+    }
+    if (json_reader_is_array(reader)) {
+      int n = json_reader_count_elements(reader);
+      for (int i = 0; i < n; i++) {
+        json_reader_read_element(reader, i);
+        // g_barbar_sway_set_focused_tree(sway, reader);
+        json_reader_end_element(reader);
+      }
+    }
+    json_reader_end_member(reader);
   }
-  json_reader_end_member(reader);
-  g_object_unref(reader);
 }
+
+// we need to go through all workspaces, check if it's on our screen
+// and then see if it has a focused con and the select the name
 static void g_barbar_sway_set_focused_tree(BarBarSwayWindow *sway,
                                            JsonReader *reader) {
   json_reader_read_member(reader, "focused");
@@ -162,9 +217,15 @@ static void g_barbar_sway_set_focused_tree(BarBarSwayWindow *sway,
     const char *name = json_reader_get_string_value(reader);
     json_reader_end_member(reader);
 
+    // json_reader_read_member(reader, "name");
+    // const char *name = json_reader_get_string_value(reader);
+    // json_reader_end_member(reader);
+
     gtk_label_set_text(GTK_LABEL(sway->label), name);
   } else {
-    json_reader_read_member(reader, "nodes");
+    if (!json_reader_read_member(reader, "nodes")) {
+      return;
+    }
     if (json_reader_is_array(reader)) {
       int n = json_reader_count_elements(reader);
       for (int i = 0; i < n; i++) {
@@ -235,5 +296,21 @@ static void g_barbar_sway_window_start(GtkWidget *widget) {
 
   GTK_WIDGET_CLASS(g_barbar_sway_window_parent_class)->root(widget);
 
+  sway->sub =
+      BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
+
   g_barbar_sway_ipc_oneshot(SWAY_GET_TREE, TRUE, NULL, tree_cb, sway, "");
+}
+
+/**
+ * g_barbar_sway_window_new:
+ *
+ * Returns: (transfer full): a new `BarBarSwayWindow`
+ */
+GtkWidget *g_barbar_sway_window_new(void) {
+  BarBarSwayWindow *window;
+
+  window = g_object_new(BARBAR_TYPE_SWAY_WINDOW, NULL);
+
+  return GTK_WIDGET(window);
 }

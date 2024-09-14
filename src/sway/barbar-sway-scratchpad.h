@@ -30,9 +30,11 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_SWAY_SCRATCHPAD (g_barbar_sway_language_get_type())
+#define BARBAR_TYPE_SWAY_SCRATCHPAD (g_barbar_sway_scratchpad_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarSwayScratchpad, g_barbar_sway_scratchpad, BARBAR,
                      SWAY_SCRATCHPAD, BarBarSensor)
+
+BarBarSensor *g_barbar_sway_scratchpad_new(void);
 
 G_END_DECLS

@@ -43,13 +43,30 @@ static GParamSpec *river_mode_props[NUM_PROPERTIES] = {
 
 static void g_barbar_river_mode_start(BarBarSensor *sensor);
 
-static void g_barbar_river_mode_set_mode(BarBarRiverMode *river,
-                                         const char *mode) {
+/**
+ * g_barbar_river_mode_set_mode:
+ * @river: a `BarBarRiverMode`
+ * @mode: mode to set
+ *
+ */
+void g_barbar_river_mode_set_mode(BarBarRiverMode *river, const char *mode) {
   g_return_if_fail(BARBAR_IS_RIVER_MODE(river));
 
   if (g_set_str(&river->mode, mode)) {
     g_object_notify_by_pspec(G_OBJECT(river), river_mode_props[PROP_MODE]);
   }
+}
+
+/**
+ * g_barbar_river_mode_get_mode:
+ * @river: a `BarBarRiverMode`
+ *
+ * Returns: (transfer none): a string represtation of the mode
+ */
+const char *g_barbar_river_mode_get_mode(BarBarRiverMode *river) {
+  g_return_val_if_fail(BARBAR_IS_RIVER_MODE(river), NULL);
+
+  return river->mode;
 }
 
 static void g_barbar_river_mode_set_property(GObject *object, guint property_id,
@@ -188,4 +205,17 @@ static void g_barbar_river_mode_start(BarBarSensor *sensor) {
   zriver_status_manager_v1_destroy(river->status_manager);
 
   river->status_manager = NULL;
+}
+
+/**
+ * g_barbar_river_mode_new:
+ *
+ * Returns: (transfer full): A `GtkWidget`
+ */
+GtkWidget *g_barbar_river_mode_new(void) {
+  BarBarRiverMode *self;
+
+  self = g_object_new(BARBAR_TYPE_RIVER_MODE, NULL);
+
+  return GTK_WIDGET(self);
 }
