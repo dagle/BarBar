@@ -50,6 +50,12 @@ libbarbar_src = [
   'sway/barbar-sway-window.c',
   'sway/barbar-sway-mode.c',
 
+  'niri/barbar-niri-ipc.c',
+  'niri/barbar-niri-subscribe.c',
+  'niri/barbar-niri-language.c',
+  'niri/barbar-niri-workspace.c',
+  'niri/barbar-niri-window.c',
+
   'hyprland/barbar-hyprland-ipc.c',
   'hyprland/barbar-hyprland-service.c',
   # 'hyprland/barbar-hyprland-submap.c',
@@ -145,6 +151,12 @@ libbarbar_headers = [
   'sway/barbar-sway-window.h',
   'sway/barbar-sway-mode.h',
 
+  'niri/barbar-niri-ipc.h',
+  'niri/barbar-niri-subscribe.h',
+  'niri/barbar-niri-language.h',
+  'niri/barbar-niri-workspace.h',
+  'niri/barbar-niri-window.h',
+
   'tray/barbar-watcher.h',
   'tray/barbar-tray.h',
   # 'tray/barbar-tray-item.h',
@@ -157,6 +169,7 @@ wayland_src = []
 
 wayland_prots = [
 	wl_protocol_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml',
+	wl_protocol_dir / 'unstable/xdg-output/xdg-output-unstable-v1.xml',
   '../protocol/river-status-unstable-v1.xml',
   '../protocol/river-control-unstable-v1.xml',
 ]
@@ -285,7 +298,7 @@ if get_option('introspection')
     nsversion: '1.0',
     symbol_prefix: ['g_barbar', 'barbar'],
     identifier_prefix : ['BarBar'],
-    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0', 'Gtk4LayerShell-1.0' ],
+    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0', 'Gtk4LayerShell-1.0', 'Json-1.0' ],
     dependencies: deps,
     extra_args: gir_args,
     fatal_warnings: true,

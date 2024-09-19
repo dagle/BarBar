@@ -1,5 +1,6 @@
 #include "sway/barbar-sway-language.h"
 #include "glib-object.h"
+#include "glib.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
 #include <string.h>
@@ -62,63 +63,20 @@ static void g_barbar_sway_language_set_keyboard(BarBarSwayLanguage *sway,
 static void g_barbar_sway_language_set_language(BarBarSwayLanguage *sway,
                                                 const gchar *language) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
-  char *str;
 
-  if (language == NULL && sway->language == NULL) {
-    return;
-  }
-
-  if (language == NULL) {
-    sway->language = NULL;
-
+  if (g_set_str(&sway->variant, language)) {
     g_object_notify_by_pspec(G_OBJECT(sway),
                              sway_language_props[PROP_LANGUAGE]);
-    return;
   }
-
-  str = g_strdup(language);
-  str = g_strstrip(str);
-
-  if (!g_strcmp0(sway->language, str)) {
-    g_free(str);
-    return;
-  }
-
-  g_free(sway->language);
-  sway->language = str;
-
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LANGUAGE]);
 }
 
 static void g_barbar_sway_language_set_variant(BarBarSwayLanguage *sway,
                                                const gchar *variant) {
   g_return_if_fail(BARBAR_IS_SWAY_LANGUAGE(sway));
 
-  char *str;
-
-  if (variant == NULL && sway->language == NULL) {
-    return;
-  }
-
-  if (variant == NULL) {
-    sway->variant = NULL;
-
+  if (g_set_str(&sway->variant, variant)) {
     g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LAYOUT]);
-    return;
   }
-
-  str = g_strdup(variant);
-  str = g_strstrip(str);
-
-  if (!g_strcmp0(sway->variant, str)) {
-    g_free(str);
-    return;
-  }
-
-  g_free(sway->variant);
-  sway->variant = str;
-
-  g_object_notify_by_pspec(G_OBJECT(sway), sway_language_props[PROP_LAYOUT]);
 }
 
 static void g_barbar_sway_language_set_layout(BarBarSwayLanguage *sway,
@@ -127,7 +85,6 @@ static void g_barbar_sway_language_set_layout(BarBarSwayLanguage *sway,
     return;
   }
 
-  // printf("layout: %s\n", layout);
   gchar **split = g_strsplit(layout, " (", -1);
 
   g_barbar_sway_language_set_language(sway, split[0]);
@@ -201,12 +158,36 @@ static void g_barbar_sway_language_class_init(BarBarSwayLanguageClass *class) {
   gobject_class->get_property = g_barbar_sway_language_get_property;
   gobject_class->finalize = g_barbar_sway_language_finalize;
 
+  /**
+   * BarBarSwayLanguage:identifer:
+   *
+   * An identifer, if we have multiple keyboards connected, match against this
+   * one.
+   */
   sway_language_props[PROP_IDENTIFIER] = g_param_spec_string(
       "identifer", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
+
+  /**
+   * BarBarSwayLanguage:keyboard:
+   *
+   * Name of the keyboard
+   */
   sway_language_props[PROP_KEYBOARD] =
       g_param_spec_string("keyboard", NULL, NULL, NULL, G_PARAM_READABLE);
+
+  /**
+   * BarBarSwayLanguage:language:
+   *
+   * Input language.
+   */
   sway_language_props[PROP_LANGUAGE] =
       g_param_spec_string("language", NULL, NULL, NULL, G_PARAM_READABLE);
+
+  /**
+   * BarBarSwayLanguage:layout:
+   *
+   * Input layout.
+   */
   sway_language_props[PROP_LAYOUT] =
       g_param_spec_string("layout", NULL, NULL, NULL, G_PARAM_READABLE);
 

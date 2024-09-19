@@ -1,7 +1,9 @@
 #include "sway/barbar-sway-workspace.h"
 #include "glib-object.h"
+#include "gtk4-layer-shell.h"
 #include "sway/barbar-sway-ipc.h"
 #include "sway/barbar-sway-subscribe.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 #include <ctype.h>
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
@@ -24,7 +26,8 @@ struct _BarBarSwayWorkspace {
   char *output_name;
 
   BarBarSwaySubscribe *sub;
-  // struct wl_output *output; in future versions?
+  struct zxdg_output_manager_v1 *xdg_output_manager;
+  struct zxdg_output_v1 *xdg_output;
 
   GList *workspaces; // A list of workspaces;
 };
@@ -200,7 +203,9 @@ void g_barbar_sway_workspace_add(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  g_barbar_sway_add_button(sway, &current);
+  if (!g_strcmp0(current.output, sway->output_name)) {
+    g_barbar_sway_add_button(sway, &current);
+  }
 }
 
 void g_barbar_sway_workspace_empty(BarBarSwayWorkspace *sway,
@@ -213,17 +218,19 @@ void g_barbar_sway_workspace_empty(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  for (list = sway->workspaces; list; list = list->next) {
-    struct entry *e = list->data;
-    if (e->id == current.id) {
-      break;
+  if (!g_strcmp0(current.output, sway->output_name)) {
+    for (list = sway->workspaces; list; list = list->next) {
+      struct entry *e = list->data;
+      if (e->id == current.id) {
+        break;
+      }
     }
-  }
-  if (list) {
-    struct entry *entry = list->data;
-    gtk_widget_unparent(entry->button);
-    g_free(entry);
-    sway->workspaces = g_list_remove_link(sway->workspaces, list);
+    if (list) {
+      struct entry *entry = list->data;
+      gtk_widget_unparent(entry->button);
+      g_free(entry);
+      sway->workspaces = g_list_remove_link(sway->workspaces, list);
+    }
   }
 }
 
@@ -237,39 +244,36 @@ void g_barbar_sway_workspace_focus(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &old);
   json_reader_end_member(reader);
 
-  // TODO:
   if (!g_strcmp0(sway->output_name, old.output)) {
-  }
 
-  for (list = sway->workspaces; list; list = list->next) {
-    struct entry *e = list->data;
-    if (e->id == old.id) {
-      break;
+    for (list = sway->workspaces; list; list = list->next) {
+      struct entry *e = list->data;
+      if (e->id == old.id) {
+        break;
+      }
     }
-  }
-  if (list) {
-    struct entry *entry = list->data;
-    gtk_widget_remove_css_class(entry->button, "focused");
+    if (list) {
+      struct entry *entry = list->data;
+      gtk_widget_remove_css_class(entry->button, "focused");
+    }
   }
 
   json_reader_read_member(reader, "current");
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  // TODO:
   if (!g_strcmp0(sway->output_name, current.output)) {
-  }
-
-  for (list = sway->workspaces; list; list = list->next) {
-    struct entry *e = list->data;
-    if (e->id == current.id) {
-      break;
+    for (list = sway->workspaces; list; list = list->next) {
+      struct entry *e = list->data;
+      if (e->id == current.id) {
+        break;
+      }
     }
-  }
 
-  if (list) {
-    struct entry *entry = list->data;
-    gtk_widget_add_css_class(entry->button, "focused");
+    if (list) {
+      struct entry *entry = list->data;
+      gtk_widget_add_css_class(entry->button, "focused");
+    }
   }
 }
 
@@ -287,7 +291,6 @@ void g_barbar_sway_workspace_move(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  // the workspace is moving away from us
   if (!g_strcmp0(old.output, sway->output_name)) {
     for (list = sway->workspaces; list; list = list->next) {
       struct entry *e = list->data;
@@ -302,19 +305,33 @@ void g_barbar_sway_workspace_move(BarBarSwayWorkspace *sway,
       sway->workspaces = g_list_remove_link(sway->workspaces, list);
     }
     // the workspace is moving to us
-  } else if (!strcmp(old.output, sway->output_name)) {
+  }
+  if (!g_strcmp0(current.output, sway->output_name)) {
     g_barbar_sway_add_button(sway, &current);
   }
 }
 void g_barbar_sway_workspace_rename(BarBarSwayWorkspace *sway,
                                     JsonReader *reader) {
   struct workspace current = {0};
+  GList *list;
 
   json_reader_read_member(reader, "current");
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  // change the name
+  if (!g_strcmp0(current.output, sway->output_name)) {
+    for (list = sway->workspaces; list; list = list->next) {
+      struct entry *e = list->data;
+      if (e->id == current.id) {
+        break;
+      }
+    }
+
+    if (list) {
+      struct entry *entry = list->data;
+      gtk_button_set_label(GTK_BUTTON(entry->button), current.name);
+    }
+  }
 }
 
 void g_barbar_sway_workspace_urgent(BarBarSwayWorkspace *sway,
@@ -327,19 +344,21 @@ void g_barbar_sway_workspace_urgent(BarBarSwayWorkspace *sway,
   g_barbar_sway_read_workspace(reader, &current);
   json_reader_end_member(reader);
 
-  for (list = sway->workspaces; list; list = list->next) {
-    struct entry *e = list->data;
-    if (e->id == current.id) {
-      break;
+  if (!g_strcmp0(current.output, sway->output_name)) {
+    for (list = sway->workspaces; list; list = list->next) {
+      struct entry *e = list->data;
+      if (e->id == current.id) {
+        break;
+      }
     }
-  }
 
-  if (list) {
-    struct entry *entry = list->data;
-    if (current.urgent) {
-      gtk_widget_add_css_class(entry->button, "urgent");
-    } else {
-      gtk_widget_remove_css_class(entry->button, "urgent");
+    if (list) {
+      struct entry *entry = list->data;
+      if (current.urgent) {
+        gtk_widget_add_css_class(entry->button, "urgent");
+      } else {
+        gtk_widget_remove_css_class(entry->button, "urgent");
+      }
     }
   }
 }
@@ -376,8 +395,6 @@ static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
   json_reader_read_member(reader, "change");
   const char *change = json_reader_get_string_value(reader);
   json_reader_end_member(reader);
-
-  // TODO: Add a check if output == sway->output_name
 
   if (!strcmp(change, "init")) {
     g_barbar_sway_workspace_add(sway, reader);
@@ -444,6 +461,18 @@ GtkWidget *g_barbar_sway_add_button(BarBarSwayWorkspace *sway,
     struct entry *prev = list->prev->data;
     gtk_widget_insert_after(btn, GTK_WIDGET(sway), prev->button);
   }
+
+  if (!workspace->visible) {
+    gtk_widget_add_css_class(btn, "invisible");
+  }
+
+  if (workspace->focused) {
+    gtk_widget_add_css_class(btn, "focused");
+  }
+  if (workspace->urgent) {
+    gtk_widget_add_css_class(btn, "urgent");
+  }
+
   entry->button = btn;
   return btn;
 }
@@ -472,10 +501,8 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
     GtkWidget *button;
     json_reader_read_element(reader, j);
     g_barbar_sway_read_workspace(reader, &workspace);
-    button = g_barbar_sway_add_button(sway, &workspace);
-
-    if (workspace.focused) {
-      gtk_widget_add_css_class(button, "focused");
+    if (!g_strcmp0(workspace.output, sway->output_name)) {
+      button = g_barbar_sway_add_button(sway, &workspace);
     }
 
     json_reader_end_element(reader);
@@ -516,13 +543,100 @@ static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {
   g_free(str);
 }
 
+static void registry_handle_global(void *data, struct wl_registry *registry,
+                                   uint32_t name, const char *interface,
+                                   uint32_t version) {
+
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+  if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+    sway->xdg_output_manager =
+        wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
+  }
+}
+
+static void registry_handle_global_remove(void *_data,
+                                          struct wl_registry *_registry,
+                                          uint32_t _name) {
+  (void)_data;
+  (void)_registry;
+  (void)_name;
+}
+
+static const struct wl_registry_listener wl_registry_listener = {
+    .global = registry_handle_global,
+    .global_remove = registry_handle_global_remove,
+};
+
+static void xdg_output_handle_logical_position(
+    void *data, struct zxdg_output_v1 *xdg_output, int32_t x, int32_t y) {}
+
+static void xdg_output_handle_logical_size(void *data,
+                                           struct zxdg_output_v1 *xdg_output,
+                                           int32_t width, int32_t height) {}
+static void xdg_output_handle_done(void *data,
+                                   struct zxdg_output_v1 *xdg_output) {}
+
+static void xdg_output_handle_name(void *data,
+                                   struct zxdg_output_v1 *xdg_output,
+                                   const char *name) {
+  BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
+  g_barbar_sway_workspace_set_output(sway, name);
+}
+
+static void xdg_output_handle_description(void *data,
+                                          struct zxdg_output_v1 *xdg_output,
+                                          const char *description) {}
+
+static const struct zxdg_output_v1_listener xdg_output_listener = {
+    .logical_position = xdg_output_handle_logical_position,
+    .logical_size = xdg_output_handle_logical_size,
+    .done = xdg_output_handle_done,
+    .name = xdg_output_handle_name,
+    .description = xdg_output_handle_description,
+};
+
 static void g_barbar_sway_workspace_start(GtkWidget *widget) {
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(widget);
+  GdkDisplay *gdk_display;
+  GdkMonitor *monitor;
+  struct wl_output *output;
+  struct wl_registry *wl_registry;
+  struct wl_display *wl_display;
 
   GTK_WIDGET_CLASS(g_barbar_sway_workspace_parent_class)->root(widget);
 
+  gdk_display = gdk_display_get_default();
+
   sway->sub =
       BARBAR_SWAY_SUBSCRIBE(g_barbar_sway_subscribe_new("[\"workspace\"]"));
+
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(sway), GTK_TYPE_WINDOW));
+  // doesn't need to be a layer window
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    printf("Parent window not found!\n");
+    return;
+  }
+
+  monitor = gtk_layer_get_monitor(window);
+  output = gdk_wayland_monitor_get_wl_output(monitor);
+
+  wl_display = gdk_wayland_display_get_wl_display(gdk_display);
+  wl_registry = wl_display_get_registry(wl_display);
+
+  wl_registry_add_listener(wl_registry, &wl_registry_listener, sway);
+  wl_display_roundtrip(wl_display);
+
+  if (!sway->xdg_output_manager) {
+    g_warning("Couldn't init the xdg output manager");
+    return;
+  }
+
+  sway->xdg_output =
+      zxdg_output_manager_v1_get_xdg_output(sway->xdg_output_manager, output);
+
+  zxdg_output_v1_add_listener(sway->xdg_output, &xdg_output_listener, sway);
+  wl_display_roundtrip(wl_display);
 
   g_barbar_sway_ipc_oneshot(SWAY_GET_WORKSPACES, TRUE, NULL, workspaces_cb,
                             sway, "");

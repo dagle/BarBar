@@ -44,6 +44,12 @@
 #include "sway/barbar-sway-window.h"
 #include "sway/barbar-sway-workspace.h"
 
+#include "niri/barbar-niri-ipc.h"
+#include "niri/barbar-niri-language.h"
+#include "niri/barbar-niri-subscribe.h"
+#include "niri/barbar-niri-window.h"
+#include "niri/barbar-niri-workspace.h"
+
 #include "dwl/no-ipc/barbar-dwl-layout.h"
 #include "dwl/no-ipc/barbar-dwl-service.h"
 #include "dwl/no-ipc/barbar-dwl-tags.h"

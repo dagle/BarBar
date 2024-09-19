@@ -58,6 +58,11 @@ void g_barbar_init(void) {
   g_barbar_sway_window_get_type();
   g_barbar_sway_mode_get_type();
 
+  g_barbar_niri_subscribe_get_type();
+  g_barbar_niri_language_get_type();
+  g_barbar_niri_workspace_get_type();
+  g_barbar_niri_window_get_type();
+
   g_barbar_hyprland_service_get_type();
   g_barbar_hyprland_workspace_get_type();
   g_barbar_hyprland_window_get_type();

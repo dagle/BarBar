@@ -113,7 +113,8 @@ static void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
       g_barbar_sway_ipc_read_finish(stream, res, NULL, &str, &len, &error);
 
   if (!ret || error) {
-    g_printerr("Failed to subscribe for workspace events: %s", error->message);
+    g_printerr("Sway failed to subscribe for workspace events: %s",
+               error->message);
     g_error_free(error);
     return;
   }

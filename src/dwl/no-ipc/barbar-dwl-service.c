@@ -52,7 +52,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   char *output_name;
 
   if (!string) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_DWL_IPC,
                 "empty line from ipc");
     return;
   }
@@ -62,7 +62,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   string = strtok_r(NULL, " ", &save_pointer);
 
   if (!string) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_DWL_IPC,
                 "No kind paramenter");
     return;
   }
@@ -82,7 +82,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
   } else if (strcmp(string, "layout") == 0) {
     kind = DWL_LAYOUT;
   } else {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_DWL_IPC,
                 "%s not a valid kind", string);
     return;
   }
@@ -130,7 +130,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
       num = strtoul(string, &endptr, 10);
 
       if (string == endptr) {
-        g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+        g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_DWL_IPC,
                     "Tag argument number %d: isn't a number %s", id, string);
         return;
       }
@@ -147,7 +147,7 @@ static void parse_line(BarBarDwlService *service, char *line, GError **error) {
       id++;
     }
     if (id != 4) {
-      g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_DWL_IPC,
+      g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_DWL_IPC,
                   "Bad number of argumentst to tags");
       return;
     }
