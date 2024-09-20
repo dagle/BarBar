@@ -1,5 +1,6 @@
 #include "niri/barbar-niri-window.h"
 #include "gdk/wayland/gdkwayland.h"
+#include "gtk/gtk.h"
 #include "gtk4-layer-shell.h"
 #include "json-glib/json-glib.h"
 #include "niri/barbar-niri-subscribe.h"
@@ -17,20 +18,26 @@ struct _BarBarNiriWindow {
   char *output_name;
   char *window;
 
+  GtkWidget *label;
+
   BarBarNiriSubscribe *sub;
   struct zxdg_output_manager_v1 *xdg_output_manager;
   struct zxdg_output_v1 *xdg_output;
 
-  GList windows;
+  GList *windows;
 };
 
 struct window {
   int id;
   char *title;
   int workspace_id;
-
-  GtkWidget label;
+  gboolean mark;
 };
+
+void free_window(struct window *window) {
+  free(window->title);
+  free(window);
+}
 
 enum {
   PROP_0,
@@ -139,7 +146,10 @@ static void g_barbar_niri_window_class_init(BarBarNiriWindowClass *class) {
   gtk_widget_class_set_css_name(widget_class, "niri-window");
 }
 
-static void g_barbar_niri_window_init(BarBarNiriWindow *self) {}
+static void g_barbar_niri_window_init(BarBarNiriWindow *self) {
+  self->label = gtk_label_new(NULL);
+  gtk_widget_set_parent(self->label, GTK_WIDGET(self));
+}
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
@@ -193,20 +203,132 @@ static const struct zxdg_output_v1_listener xdg_output_listener = {
     .description = xdg_output_handle_description,
 };
 
+const char *safe_json_get_string_value2(JsonReader *reader) {
+
+  if (json_reader_get_null_value(reader)) {
+    return NULL;
+  }
+  return json_reader_get_string_value(reader);
+}
+
+static struct window *get_window(GList *windows, gint64 id) {
+  for (; windows; windows = windows->next) {
+    struct window *entry;
+    entry = windows->data;
+    if (entry->id == id) {
+      return entry;
+    }
+  }
+  return NULL;
+}
+
+static void sweep(BarBarNiriWindow *niri) {
+  GList *workspace = niri->windows;
+
+  for (; workspace; workspace = workspace->next) {
+    struct window *entry;
+    entry = workspace->data;
+    if (!entry->mark) {
+      free_window(entry);
+      niri->windows = g_list_remove_link(niri->windows, workspace);
+    } else {
+      entry->mark = FALSE;
+    }
+  }
+}
+
+static gboolean g_barbar_niri_window_set_windows(BarBarNiriWindow *niri,
+                                                 JsonReader *reader) {
+  struct window *window;
+
+  json_reader_read_member(reader, "is_focused");
+  gboolean focused = json_reader_get_boolean_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "id");
+  gint64 id = json_reader_get_int_value(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "title");
+  const char *title = safe_json_get_string_value2(reader);
+  json_reader_end_member(reader);
+
+  json_reader_read_member(reader, "workspace_id");
+  gint64 workspace_id = json_reader_get_int_value(reader);
+  json_reader_end_member(reader);
+
+  window = get_window(niri->windows, id);
+
+  if (!window) {
+    window = calloc(1, sizeof(struct window));
+    window->id = id;
+    niri->windows = g_list_insert(niri->windows, window, 0);
+  }
+
+  free(window->title);
+  window->title = g_strdup(title);
+  window->workspace_id = workspace_id;
+  window->mark = TRUE;
+
+  if (focused) {
+    gtk_label_set_label(GTK_LABEL(niri->label), title);
+    return TRUE;
+  }
+  return FALSE;
+}
+
 static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
                           gpointer data) {
   BarBarNiriWindow *niri = BARBAR_NIRI_WINDOW(data);
+  gboolean label_set = FALSE;
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
   if (json_reader_read_member(reader, "WindowsChanged")) {
+    json_reader_read_member(reader, "windows");
+
+    int n = json_reader_count_elements(reader);
+
+    for (int i = 0; i < n; i++) {
+      json_reader_read_element(reader, i);
+      label_set |= g_barbar_niri_window_set_windows(niri, reader);
+      json_reader_end_element(reader);
+    }
+
+    json_reader_end_member(reader);
+
+    if (!label_set) {
+      gtk_label_set_label(GTK_LABEL(niri->label), NULL);
+    }
+    sweep(niri);
   }
+  json_reader_end_member(reader); // end changed
+
   if (json_reader_read_member(reader, "WindowOpenedOrChanged")) {
-  }
-  if (json_reader_read_member(reader, "WindowFocusChanged")) {
-    json_reader_read_member(reader, "id");
-    guint64 id = json_reader_get_int_value(reader);
+    json_reader_read_member(reader, "windows");
+
+    g_barbar_niri_window_set_windows(niri, reader);
     json_reader_end_member(reader);
   }
+  json_reader_end_member(reader); // end opened or changed
+
+  if (json_reader_read_member(reader, "WindowFocusChanged")) {
+    struct window *window;
+    json_reader_read_member(reader, "id");
+
+    if (json_reader_get_null_value(reader)) {
+      gtk_label_set_label(GTK_LABEL(niri->label), NULL);
+    } else {
+      guint64 id = json_reader_get_int_value(reader);
+
+      window = get_window(niri->windows, id);
+
+      if (window) {
+        gtk_label_set_label(GTK_LABEL(niri->label), window->title);
+      }
+    }
+    json_reader_end_member(reader); // id
+  }
+  json_reader_end_member(reader); // end opened or changed
 }
 
 static void g_barbar_niri_window_start(GtkWidget *widget) {

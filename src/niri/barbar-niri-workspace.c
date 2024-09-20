@@ -12,6 +12,7 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
+// TODO: use output_name, be able to click buttons, look for updates
 /**
  * BarBarNiriWorkspace:
  *
@@ -36,6 +37,11 @@ struct workspace {
 
   GtkWidget *button;
 };
+
+void free_workspace(struct workspace *workspace) {
+  gtk_widget_unparent(workspace->button);
+  free(workspace);
+}
 
 enum {
   PROP_0,
@@ -214,7 +220,7 @@ static gint compare_func(gconstpointer a, gconstpointer b) {
   return wrka->num - wrkb->num;
 }
 
-static struct workspace *get_entry(GList *workspace, guint64 id) {
+static struct workspace *get_entry(GList *workspace, gint64 id) {
   for (; workspace; workspace = workspace->next) {
     struct workspace *entry;
     entry = workspace->data;
@@ -232,8 +238,9 @@ static void sweep(BarBarNiriWorkspace *niri) {
     struct workspace *entry;
     entry = workspace->data;
     if (!entry->mark) {
-      g_free(entry);
+      free_workspace(entry);
       niri->workspaces = g_list_remove_link(niri->workspaces, workspace);
+      printf("sweep!\n");
     } else {
       entry->mark = FALSE;
     }
@@ -245,17 +252,25 @@ static void sort_widgets(BarBarNiriWorkspace *niri) {
   for (workspace = niri->workspaces; workspace; workspace = workspace->next) {
     struct workspace *entry;
     entry = workspace->data;
-    if (workspace->prev) {
-      struct workspace *prev = workspace->prev->data;
-      gtk_widget_insert_after(entry->button, GTK_WIDGET(niri), prev->button);
-    }
+    gtk_widget_insert_before(entry->button, GTK_WIDGET(niri), NULL);
   }
+}
+
+static void printlist(BarBarNiriWorkspace *niri) {
+  GList *workspace;
+  for (workspace = niri->workspaces; workspace; workspace = workspace->next) {
+    struct workspace *entry;
+    entry = workspace->data;
+    printf("%d: %d,", entry->id, entry->num);
+  }
+  printf("\n");
 }
 
 static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
                                                       JsonReader *reader) {
   struct workspace *entry = NULL;
   gboolean needs_sort = FALSE;
+  gboolean added = FALSE;
 
   json_reader_read_member(reader, "output");
   const char *output = safe_json_get_string_value(reader);
@@ -272,8 +287,9 @@ static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
     entry->button = gtk_button_new();
     entry->id = id;
     needs_sort = TRUE;
-    gtk_widget_set_parent(entry->button, GTK_WIDGET(niri));
+    added = TRUE;
   }
+  entry->mark = TRUE;
 
   json_reader_read_member(reader, "idx");
   gint64 idx = json_reader_get_int_value(reader);
@@ -314,8 +330,10 @@ static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
     gtk_widget_remove_css_class(entry->button, "focused");
   }
 
-  niri->workspaces =
-      g_list_insert_sorted(niri->workspaces, entry, compare_func);
+  if (added) {
+    niri->workspaces =
+        g_list_insert_sorted(niri->workspaces, entry, compare_func);
+  }
   return needs_sort;
 }
 
@@ -334,22 +352,46 @@ static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
       needs_sort |= g_barbar_niri_workspace_set_workspace(niri, reader);
       json_reader_end_element(reader);
     }
+    printlist(niri);
 
     json_reader_end_member(reader); // end workspaces
-    json_reader_end_member(reader); // end changed
     sweep(niri);
+    printlist(niri);
     if (needs_sort) {
       sort_widgets(niri);
     }
   }
+  json_reader_end_member(reader); // end changed
+
   if (json_reader_read_member(reader, "WorkspaceActivated")) {
+    struct workspace *workspace;
     json_reader_read_member(reader, "id");
-    json_reader_end_member(reader);
-    json_reader_read_member(reader, "focused");
+    gint64 id = json_reader_get_int_value(reader);
     json_reader_end_member(reader);
 
-    json_reader_end_member(reader); // end activated
+    json_reader_read_member(reader, "focused");
+    gboolean focused = json_reader_get_boolean_value(reader);
+    json_reader_end_member(reader);
+
+    workspace = get_entry(niri->workspaces, id);
+
+    // we need to iterate twice, because if we don't find the id
+    // it's not our screen.
+    if (workspace) {
+
+      GList *entries = niri->workspaces;
+      for (; entries; entries = entries->next) {
+        struct workspace *entry;
+        entry = entries->data;
+        gtk_widget_remove_css_class(entry->button, "focused");
+      }
+      // maybe we should always do this?
+      if (focused) {
+        gtk_widget_add_css_class(workspace->button, "focused");
+      }
+    }
   }
+  json_reader_end_member(reader); // end activated
 }
 
 static void g_barbar_niri_workspace_start(GtkWidget *widget) {

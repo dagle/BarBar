@@ -198,7 +198,9 @@ static void g_barbar_sway_set_focused_tree(BarBarSwayWindow *sway,
     }
     json_reader_end_member(reader);
   } else {
-    if (!json_reader_read_member(reader, "nodes")) {
+    gboolean nodes = json_reader_read_member(reader, "nodes");
+    json_reader_end_member(reader);
+    if (!nodes) {
       return;
     }
     if (json_reader_is_array(reader)) {

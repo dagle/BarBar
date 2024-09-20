@@ -33,3 +33,13 @@ GSocketConnection *g_barbar_niri_ipc_connect(GError **error) {
 
   return connection;
 }
+
+/**
+ * g_barbar_niri_ipc_send_command:
+ */
+void g_barbar_niri_ipc_send_command(void) {}
+
+void g_barbar_niri_ipc_change_workspace(int id) {
+  const char *action_str = "{Action: {FocusWorkspace: reference: {Id: %d}}}";
+  char *action = g_strdup_printf(action_str, id);
+}
