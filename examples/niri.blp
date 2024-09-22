@@ -1,0 +1,21 @@
+using Gtk 4.0;
+using BarBar 1.0;
+
+BarBar.Bar {
+  bar-pos: bot;
+
+  Gtk.ActionBar {
+    [start]
+    BarBar.NiriWorkspace {}
+
+    [start]
+    BarBar.NiriWindow {}
+
+    [end]
+    Gtk.Label {
+      label: bind lang.language;
+    }
+  }
+}
+
+BarBar.NiriLanguage lang {}
