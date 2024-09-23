@@ -1,8 +1,10 @@
 #include "niri/barbar-niri-workspace.h"
+#include "barbar-bar.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "gtk/gtk.h"
 #include "gtk4-layer-shell.h"
+#include "niri/barbar-niri-ipc.h"
 #include "niri/barbar-niri-subscribe.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -145,10 +147,56 @@ g_barbar_niri_workspace_class_init(BarBarNiriWorkspaceClass *class) {
   gtk_widget_class_set_css_name(widget_class, "niri-workspace");
 }
 
+static void clicked(GtkButton *self, gpointer user_data) {
+  BarBarNiriWorkspace *niri = BARBAR_NIRI_WORKSPACE(user_data);
+  printf("CLICKED!!!\n\n");
+
+  GList *workspace = niri->workspaces;
+  int id = 0;
+  for (; workspace; workspace = workspace->next) {
+    struct workspace *entry;
+    entry = workspace->data;
+    if (entry->button == self) {
+      id = entry->id;
+    }
+  }
+  g_signal_emit(niri, click_signal, 0, id);
+}
+
 static void g_barbar_niri_workspace_init(BarBarNiriWorkspace *self) {}
+
+#define FOCUS_WORKSPACE                                                        \
+  "{\"Action\": {\"FocusWorkspace\": {\"reference\": {\"Id\": %d}}}}\n"
+
+static void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
+  GOutputStream *stream = G_OUTPUT_STREAM(source);
+  gsize bytes;
+  GError *error = NULL;
+
+  g_output_stream_write_all_finish(stream, res, &bytes, &error);
+  // BarBarNiriWorkspace *send = BARBAR_NIRI_WORKSPACE(data);
+
+  if (error) {
+    g_printerr("Setting niri workspace error: %s", error->message);
+    return;
+  }
+}
 
 static void default_clicked_handler(BarBarNiriWorkspace *niri, guint tag,
                                     gpointer user_data) {
+  GOutputStream *output_stream;
+  GSocketConnection *connection;
+  GError *error = NULL;
+  printf("handler!!!\n\n");
+  char *req = g_strdup_printf(FOCUS_WORKSPACE, tag);
+  printf("%s\n", req);
+  connection = g_barbar_niri_ipc_connect(&error);
+
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
+
+  g_output_stream_write_all_async(output_stream, req, strlen(req), 0, NULL,
+                                  ipc_callback, niri);
+
   // g_barbar_sway_ipc_oneshot(SWAY_RUN_COMMAND, FALSE, NULL, NULL, NULL,
   //                           "%workspace %d", tag);
 }
@@ -285,6 +333,8 @@ static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
   if (!entry) {
     entry = malloc(sizeof(struct workspace));
     entry->button = gtk_button_new();
+
+    g_signal_connect(entry->button, "clicked", G_CALLBACK(clicked), niri);
     entry->id = id;
     needs_sort = TRUE;
     added = TRUE;

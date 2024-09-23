@@ -34,12 +34,22 @@ GSocketConnection *g_barbar_niri_ipc_connect(GError **error) {
   return connection;
 }
 
-/**
- * g_barbar_niri_ipc_send_command:
- */
-void g_barbar_niri_ipc_send_command(void) {}
-
 void g_barbar_niri_ipc_change_workspace(int id) {
   const char *action_str = "{Action: {FocusWorkspace: reference: {Id: %d}}}";
   char *action = g_strdup_printf(action_str, id);
+}
+
+gboolean g_barbar_niri_ipc_oneshot_finish(GAsyncResult *result, guint32 *type,
+                                          char **response, gsize *length,
+                                          GError **error) {
+  // output_stream =
+  // g_io_stream_get_output_stream(G_IO_STREAM(ipc->connection));
+  // g_output_stream_write_all_async(output_stream, message, length, 0,
+  //                                 cancellable, ipc_callback, task);
+}
+
+void g_barbar_niri_ipc_oneshot(GCancellable *cancellable,
+                               GAsyncReadyCallback callback, gpointer data,
+                               const char *format, ...) {
+  //
 }

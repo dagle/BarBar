@@ -28,6 +28,10 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+  NIRI_Quit,
+} BarBarNiriActionType;
+
 GSocketConnection *g_barbar_niri_ipc_connect(GError **error);
 
 G_END_DECLS
