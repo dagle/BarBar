@@ -91,7 +91,6 @@ static void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
     g_free(line);
     return;
   }
-  printf("%s\n", line);
 
   g_signal_emit(self, event_signal, 0, parser);
 

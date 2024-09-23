@@ -28,7 +28,7 @@ void g_sway_async_send_free(SwaySendIpc *send) {
   g_free(send);
 }
 
-typedef struct SwayIpcCmd {
+typedef struct NiriIpcAction {
   GSocketClient *socket_client;
   GSocketConnection *connection;
   BarBarSwayMessageType type;
@@ -644,7 +644,7 @@ static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
 }
 
 /**
- * g_barbar_sway_ipc_command_finish:
+ * g_barbar_sway_ipc_oneshot_finish:
  * @result: a #GAsyncResult
  * @type: (out) (optional): Type of message in the response or %NULL if the type
  * is not needed
@@ -655,11 +655,9 @@ static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
  * @error: a #GError, or %NULL
  *
  * Finishes an asynchronous sway ipc response that was started
- * with g_barbar_sway_ipc_read_async(). The data is always
- * zero-terminated. The returned @contents should be freed with g_free()
- * when no longer needed.
+ * with g_barbar_sway_ipc_oneshot().
  *
- * Returns: %TRUE if the ipc was successfully communicated (the ipc content can
+ * Returns: %TRUE if the ipc was successfully communicated
  * still contain an error). If %FALSE and @error is present, it will be set
  * appropriately.
  */
@@ -709,10 +707,11 @@ gboolean g_barbar_sway_ipc_oneshot_finish(GAsyncResult *result, guint32 *type,
  * @format: a standard `printf()` format string, to send to sway
  * @...: the arguments to insert in the output
  *
- * Sends a command to sway async. If result is set to true and a callback is set
- * the uncion will try to read the output. Use
- * g_barbar_sway_ipc_command_finish() in the callback function to get the
- * result.
+ * Opens a new connection and sends a command to sway async. If result is set to
+ * true and a callback is set we will try to read the output. Use
+ * g_barbar_sway_ipc_oneshot_finish() in the callback function to get the
+ * result. After the message is sent, all data is freed and connections are
+ * closed.
  *
  */
 void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
@@ -732,6 +731,7 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
     g_task_return_new_error(task, BARBAR_ERROR, BARBAR_ERROR_BAD_SWAY_IPC,
                             "No socket path found, is sway running?");
     g_object_unref(task);
+    g_sway_ipc_cmd_free(ipc);
     return;
   }
 
@@ -749,4 +749,5 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
   g_socket_client_connect_async(ipc->socket_client,
                                 G_SOCKET_CONNECTABLE(address), cancellable,
                                 connect_cb, task);
+  g_object_unref(address);
 }

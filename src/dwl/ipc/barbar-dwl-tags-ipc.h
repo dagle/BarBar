@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDwlTagsIpc, g_barbar_dwl_tags_ipc, BARBAR,
                      DWL_TAGS_IPC, GtkWidget)
 
+GtkWidget *g_barbar_dwl_tags_ipc_new(void);
+
 G_END_DECLS

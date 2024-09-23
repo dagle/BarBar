@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDwlTitle, g_barbar_dwl_title, BARBAR, DWL_TITLE,
                      GtkWidget)
 
+GtkWidget *g_barbar_dwl_title_new(void);
+
 G_END_DECLS

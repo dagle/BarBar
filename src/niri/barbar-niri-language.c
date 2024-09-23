@@ -17,8 +17,6 @@ struct _BarBarNiriLanguage {
   BarBarSensor parent_instance;
 
   BarBarNiriSubscribe *sub;
-  // struct zxdg_output_manager_v1 *xdg_output_manager;
-  // struct zxdg_output_v1 *xdg_output;
   char *keyboard;
   char *identifier;
   char *language;

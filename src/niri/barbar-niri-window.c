@@ -14,9 +14,9 @@
  */
 struct _BarBarNiriWindow {
   GtkWidget parent_instance;
+  gboolean all_workspaces;
 
   char *output_name;
-  char *window;
 
   GtkWidget *label;
 
@@ -25,6 +25,14 @@ struct _BarBarNiriWindow {
   struct zxdg_output_v1 *xdg_output;
 
   GList *windows;
+  GList *workspaces;
+};
+
+struct workspace {
+  int id;
+  char *output;
+
+  gboolean mark;
 };
 
 struct window {
@@ -43,7 +51,7 @@ enum {
   PROP_0,
 
   PROP_OUTPUT,
-  PROP_WINDOW,
+  PROP_ALLWORKSPACES,
 
   NUM_PROPERTIES,
 };
@@ -65,13 +73,17 @@ static void g_barbar_niri_window_set_output(BarBarNiriWindow *niri,
   }
 }
 
-static void g_barbar_niri_window_set_window(BarBarNiriWindow *niri,
-                                            const gchar *window) {
+static void g_barbar_niri_window_set_allworkspaces(BarBarNiriWindow *niri,
+                                                   gboolean all) {
   g_return_if_fail(BARBAR_IS_NIRI_WINDOW(niri));
 
-  if (g_set_str(&niri->window, window)) {
-    g_object_notify_by_pspec(G_OBJECT(niri), niri_window_props[PROP_WINDOW]);
+  if (niri->all_workspaces == all) {
+    return;
   }
+
+  niri->all_workspaces = all;
+  g_object_notify_by_pspec(G_OBJECT(niri),
+                           niri_window_props[PROP_ALLWORKSPACES]);
 }
 
 static void g_barbar_niri_window_set_property(GObject *object,
@@ -81,6 +93,9 @@ static void g_barbar_niri_window_set_property(GObject *object,
   BarBarNiriWindow *niri = BARBAR_NIRI_WINDOW(object);
 
   switch (property_id) {
+  case PROP_ALLWORKSPACES:
+    g_barbar_niri_window_set_allworkspaces(niri, g_value_get_boolean(value));
+    break;
   case PROP_OUTPUT:
     // g_barbar_sway_workspace_set_output(sway, g_value_get_string(value));
     // break;
@@ -95,6 +110,9 @@ static void g_barbar_niri_window_get_property(GObject *object,
   BarBarNiriWindow *niri = BARBAR_NIRI_WINDOW(object);
 
   switch (property_id) {
+  case PROP_ALLWORKSPACES:
+    g_value_set_boolean(value, niri->all_workspaces);
+    break;
   case PROP_OUTPUT:
     g_value_set_string(value, niri->output_name);
     break;
@@ -108,7 +126,6 @@ static void g_barbar_niri_window_finalize(GObject *object) {
 
   g_clear_object(&workspace->sub);
   g_free(workspace->output_name);
-  g_free(workspace->window);
 
   G_OBJECT_CLASS(g_barbar_niri_window_parent_class)->finalize(object);
 }
@@ -122,20 +139,21 @@ static void g_barbar_niri_window_class_init(BarBarNiriWindowClass *class) {
   gobject_class->finalize = g_barbar_niri_window_finalize;
 
   /**
+   * BarBarNiriWindow:all-workspaces:
+   *
+   * if we should listen to all outputs.
+   */
+  niri_window_props[PROP_ALLWORKSPACES] =
+      g_param_spec_boolean("all-workspaces", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
    * BarBarNiriWindow:output:
    *
    * What screen this is monitoring
    */
   niri_window_props[PROP_OUTPUT] =
       g_param_spec_string("output", NULL, NULL, NULL, G_PARAM_READWRITE);
-
-  /**
-   * BarBarNiriWindow:window:
-   *
-   * What screen this is monitoring
-   */
-  niri_window_props[PROP_WINDOW] =
-      g_param_spec_string("window", NULL, NULL, NULL, G_PARAM_READABLE);
 
   widget_class->root = g_barbar_niri_window_start;
 
@@ -237,9 +255,30 @@ static void sweep(BarBarNiriWindow *niri) {
   }
 }
 
+static struct workspace *get_workspace(GList *workspace, gint64 id) {
+  for (; workspace; workspace = workspace->next) {
+    struct workspace *entry;
+    entry = workspace->data;
+    if (entry->id == id) {
+      return entry;
+    }
+  }
+  return NULL;
+}
+
 static gboolean g_barbar_niri_window_set_windows(BarBarNiriWindow *niri,
                                                  JsonReader *reader) {
   struct window *window;
+
+  json_reader_read_member(reader, "workspace_id");
+  gint64 workspace_id = json_reader_get_int_value(reader);
+  json_reader_end_member(reader);
+
+  // Not our output
+  if (!niri->all_workspaces ||
+      get_workspace(niri->workspaces, workspace_id) == NULL) {
+    return FALSE;
+  }
 
   json_reader_read_member(reader, "is_focused");
   gboolean focused = json_reader_get_boolean_value(reader);
@@ -251,10 +290,6 @@ static gboolean g_barbar_niri_window_set_windows(BarBarNiriWindow *niri,
 
   json_reader_read_member(reader, "title");
   const char *title = safe_json_get_string_value2(reader);
-  json_reader_end_member(reader);
-
-  json_reader_read_member(reader, "workspace_id");
-  gint64 workspace_id = json_reader_get_int_value(reader);
   json_reader_end_member(reader);
 
   window = get_window(niri->windows, id);
@@ -277,12 +312,8 @@ static gboolean g_barbar_niri_window_set_windows(BarBarNiriWindow *niri,
   return FALSE;
 }
 
-static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
-                          gpointer data) {
-  BarBarNiriWindow *niri = BARBAR_NIRI_WINDOW(data);
+static void handle_window(BarBarNiriWindow *niri, JsonReader *reader) {
   gboolean label_set = FALSE;
-
-  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
   if (json_reader_read_member(reader, "WindowsChanged")) {
     json_reader_read_member(reader, "windows");
 
@@ -304,8 +335,8 @@ static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
   json_reader_end_member(reader); // end changed
 
   if (json_reader_read_member(reader, "WindowOpenedOrChanged")) {
-    json_reader_read_member(reader, "windows");
 
+    json_reader_read_member(reader, "windows");
     g_barbar_niri_window_set_windows(niri, reader);
     json_reader_end_member(reader);
   }
@@ -329,6 +360,76 @@ static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
     json_reader_end_member(reader); // id
   }
   json_reader_end_member(reader); // end opened or changed
+
+  if (json_reader_read_member(reader, "WindowClosed")) {
+  }
+  json_reader_end_member(reader); // end closed
+}
+
+void free_window_workspace(struct workspace *workspace) {
+  free(workspace->output);
+  free(workspace);
+}
+
+static void workspace_sweep(BarBarNiriWindow *niri) {
+  GList *workspace = niri->workspaces;
+
+  for (; workspace; workspace = workspace->next) {
+    struct workspace *entry;
+    entry = workspace->data;
+    if (!entry->mark) {
+      free_window_workspace(entry);
+      niri->workspaces = g_list_remove_link(niri->workspaces, workspace);
+    } else {
+      entry->mark = FALSE;
+    }
+  }
+}
+
+static void handle_workspace(BarBarNiriWindow *niri, JsonReader *reader) {
+  if (json_reader_read_member(reader, "WorkspacesChanged")) {
+    json_reader_read_member(reader, "workspaces");
+    int n = json_reader_count_elements(reader);
+
+    for (int i = 0; i < n; i++) {
+      struct workspace *entry;
+
+      json_reader_read_element(reader, i);
+
+      json_reader_read_member(reader, "id");
+      gint64 id = json_reader_get_int_value(reader);
+      json_reader_end_member(reader);
+      entry = get_workspace(niri->workspaces, id);
+      if (!entry) {
+        entry = malloc(sizeof(struct workspace));
+
+        json_reader_read_member(reader, "output");
+        const char *output = safe_json_get_string_value2(reader);
+        json_reader_end_member(reader);
+
+        entry->id = id;
+        entry->output = g_strdup(output);
+
+        niri->workspaces = g_list_insert(niri->workspaces, entry, 0);
+      }
+      entry->mark = TRUE;
+
+      json_reader_end_element(reader);
+    }
+    workspace_sweep(niri);
+
+    json_reader_end_member(reader); // end workspaces
+  }
+  json_reader_end_member(reader); // end closed
+}
+
+static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
+                          gpointer data) {
+  BarBarNiriWindow *niri = BARBAR_NIRI_WINDOW(data);
+
+  JsonReader *reader = json_reader_new(json_parser_get_root(parser));
+  handle_workspace(niri, reader);
+  handle_window(niri, reader);
 }
 
 static void g_barbar_niri_window_start(GtkWidget *widget) {
@@ -380,4 +481,17 @@ static void g_barbar_niri_window_start(GtkWidget *widget) {
     g_printerr("can't connect: %s\n", error->message);
     return;
   }
+}
+
+/**
+ * g_barbar_niri_window_new:
+ *
+ * Returns: (transfer full): a new `BarBarNiriWindow`
+ */
+GtkWidget *g_barbar_niri_window_new(void) {
+  BarBarNiriWindow *window;
+
+  window = g_object_new(BARBAR_TYPE_NIRI_WINDOW, NULL);
+
+  return GTK_WIDGET(window);
 }

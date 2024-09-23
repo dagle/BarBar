@@ -34,4 +34,11 @@ typedef enum {
 
 GSocketConnection *g_barbar_niri_ipc_connect(GError **error);
 
+void g_barbar_niri_ipc_oneshot(GCancellable *cancellable,
+                               GAsyncReadyCallback callback, gpointer data,
+                               const char *format, ...);
+
+gboolean g_barbar_niri_ipc_oneshot_finish(GOutputStream *stream,
+                                          GAsyncResult *result, GError **error);
+
 G_END_DECLS

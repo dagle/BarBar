@@ -1,5 +1,6 @@
 #include "niri/barbar-niri-workspace.h"
 #include "barbar-bar.h"
+#include "glib-object.h"
 #include "glib.h"
 #include "glibconfig.h"
 #include "gtk/gtk.h"
@@ -14,7 +15,6 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-// TODO: use output_name, be able to click buttons, look for updates
 /**
  * BarBarNiriWorkspace:
  *
@@ -22,6 +22,7 @@
  */
 struct _BarBarNiriWorkspace {
   GtkWidget parent_instance;
+  gboolean all_workspaces;
 
   char *output_name;
 
@@ -49,6 +50,7 @@ enum {
   PROP_0,
 
   PROP_OUTPUT,
+  PROP_ALLWORKSPACES,
 
   NUM_PROPERTIES,
 };
@@ -75,6 +77,19 @@ static void g_barbar_niri_workspace_set_output(BarBarNiriWorkspace *niri,
   }
 }
 
+static void g_barbar_niri_workspace_set_allworkspaces(BarBarNiriWorkspace *niri,
+                                                      gboolean all) {
+  g_return_if_fail(BARBAR_IS_NIRI_WORKSPACE(niri));
+
+  if (niri->all_workspaces == all) {
+    return;
+  }
+
+  niri->all_workspaces = all;
+  g_object_notify_by_pspec(G_OBJECT(niri),
+                           niri_workspace_props[PROP_ALLWORKSPACES]);
+}
+
 static void g_barbar_niri_workspace_set_property(GObject *object,
                                                  guint property_id,
                                                  const GValue *value,
@@ -82,6 +97,9 @@ static void g_barbar_niri_workspace_set_property(GObject *object,
   BarBarNiriWorkspace *niri = BARBAR_NIRI_WORKSPACE(object);
 
   switch (property_id) {
+  case PROP_ALLWORKSPACES:
+    g_barbar_niri_workspace_set_allworkspaces(niri, g_value_get_boolean(value));
+    break;
   case PROP_OUTPUT:
     // g_barbar_sway_workspace_set_output(sway, g_value_get_string(value));
     // break;
@@ -97,6 +115,9 @@ static void g_barbar_niri_workspace_get_property(GObject *object,
   BarBarNiriWorkspace *niri = BARBAR_NIRI_WORKSPACE(object);
 
   switch (property_id) {
+  case PROP_ALLWORKSPACES:
+    g_value_set_boolean(value, niri->all_workspaces);
+    break;
   case PROP_OUTPUT:
     g_value_set_string(value, niri->output_name);
     break;
@@ -125,6 +146,15 @@ g_barbar_niri_workspace_class_init(BarBarNiriWorkspaceClass *class) {
   gobject_class->finalize = g_barbar_niri_workspace_finalize;
 
   /**
+   * BarBarNiriWorkspace:all-workspaces:
+   *
+   * if we should listen to all outputs.
+   */
+  niri_workspace_props[PROP_ALLWORKSPACES] =
+      g_param_spec_boolean("all-workspaces", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+
+  /**
    * BarBarNiriWorkspace:output:
    *
    * What screen this is monitoring
@@ -149,14 +179,13 @@ g_barbar_niri_workspace_class_init(BarBarNiriWorkspaceClass *class) {
 
 static void clicked(GtkButton *self, gpointer user_data) {
   BarBarNiriWorkspace *niri = BARBAR_NIRI_WORKSPACE(user_data);
-  printf("CLICKED!!!\n\n");
 
   GList *workspace = niri->workspaces;
   int id = 0;
   for (; workspace; workspace = workspace->next) {
     struct workspace *entry;
     entry = workspace->data;
-    if (entry->button == self) {
+    if (GTK_BUTTON(entry->button) == self) {
       id = entry->id;
     }
   }
@@ -173,8 +202,7 @@ static void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
   gsize bytes;
   GError *error = NULL;
 
-  g_output_stream_write_all_finish(stream, res, &bytes, &error);
-  // BarBarNiriWorkspace *send = BARBAR_NIRI_WORKSPACE(data);
+  g_barbar_niri_ipc_oneshot_finish(stream, res, &error);
 
   if (error) {
     g_printerr("Setting niri workspace error: %s", error->message);
@@ -184,21 +212,7 @@ static void ipc_callback(GObject *source, GAsyncResult *res, gpointer data) {
 
 static void default_clicked_handler(BarBarNiriWorkspace *niri, guint tag,
                                     gpointer user_data) {
-  GOutputStream *output_stream;
-  GSocketConnection *connection;
-  GError *error = NULL;
-  printf("handler!!!\n\n");
-  char *req = g_strdup_printf(FOCUS_WORKSPACE, tag);
-  printf("%s\n", req);
-  connection = g_barbar_niri_ipc_connect(&error);
-
-  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(connection));
-
-  g_output_stream_write_all_async(output_stream, req, strlen(req), 0, NULL,
-                                  ipc_callback, niri);
-
-  // g_barbar_sway_ipc_oneshot(SWAY_RUN_COMMAND, FALSE, NULL, NULL, NULL,
-  //                           "%workspace %d", tag);
+  g_barbar_niri_ipc_oneshot(NULL, ipc_callback, niri, FOCUS_WORKSPACE, tag);
 }
 
 static void registry_handle_global(void *data, struct wl_registry *registry,
@@ -288,7 +302,6 @@ static void sweep(BarBarNiriWorkspace *niri) {
     if (!entry->mark) {
       free_workspace(entry);
       niri->workspaces = g_list_remove_link(niri->workspaces, workspace);
-      printf("sweep!\n");
     } else {
       entry->mark = FALSE;
     }
@@ -304,16 +317,6 @@ static void sort_widgets(BarBarNiriWorkspace *niri) {
   }
 }
 
-static void printlist(BarBarNiriWorkspace *niri) {
-  GList *workspace;
-  for (workspace = niri->workspaces; workspace; workspace = workspace->next) {
-    struct workspace *entry;
-    entry = workspace->data;
-    printf("%d: %d,", entry->id, entry->num);
-  }
-  printf("\n");
-}
-
 static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
                                                       JsonReader *reader) {
   struct workspace *entry = NULL;
@@ -323,6 +326,12 @@ static gboolean g_barbar_niri_workspace_set_workspace(BarBarNiriWorkspace *niri,
   json_reader_read_member(reader, "output");
   const char *output = safe_json_get_string_value(reader);
   json_reader_end_member(reader);
+
+  // not for our screen
+  if (niri->all_workspaces ||
+      (output && g_strcmp0(output, niri->output_name))) {
+    return FALSE;
+  }
 
   json_reader_read_member(reader, "id");
   gint64 id = json_reader_get_int_value(reader);
@@ -402,11 +411,9 @@ static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
       needs_sort |= g_barbar_niri_workspace_set_workspace(niri, reader);
       json_reader_end_element(reader);
     }
-    printlist(niri);
 
     json_reader_end_member(reader); // end workspaces
     sweep(niri);
-    printlist(niri);
     if (needs_sort) {
       sort_widgets(niri);
     }
@@ -436,9 +443,9 @@ static void event_listner(BarBarNiriSubscribe *sub, JsonParser *parser,
         gtk_widget_remove_css_class(entry->button, "focused");
       }
       // maybe we should always do this?
-      if (focused) {
-        gtk_widget_add_css_class(workspace->button, "focused");
-      }
+      // if (focused) {
+      gtk_widget_add_css_class(workspace->button, "focused");
+      // }
     }
   }
   json_reader_end_member(reader); // end activated
@@ -463,7 +470,7 @@ static void g_barbar_niri_workspace_start(GtkWidget *widget) {
       GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(niri), GTK_TYPE_WINDOW));
   // doesn't need to be a layer window
   if (window == NULL || !gtk_layer_is_layer_window(window)) {
-    printf("Parent window not found!\n");
+    g_printerr("Parent window not found!\n");
     return;
   }
 

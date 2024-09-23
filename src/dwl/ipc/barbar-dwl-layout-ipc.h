@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDwlLayoutIpc, g_barbar_dwl_layout_ipc, BARBAR,
                      DWL_LAYOUT_IPC, GtkWidget)
 
+GtkWidget *g_barbar_dwl_layout_ipc_new(void);
+
 G_END_DECLS
