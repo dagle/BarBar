@@ -1,22 +1,31 @@
 #include "barbar-dwl-service.h"
 #include "barbar-error.h"
 #include "glib-object.h"
+#include "glib.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 
+/**
+ * BarBarDwlService:
+ * A background service for dwl. For BarBarDwlService to work
+ * you need to pipe dwl into barbar.
+ *
+ *
+ */
 struct _BarBarDwlService {
   BarBarSensor parent_instance;
 
-  // path to the data, if null, iit will read stdin.
+  // path to the data, if null, it will read stdin.
   char *file_path;
   GFileMonitor *monitor;
   GDataInputStream *input;
 };
 
 typedef enum {
+  DWL_STARTED,
   DWL_TAGS,
   DWL_LAYOUT,
   DWL_TITLE,
@@ -370,8 +379,9 @@ static void g_barbar_dwl_service_start(BarBarSensor *sensor) {
     // or we have piped from stdin
     GInputStream *stream;
     stream = g_unix_input_stream_new(STDIN_FILENO, FALSE);
-    g_clear_object(&stream);
     service->input = g_data_input_stream_new(stream);
+
+    g_clear_object(&stream);
 
     g_data_input_stream_read_line_async(service->input, G_PRIORITY_DEFAULT,
                                         NULL, g_barbar_dwl_service_pipe_reader,

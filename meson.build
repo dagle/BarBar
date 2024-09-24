@@ -29,6 +29,7 @@ udev = dependency('libudev')
 module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
+systray = dependency('statusnotifier-systray-gtk4')
 
 libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
@@ -58,6 +59,7 @@ deps = [
   json,
   upower_glib,
   libgtop,
+  systray,
   libwireplumber,
   playerctl,
   template_glib,

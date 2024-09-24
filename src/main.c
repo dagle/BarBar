@@ -2,6 +2,7 @@
 #include "barbar.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
+#include <snsystray.h>
 #include <string.h>
 
 #include "sensors/barbar-clock.h"
@@ -162,5 +163,6 @@ int run(int argc, char **argv) {
 int main(int argc, char **argv) {
   gtk_init();
   g_barbar_init();
+  g_type_ensure(SN_TYPE_SYSTRAY);
   run(argc, argv);
 }

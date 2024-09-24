@@ -11,6 +11,8 @@
 /**
  * BarBarDwlLayout:
  * A widget to display the layout for the associated screen.
+ *
+ * See `BarBarDwlService` for how BarBarDwlLayout fetches information
  */
 struct _BarBarDwlLayout {
   GtkWidget parent_instance;

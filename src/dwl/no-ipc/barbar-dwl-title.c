@@ -12,6 +12,8 @@
  * BarBarDwlTitle:
  * A widget to display the title for current application for the
  * associated screen.
+ *
+ * See `BarBarDwlService` for how BarBarDwlLayout fetches information
  */
 struct _BarBarDwlTitle {
   GtkWidget parent_instance;
@@ -126,6 +128,6 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_dwl_title_parent_class)->root(widget);
 
   dwl->service = g_barbar_dwl_service_new(NULL);
-  g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "title", G_CALLBACK(g_dwl_listen_cb), dwl);
+  g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
 }

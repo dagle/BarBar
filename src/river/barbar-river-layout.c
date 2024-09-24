@@ -90,7 +90,7 @@ static void g_barbar_river_layout_get_property(GObject *object,
 static void g_barbar_river_layout_finalize(GObject *object) {
   BarBarRiverLayout *river = BARBAR_RIVER_LAYOUT(object);
 
-  zriver_output_status_v1_destroy(river->output_status);
+  g_clear_pointer(&river->output_status, zriver_output_status_v1_destroy);
 
   G_OBJECT_CLASS(g_barbar_river_layout_parent_class)->finalize(object);
 }

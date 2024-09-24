@@ -13,6 +13,8 @@
  * BarBarDwlTags:
  * A widget to display the title for current application for the
  * associated screen.
+ *
+ * See `BarBarDwlService` for how BarBarDwlTags fetches information
  */
 struct _BarBarDwlTags {
   GtkWidget parent_instance;
