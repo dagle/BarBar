@@ -28,8 +28,8 @@ json = dependency('json-glib-1.0')
 udev = dependency('libudev')
 module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
-libgtop = dependency('libgtop-2.0', required: get_option('libgtop'))
-systray = dependency('statusnotifier-systray-gtk4')
+libgtop = dependency('libgtop-2.0')
+systray = dependency('statusnotifier-systray-gtk4', required: get_option('systray'))
 
 libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
@@ -70,10 +70,13 @@ deps = [
   module,
 ]
 
+if get_option('systray')
+  add_project_arguments('-DSTATUSNOTIFIER_SYSTRAY', language: 'c')
+endif
+
 # like deps but only needed for the binary
 bin_deps = [
   systray,
-
 ]
 
 LIBS = [glib, gio, gobject, gtk]

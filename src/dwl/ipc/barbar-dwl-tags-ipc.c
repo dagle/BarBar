@@ -283,15 +283,15 @@ static void tag(void *data, struct zdwl_ipc_output_v2 *zdwl_ipc_output_v2,
                 uint32_t focused) {
   BarBarDwlTagsIpc *dwl = BARBAR_DWL_TAGS_IPC(data);
 
-  if (state & ZDWL_IPC_OUTPUT_V2_TAG_STATE_ACTIVE) {
-    gtk_widget_add_css_class(dwl->buttons[tag], "focused");
-  } else {
-    gtk_widget_add_css_class(dwl->buttons[tag], "unfocused");
-  }
   if (clients > 0) {
     gtk_widget_add_css_class(dwl->buttons[tag], "occupied");
   } else {
     gtk_widget_remove_css_class(dwl->buttons[tag], "occupied");
+  }
+  if (state & ZDWL_IPC_OUTPUT_V2_TAG_STATE_ACTIVE) {
+    gtk_widget_add_css_class(dwl->buttons[tag], "focused");
+  } else {
+    gtk_widget_remove_css_class(dwl->buttons[tag], "focused");
   }
   if (state & ZDWL_IPC_OUTPUT_V2_TAG_STATE_URGENT) {
     gtk_widget_add_css_class(dwl->buttons[tag], "urgent");

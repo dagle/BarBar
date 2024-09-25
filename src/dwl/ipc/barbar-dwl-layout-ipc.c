@@ -21,10 +21,13 @@ struct _BarBarDwlLayoutIpc {
 
   GtkWidget *button;
   uint32_t layout_idx;
+  uint32_t max_layout;
 };
 
 enum {
   PROP_0,
+
+  PROP_MAXLAYOUT,
 
   NUM_PROPERTIES,
 };
@@ -37,11 +40,31 @@ static GParamSpec *dwl_layout_props[NUM_PROPERTIES] = {
 
 static void g_barbar_dwl_layout_ipc_root(GtkWidget *widget);
 
+static void g_barbar_dwl_layout_set_maxlayout(BarBarDwlLayoutIpc *dwl,
+                                              guint max_layout) {
+  g_return_if_fail(BARBAR_IS_DWL_LAYOUT_IPC(dwl));
+  printf("aaeoeeoau\n");
+
+  if (dwl->max_layout == max_layout) {
+    return;
+  }
+  if (max_layout == 0) {
+    max_layout = 1;
+  }
+
+  dwl->max_layout = max_layout;
+
+  g_object_notify_by_pspec(G_OBJECT(dwl), dwl_layout_props[PROP_MAXLAYOUT]);
+}
+
 static void g_barbar_dwl_layout_set_property(GObject *object, guint property_id,
                                              const GValue *value,
                                              GParamSpec *pspec) {
-  // BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
+  BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
   switch (property_id) {
+  case PROP_MAXLAYOUT:
+    g_barbar_dwl_layout_set_maxlayout(dwl, g_value_get_uint(value));
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -49,9 +72,11 @@ static void g_barbar_dwl_layout_set_property(GObject *object, guint property_id,
 
 static void g_barbar_dwl_layout_get_property(GObject *object, guint property_id,
                                              GValue *value, GParamSpec *pspec) {
-  // BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
+  BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(object);
 
   switch (property_id) {
+  case PROP_MAXLAYOUT:
+    g_value_set_uint(value, dwl->max_layout);
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -77,17 +102,27 @@ static void g_barbar_dwl_layout_ipc_class_init(BarBarDwlLayoutIpcClass *class) {
 
   widget_class->root = g_barbar_dwl_layout_ipc_root;
 
+  /**
+   * BarBarDwlLayoutIpc:max-layout:
+   *
+   * How many layouts we should be able to toggle between before wrapping
+   */
+  dwl_layout_props[PROP_MAXLAYOUT] = g_param_spec_uint(
+      "max-layout", NULL, NULL, 0, 100, 3,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "dwl-layout");
 }
 static void clicked(GtkButton *self, gpointer data) {
   BarBarDwlLayoutIpc *dwl = BARBAR_DWL_LAYOUT_IPC(data);
 
-  // TODO: Do we need to modular stuff or will dwl do that for us?
+  dwl->layout_idx = (dwl->layout_idx + 1) % dwl->max_layout;
   zdwl_ipc_output_v2_set_layout(dwl->ipc_output, dwl->layout_idx + 1);
 }
 
 static void g_barbar_dwl_layout_ipc_init(BarBarDwlLayoutIpc *self) {
+  self->max_layout = 3;
   self->button = gtk_button_new_with_label("");
   g_signal_connect(self->button, "clicked", G_CALLBACK(clicked), self);
   gtk_widget_set_parent(self->button, GTK_WIDGET(self));

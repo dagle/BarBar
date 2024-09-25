@@ -55,6 +55,10 @@
 #include "dwl/no-ipc/barbar-dwl-tags.h"
 #include "dwl/no-ipc/barbar-dwl-title.h"
 
+#include "dwl/ipc/barbar-dwl-layout-ipc.h"
+#include "dwl/ipc/barbar-dwl-tags-ipc.h"
+#include "dwl/ipc/barbar-dwl-title-ipc.h"
+
 #include "widgets/barbar-activity-graph.h"
 #include "widgets/barbar-box.h"
 #include "widgets/barbar-eventswitcher.h"
