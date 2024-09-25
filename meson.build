@@ -59,7 +59,6 @@ deps = [
   json,
   upower_glib,
   libgtop,
-  systray,
   libwireplumber,
   playerctl,
   template_glib,
@@ -69,6 +68,12 @@ deps = [
   # xkbcommon,
   m_dep,
   module,
+]
+
+# like deps but only needed for the binary
+bin_deps = [
+  systray,
+
 ]
 
 LIBS = [glib, gio, gobject, gtk]

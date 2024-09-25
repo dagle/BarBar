@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://codeberg.org/janetski/statusnotifier-systray-gtk4.git
+revision = head
+depth = 1

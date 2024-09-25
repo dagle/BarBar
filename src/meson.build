@@ -315,7 +315,7 @@ endif
 
 executable('barbar',
   libbarbar_src + 'main.c', wayland_src, status_notifier_src, power_profiles_src,
-  dependencies: deps,
+  dependencies: deps + bin_deps,
   link_args: ['-Wl,--export-dynamic'],
   install: true
 )
