@@ -1,7 +1,9 @@
 #include "barbar-hyprland-workspace.h"
 #include "barbar-hyprland-ipc.h"
+#include "glib-object.h"
 #include "gtk4-layer-shell.h"
 #include "hyprland/barbar-hyprland-service.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -28,6 +30,8 @@ struct _BarBarHyprlandWorkspace {
                         // workspace
 
   BarBarHyprlandService *service;
+  struct zxdg_output_manager_v1 *xdg_output_manager;
+  struct zxdg_output_v1 *xdg_output;
 
   // struct wl_output *output;
 
@@ -38,19 +42,6 @@ struct MonitorEntry {
   int id;
   GtkWidget *button;
 };
-
-// struct workspace {
-//   int id;
-//   int num;
-//
-//   gboolean focused;
-//
-//   gboolean visible;
-//   gboolean urgent;
-//
-//   char *name;
-//   char *output;
-// };
 
 struct entry {
   int id;
@@ -312,7 +303,7 @@ static void parse_initional_workspaces(BarBarHyprlandWorkspace *hypr,
   gboolean ret = json_parser_load_from_stream(parser, input_stream, NULL, &err);
 
   if (!ret) {
-    g_printerr("Hyprland workspace: Failed to parse json: %s", err->message);
+    g_printerr("Hyprland workspace: Failed to parse json: %s\n", err->message);
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -338,8 +329,6 @@ static void parse_initional_workspaces(BarBarHyprlandWorkspace *hypr,
       json_reader_end_member(reader);
       json_reader_end_element(reader);
 
-      printf("monitor: %s\n", monitor);
-
       // if (!g_strcmp0(monitor, "DVI-D-1")) {
       g_barbar_hyprland_add_workspace(hypr, id, name);
       // }
@@ -358,7 +347,7 @@ static void clicked(GtkButton *self, gpointer user_data) {
 
   GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
   if (error) {
-    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s\n",
                error->message);
     return;
   }
@@ -444,19 +433,6 @@ static void g_barbar_hyprland_rename_workspace(BarBarHyprlandWorkspace *hypr,
   }
 }
 
-// TODO: when we can listen for the output version 4
-//
-// static void noop() {}
-//
-// static const struct wl_output_listener wl_output_listener = {
-//     .name = wl_output_handle_name,
-//     .geometry = noop,
-//     .mode = noop,
-//     .scale = noop,
-//     .description = noop,
-//     .done = noop,
-// };
-//
 static void parse_active_workspace(BarBarHyprlandWorkspace *hypr,
                                    GSocketConnection *ipc) {
   JsonParser *parser;
@@ -468,7 +444,7 @@ static void parse_active_workspace(BarBarHyprlandWorkspace *hypr,
   gboolean ret = json_parser_load_from_stream(parser, input_stream, NULL, &err);
 
   if (!ret) {
-    g_printerr("Hyprland workspace: Failed to parse json: %s", err->message);
+    g_printerr("Hyprland workspace: Failed to parse json: %s\n", err->message);
   }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
@@ -498,15 +474,106 @@ cleanup:
   g_object_unref(parser);
 }
 
+static void registry_handle_global(void *data, struct wl_registry *registry,
+                                   uint32_t name, const char *interface,
+                                   uint32_t version) {
+
+  BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(data);
+  if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+    hypr->xdg_output_manager =
+        wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
+  }
+}
+
+static void registry_handle_global_remove(void *_data,
+                                          struct wl_registry *_registry,
+                                          uint32_t _name) {
+  (void)_data;
+  (void)_registry;
+  (void)_name;
+}
+
+static const struct wl_registry_listener wl_registry_listener = {
+    .global = registry_handle_global,
+    .global_remove = registry_handle_global_remove,
+};
+
+static void xdg_output_handle_logical_position(
+    void *data, struct zxdg_output_v1 *xdg_output, int32_t x, int32_t y) {}
+
+static void xdg_output_handle_logical_size(void *data,
+                                           struct zxdg_output_v1 *xdg_output,
+                                           int32_t width, int32_t height) {}
+static void xdg_output_handle_done(void *data,
+                                   struct zxdg_output_v1 *xdg_output) {}
+
+static void xdg_output_handle_name(void *data,
+                                   struct zxdg_output_v1 *xdg_output,
+                                   const char *name) {
+  BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(data);
+  g_set_str(&hypr->output_name, name);
+}
+
+static void xdg_output_handle_description(void *data,
+                                          struct zxdg_output_v1 *xdg_output,
+                                          const char *description) {}
+
+static const struct zxdg_output_v1_listener xdg_output_listener = {
+    .logical_position = xdg_output_handle_logical_position,
+    .logical_size = xdg_output_handle_logical_size,
+    .done = xdg_output_handle_done,
+    .name = xdg_output_handle_name,
+    .description = xdg_output_handle_description,
+};
+
 static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(g_barbar_hyprland_workspace_parent_class)->root(widget);
   GError *error = NULL;
+  GdkDisplay *gdk_display;
+  GdkMonitor *monitor;
+  struct wl_output *output;
+  struct wl_registry *wl_registry;
+  struct wl_display *wl_display;
+  BarBarHyprlandWorkspace *hypr;
+  GSocketConnection *ipc;
 
-  BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(widget);
+  hypr = BARBAR_HYPRLAND_WORKSPACE(widget);
 
-  GSocketConnection *ipc = g_barbar_hyprland_ipc_controller(&error);
+  gdk_display = gdk_display_get_default();
+
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(hypr), GTK_TYPE_WINDOW));
+  // doesn't need to be a layer window
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    printf("Parent window not found!\n");
+    return;
+  }
+
+  monitor = gtk_layer_get_monitor(window);
+  output = gdk_wayland_monitor_get_wl_output(monitor);
+
+  wl_display = gdk_wayland_display_get_wl_display(gdk_display);
+  wl_registry = wl_display_get_registry(wl_display);
+
+  wl_registry_add_listener(wl_registry, &wl_registry_listener, hypr);
+  wl_display_roundtrip(wl_display);
+
+  if (!hypr->xdg_output_manager) {
+    g_warning("Couldn't init the xdg output manager");
+    return;
+  }
+
+  hypr->xdg_output =
+      zxdg_output_manager_v1_get_xdg_output(hypr->xdg_output_manager, output);
+
+  zxdg_output_v1_add_listener(hypr->xdg_output, &xdg_output_listener, hypr);
+  wl_display_roundtrip(wl_display);
+
+  // TODO: oneshot stuff
+  ipc = g_barbar_hyprland_ipc_controller(&error);
 
   if (error) {
-    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s\n",
                error->message);
     return;
   }
@@ -514,7 +581,7 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   g_barbar_hyprland_ipc_send_command(ipc, "j/workspaces", &error);
   if (error) {
     g_printerr("Hyprland workspace: Error sending command for initial "
-               "workspaces: %s",
+               "workspaces: %s\n",
                error->message);
     return;
   }
@@ -525,7 +592,7 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   ipc = g_barbar_hyprland_ipc_controller(&error);
 
   if (error) {
-    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s\n",
                error->message);
     return;
   }
@@ -533,7 +600,7 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
   g_barbar_hyprland_ipc_send_command(ipc, "j/activeworkspace", &error);
   if (error) {
     g_printerr(
-        "Hyprland workspace: Error sending command for initial workspace: %s",
+        "Hyprland workspace: Error sending command for initial workspace: %s\n",
         error->message);
     return;
   }
@@ -564,10 +631,20 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
                    G_CALLBACK(g_barbar_hyprland_workspace_urgent_callback),
                    hypr);
 
-  // hypr->listener = g_barbar_hyprland_ipc_listner(
-  //     g_barbar_hyprland_workspace_callback, hypr, NULL, &error);
-
   if (error) {
     g_printerr("error setting up listner: %s\n", error->message);
   }
+}
+
+/**
+ * g_barbar_hyprland_workspace_new:
+ *
+ * Returs: (transfer none): a `BarBarHyprlandWindow`
+ */
+GtkWidget *g_barbar_hyprland_workspace_new(void) {
+  BarBarHyprlandWorkspace *hypr;
+
+  hypr = g_object_new(BARBAR_TYPE_HYPRLAND_WORKSPACE, NULL);
+
+  return GTK_WIDGET(hypr);
 }

@@ -1,7 +1,26 @@
 #include "barbar-hyprland-ipc.h"
 #include "barbar-error.h"
+#include "gio/gio.h"
+#include "glib.h"
+#include "json-glib/json-glib.h"
 #include <stdint.h>
 #include <stdio.h>
+
+GSocketAddress *g_barbar_hyprland_ipc_address(const char *socket,
+                                              GError **error) {
+  GSocketAddress *address;
+  const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+  if (!his) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_HYPRLAND_IPC,
+                "HYPRLAND_INSTANCE_SIGNATURE not set");
+    return NULL;
+  }
+  char *socket_path =
+      g_strdup_printf("%s/hypr/%s/%s", g_get_user_runtime_dir(), his, socket);
+  address = g_unix_socket_address_new(socket_path);
+  g_free(socket_path);
+  return address;
+}
 
 /**
  * g_barbar_hyprland_ipc_controller:
@@ -12,26 +31,155 @@
 GSocketConnection *g_barbar_hyprland_ipc_controller(GError **error) {
   GSocketClient *socket_client;
   GSocketConnection *connection;
+  GSocketAddress *address;
+  GError *err = NULL;
 
-  const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+  address =
+      g_barbar_hyprland_ipc_address(BARBAR_HYPERLAND_REQUEST_SOCKET, &err);
 
-  if (!his) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_COMPOSITOR,
-                "HYPRLAND_INSTANCE_SIGNATURE not set");
+  if (err) {
+    g_propagate_error(error, err);
     return NULL;
   }
 
-  char *socket_path = g_strdup_printf("/tmp/hypr/%s/.socket.sock", his);
-
   socket_client = g_socket_client_new();
-  GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   connection = g_socket_client_connect(
       socket_client, G_SOCKET_CONNECTABLE(address), NULL, error);
-
-  g_free(socket_path);
+  g_object_unref(address);
 
   return connection;
+}
+
+typedef struct HyprIpc {
+  GSocketClient *socket_client;
+  GSocketConnection *connection;
+  char *response;
+  char *message;
+  JsonParser *parser;
+} HyprIpc;
+
+static void g_hyprland_ipc_free(HyprIpc *ipc) {
+  g_clear_object(&ipc->socket_client);
+  g_clear_object(&ipc->connection);
+  g_free(ipc->message);
+  g_free(ipc->response);
+  g_free(ipc);
+}
+
+static void cmd_close(GObject *source, GAsyncResult *res, gpointer data) {
+  GError *error = NULL;
+  HyprIpc *ipc = data;
+  g_io_stream_close_finish(G_IO_STREAM(source), res, &error);
+
+  if (error) {
+    g_warning("Couldn't close socket: %s\n", error->message);
+    g_error_free(error);
+  }
+  g_hyprland_ipc_free(ipc);
+}
+
+static void ipc_done(HyprIpc *ipc) {
+  g_io_stream_close_async(G_IO_STREAM(ipc->connection), 0, NULL, cmd_close,
+                          ipc);
+}
+
+JsonParser *g_barbar_sway_ipc_oneshot_finish(GAsyncResult *result,
+                                             GError **error) {
+  GTask *task;
+  HyprIpc *ipc;
+  // gboolean res;
+
+  task = G_TASK(result);
+  // res = g_task_propagate_boolean(task, error);
+
+  ipc = g_task_get_task_data(task);
+
+  return g_object_ref(ipc->parser);
+}
+
+static void json_parsed(GObject *source, GAsyncResult *result, gpointer data) {
+  JsonParser *parser = JSON_PARSER(source);
+  gboolean res;
+  GError *err = NULL;
+
+  res = json_parser_load_from_stream_finish(parser, result, &err);
+}
+
+static void send_cb(GObject *source, GAsyncResult *res, gpointer data) {
+  GOutputStream *output_stream = G_OUTPUT_STREAM(source);
+  GInputStream *input_stream;
+  GTask *task = data;
+  GError *error = NULL;
+  gsize bytes;
+  HyprIpc *ipc = g_task_get_task_data(task);
+
+  g_output_stream_write_all_finish(output_stream, res, &bytes, &error);
+
+  if (error) {
+    g_task_return_error(task, error);
+    g_object_unref(task);
+    return;
+  }
+
+  input_stream = g_io_stream_get_input_stream(G_IO_STREAM(ipc->connection));
+  ipc->parser = json_parser_new();
+
+  json_parser_load_from_stream_async(ipc->parser, input_stream,
+                                     g_task_get_cancellable(task), json_parsed,
+                                     task);
+}
+
+static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
+  GTask *task = data;
+  GError *error = NULL;
+  GSocketClient *socket_client = G_SOCKET_CLIENT(source);
+  GOutputStream *output_stream;
+  HyprIpc *ipc = g_task_get_task_data(task);
+
+  ipc->connection = g_socket_client_connect_finish(socket_client, res, &error);
+
+  if (error) {
+    g_task_return_error(task, error);
+    g_object_unref(task);
+    return;
+  }
+  output_stream = g_io_stream_get_output_stream(G_IO_STREAM(ipc->connection));
+  g_output_stream_write_all_async(output_stream, ipc->message,
+                                  strlen(ipc->message), 0,
+                                  g_task_get_cancellable(task), send_cb, task);
+}
+
+void g_barbar_hyprland_ipc_oneshot(GCancellable *cancellable,
+                                   GAsyncReadyCallback callback, gpointer data,
+                                   const char *msg) {
+  HyprIpc *ipc;
+  GSocketAddress *address;
+  GError *err = NULL;
+  GTask *task;
+
+  task = g_task_new(NULL, cancellable, callback, data);
+
+  address =
+      g_barbar_hyprland_ipc_address(BARBAR_HYPERLAND_REQUEST_SOCKET, &err);
+
+  if (err) {
+    g_task_return_error(task, err);
+    g_object_unref(task);
+    return;
+  }
+
+  ipc = g_malloc0(sizeof(HyprIpc));
+  ipc->socket_client = g_socket_client_new();
+  ipc->message = g_strdup(msg);
+
+  g_task_set_task_data(task, ipc, (GDestroyNotify)ipc_done);
+
+  g_socket_client_connect_async(ipc->socket_client,
+                                G_SOCKET_CONNECTABLE(address), cancellable,
+                                connect_cb, task);
+
+  g_object_unref(address);
 }
 
 /* g_barbar_hyprland_ipc_send_command:
@@ -143,28 +291,26 @@ g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
   GSocketConnection *connection;
   GInputStream *input_stream;
   GDataInputStream *data_stream;
+  GSocketAddress *address;
+  GError *err = NULL;
 
-  const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+  address = g_barbar_hyprland_ipc_address(BARBAR_HYPERLAND_EVENT_SOCKET, &err);
 
-  if (!his) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_COMPOSITOR,
-                "HYPRLAND_INSTANCE_SIGNATURE not set");
+  if (err) {
+    g_propagate_error(error, err);
     return NULL;
   }
 
-  char *socket_path = g_strdup_printf("/tmp/hypr/%s/.socket2.sock", his);
-
   socket_client = g_socket_client_new();
-  GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   connection = g_socket_client_connect(
       socket_client, G_SOCKET_CONNECTABLE(address), NULL, error);
   g_object_unref(socket_client);
   g_object_unref(address);
 
-  g_free(socket_path);
-
   if (!connection) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_HYPRLAND_IPC,
+                "Couldn't connect to the hyprland socket");
     return NULL;
   }
 

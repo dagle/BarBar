@@ -2,6 +2,7 @@
 #include "barbar-hyprland-ipc.h"
 #include "gtk4-layer-shell.h"
 #include "hyprland/barbar-hyprland-service.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gio/gio.h>
 #include <json-glib/json-glib.h>
@@ -24,6 +25,8 @@ struct _BarBarHyprlandWindow {
   char *output_name;
   gboolean focused;
   gboolean global;
+  struct zxdg_output_manager_v1 *xdg_output_manager;
+  struct zxdg_output_v1 *xdg_output;
 
   BarBarHyprlandService *service;
 
@@ -137,9 +140,7 @@ static void g_barbar_hyprland_workspace_active_window_callback(
 
   BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(data);
 
-  if (hypr->focused) {
-    g_barbar_hyprland_window_set_window(hypr, title);
-  }
+  g_barbar_hyprland_window_set_window(hypr, title);
 }
 
 static void parse_active_workspace(BarBarHyprlandWindow *hypr,
@@ -193,24 +194,112 @@ static void parse_initional_monitor(BarBarHyprlandWindow *hypr,
   g_object_unref(reader);
   g_object_unref(parser);
 }
+static void registry_handle_global(void *data, struct wl_registry *registry,
+                                   uint32_t name, const char *interface,
+                                   uint32_t version) {
+
+  BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(data);
+  if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+    hypr->xdg_output_manager =
+        wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
+  }
+}
+
+static void registry_handle_global_remove(void *_data,
+                                          struct wl_registry *_registry,
+                                          uint32_t _name) {
+  (void)_data;
+  (void)_registry;
+  (void)_name;
+}
+
+static const struct wl_registry_listener wl_registry_listener = {
+    .global = registry_handle_global,
+    .global_remove = registry_handle_global_remove,
+};
+
+static void xdg_output_handle_logical_position(
+    void *data, struct zxdg_output_v1 *xdg_output, int32_t x, int32_t y) {}
+
+static void xdg_output_handle_logical_size(void *data,
+                                           struct zxdg_output_v1 *xdg_output,
+                                           int32_t width, int32_t height) {}
+static void xdg_output_handle_done(void *data,
+                                   struct zxdg_output_v1 *xdg_output) {}
+
+static void xdg_output_handle_name(void *data,
+                                   struct zxdg_output_v1 *xdg_output,
+                                   const char *name) {
+  BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(data);
+  g_set_str(&hypr->output_name, name);
+}
+
+static void xdg_output_handle_description(void *data,
+                                          struct zxdg_output_v1 *xdg_output,
+                                          const char *description) {}
+
+static const struct zxdg_output_v1_listener xdg_output_listener = {
+    .logical_position = xdg_output_handle_logical_position,
+    .logical_size = xdg_output_handle_logical_size,
+    .done = xdg_output_handle_done,
+    .name = xdg_output_handle_name,
+    .description = xdg_output_handle_description,
+};
 
 static void g_barbar_hyprland_window_map(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(g_barbar_hyprland_window_parent_class)->root(widget);
   GError *error = NULL;
+  GdkDisplay *gdk_display;
+  GdkMonitor *monitor;
+  struct wl_output *output;
+  struct wl_registry *wl_registry;
+  struct wl_display *wl_display;
   GSocketConnection *ipc;
+  BarBarHyprlandWindow *hypr;
 
-  BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(widget);
+  hypr = BARBAR_HYPRLAND_WINDOW(widget);
 
+  gdk_display = gdk_display_get_default();
+
+  GtkWindow *window =
+      GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(hypr), GTK_TYPE_WINDOW));
+  // doesn't need to be a layer window
+  if (window == NULL || !gtk_layer_is_layer_window(window)) {
+    printf("Parent window not found!\n");
+    return;
+  }
+
+  monitor = gtk_layer_get_monitor(window);
+  output = gdk_wayland_monitor_get_wl_output(monitor);
+
+  wl_display = gdk_wayland_display_get_wl_display(gdk_display);
+  wl_registry = wl_display_get_registry(wl_display);
+
+  wl_registry_add_listener(wl_registry, &wl_registry_listener, hypr);
+  wl_display_roundtrip(wl_display);
+
+  if (!hypr->xdg_output_manager) {
+    g_warning("Couldn't init the xdg output manager");
+    return;
+  }
+
+  hypr->xdg_output =
+      zxdg_output_manager_v1_get_xdg_output(hypr->xdg_output_manager, output);
+
+  zxdg_output_v1_add_listener(hypr->xdg_output, &xdg_output_listener, hypr);
+  wl_display_roundtrip(wl_display);
   ipc = g_barbar_hyprland_ipc_controller(&error);
 
   if (error) {
-    g_printerr("Hyprland workspace: Error connecting to the ipc: %s",
+    g_printerr("Hyprland workspace: Error connecting to the ipc: %s\n",
                error->message);
     return;
   }
+
   g_barbar_hyprland_ipc_send_command(ipc, "j/activeworkspace", &error);
   if (error) {
     g_printerr(
-        "Hyprland workspace: Error sending command for initial workspace: %s",
+        "Hyprland workspace: Error sending command for initial workspace: %s\n",
         error->message);
     return;
   }
@@ -229,7 +318,7 @@ static void g_barbar_hyprland_window_map(GtkWidget *widget) {
   g_barbar_hyprland_ipc_send_command(ipc, "j/activewindow", &error);
   if (error) {
     g_printerr(
-        "Hyprland workspace: Error sending command for initial window: %s",
+        "Hyprland workspace: Error sending command for initial window: %s\n",
         error->message);
     return;
   }
@@ -245,4 +334,17 @@ static void g_barbar_hyprland_window_map(GtkWidget *widget) {
   g_signal_connect(
       hypr->service, "active-window",
       G_CALLBACK(g_barbar_hyprland_workspace_active_window_callback), hypr);
+}
+
+/**
+ * g_barbar_hyprland_window_new:
+ *
+ * Returs: (transfer none): a `BarBarHyprlandWindow`
+ */
+GtkWidget *g_barbar_hyprland_window_new(void) {
+  BarBarHyprlandWindow *hypr;
+
+  hypr = g_object_new(BARBAR_TYPE_HYPRLAND_WINDOW, NULL);
+
+  return GTK_WIDGET(hypr);
 }

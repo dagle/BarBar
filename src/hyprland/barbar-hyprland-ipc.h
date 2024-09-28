@@ -79,16 +79,11 @@ struct BarBarHyprlandListner {
   gpointer *data;
 };
 
-/* struct _BarBarSwayIpcAsyncData { */
-/*   // A pointer to the class pointer */
-/*   // A bit like a parrent pointer */
-/*   gpointer *data; */
-/*   uint32_t type; */
-/*   uint32_t plen; */
-/*   gchar *header; */
-/**/
-/*   gchar *payload; */
-/* }; */
+#define BARBAR_HYPERLAND_REQUEST_SOCKET ".socket.sock"
+#define BARBAR_HYPERLAND_EVENT_SOCKET ".socket2.sock"
+
+GSocketAddress *g_barbar_hyprland_ipc_address(const char *socket,
+                                              GError **error);
 
 GSocketConnection *g_barbar_hyprland_ipc_controller(GError **err);
 
@@ -100,5 +95,9 @@ gchar *g_barbar_hyprland_ipc_message_resp(GSocketConnection *ipc, GError **err);
 GSocketConnection *
 g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
                               GDestroyNotify destroy, GError **error);
+
+void g_barbar_hyprland_ipc_oneshot(GCancellable *cancellable,
+                                   GAsyncReadyCallback callback, gpointer data,
+                                   const char *msg);
 
 G_END_DECLS

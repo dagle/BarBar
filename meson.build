@@ -40,6 +40,9 @@ wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
 # xkbcommon = dependency('xkbcommon')
 
+# defaults to etc
+sysconfdir = get_option('sysconfdir')
+
 gtk = dependency('gtk4')
 
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
@@ -90,6 +93,8 @@ endif
 install_data('barbar.desktop', install_dir: barbar_applicationsdir)
 
 install_data('barbar.svg', install_dir: barbar_icondir)
+
+install_data('style.css', install_dir: sysconfdir)
 
 
 summary({'Install Prefix': get_option('prefix'),

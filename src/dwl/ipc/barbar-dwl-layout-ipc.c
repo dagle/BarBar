@@ -1,5 +1,6 @@
 #include "barbar-dwl-layout-ipc.h"
 #include "dwl-ipc-unstable-v2-client-protocol.h"
+#include "glib-object.h"
 #include <gdk/wayland/gdkwayland.h>
 #include <gtk4-layer-shell.h>
 #include <stdint.h>
@@ -242,4 +243,17 @@ static void g_barbar_dwl_layout_ipc_root(GtkWidget *widget) {
   zdwl_ipc_output_v2_add_listener(dwl->ipc_output, &ipc_output_listener, dwl);
 
   wl_display_roundtrip(wl_display);
+}
+
+/**
+ * g_barbar_dwl_layout_ipc_new:
+ *
+ * Returs: (transfer full): a `BarBarDwlLayoutIpc`
+ */
+GtkWidget *g_barbar_dwl_layout_ipc_new(void) {
+  BarBarDwlLayoutIpc *dwl;
+
+  dwl = g_object_new(BARBAR_TYPE_DWL_LAYOUT_IPC, NULL);
+
+  return GTK_WIDGET(dwl);
 }

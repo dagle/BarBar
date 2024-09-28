@@ -128,22 +128,10 @@ static void g_barbar_sway_window_init(BarBarSwayWindow *self) {
   gtk_widget_set_parent(self->label, GTK_WIDGET(self));
 }
 
-static void g_barbar_sway_handle_window_change(const char *payload,
-                                               uint32_t len, uint32_t type,
+static void g_barbar_sway_handle_window_change(uint32_t type,
+                                               JsonParser *parser,
                                                gpointer data) {
-  JsonParser *parser;
-  gboolean ret;
-  GError *err = NULL;
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(data);
-
-  parser = json_parser_new();
-  ret = json_parser_load_from_data(parser, payload, len, &err);
-
-  if (!ret) {
-    g_warning("Sway window: Failed to parse json: %s", err->message);
-    g_error_free(err);
-    return;
-  }
 
   JsonReader *reader = json_reader_new(json_parser_get_root(parser));
 
@@ -238,9 +226,9 @@ static void g_barbar_sway_initial_window(BarBarSwayWindow *sway, gchar *payload,
 }
 
 static void event_listner(BarBarSwaySubscribe *sub, guint type,
-                          const char *payload, guint length, gpointer data) {
+                          JsonParser *parser, gpointer data) {
   BarBarSwayWindow *sway = BARBAR_SWAY_WINDOW(data);
-  g_barbar_sway_handle_window_change(payload, length, type, sway);
+  g_barbar_sway_handle_window_change(type, parser, sway);
 }
 
 static void tree_cb(GObject *object, GAsyncResult *res, gpointer data) {

@@ -1,3 +1,6 @@
+/* The default style for barbar, do not edit. */
+/* Copy this to ~/.config/barbar/style.css to override default settings */
+
 * {
   border-radius: 0;
 }
@@ -22,6 +25,15 @@ background {
     transition-duration: .5s;
     color: #ffffff;
     border: none;
+}
+
+process-list button {
+  min-height: 21px;
+  min-width: 14px;
+  padding: 0 5px;
+  background: black;
+  border: none;
+  color: #ffffff;
 }
 
 bar {
@@ -84,6 +96,20 @@ activity-graph barbar-box.level-4 {
 /*activity-graph barbar-box.max {*/
 /*  background-color: #24A153;*/
 /*}*/
+
+label#dark {
+  font-size: 18px;
+  /*color: #C0FF00;*/
+  color: #24A153;
+}
+background separator#dark {
+/*separator background {*/
+    background-color: #24A153;
+    /* border-color: #C0FF00; */
+    /* border-bottom-style: solid; */
+    /* border-bottom: 1px solid; */
+    margin: 1em 3px 0.8em 3px;
+}
 
 background separator {
 /*separator background {*/
@@ -157,6 +183,13 @@ river-tag button.occupied {
     color: #ffffff;
 }
 
+dwl-layout button {
+    box-shadow: inherit;
+    background: black;
+    color: #ffffff;
+    border: none;
+}
+
 dwl-tag button {
   min-height: 21px;
   min-width: 14px;
@@ -224,6 +257,28 @@ sway-workspace button.urgent {
 }
 
 sway-workspace button.occupied {
+    box-shadow: inherit;
+    color: #ffffff;
+}
+
+niri-workspace button {
+  background: black;
+  border: none;
+  color: #444444;
+}
+
+niri-workspace button.focused {
+    background: rgba(130, 130, 130, 0.2);
+    box-shadow: inherit;
+    border-bottom: 1px solid #ffffff;
+}
+
+niri-workspace button.urgent {
+    box-shadow: inherit;
+    color: #eb4b4b;
+}
+
+niri-workspace button.active {
     box-shadow: inherit;
     color: #ffffff;
 }

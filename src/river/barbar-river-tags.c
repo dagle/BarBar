@@ -467,7 +467,7 @@ static void g_barbar_river_tag_root(GtkWidget *widget) {
 /**
  * g_barbar_river_tag_new:
  *
- * Returs: (transfer none): a `BarBarRiverTag`
+ * Returs: (transfer full): a `BarBarRiverTag`
  */
 GtkWidget *g_barbar_river_tag_new(void) {
   BarBarRiverTag *self;

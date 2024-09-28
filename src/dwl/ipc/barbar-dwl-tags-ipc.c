@@ -376,3 +376,16 @@ static void g_barbar_dwl_tag_root(GtkWidget *widget) {
 
   wl_display_roundtrip(wl_display);
 }
+
+/**
+ * g_barbar_dwl_tags_ipc_new:
+ *
+ * Returs: (transfer full): a `BarBarDwlTagsIpc`
+ */
+GtkWidget *g_barbar_dwl_tags_ipc_new(void) {
+  BarBarDwlTagsIpc *dwl;
+
+  dwl = g_object_new(BARBAR_TYPE_DWL_TAGS_IPC, NULL);
+
+  return GTK_WIDGET(dwl);
+}

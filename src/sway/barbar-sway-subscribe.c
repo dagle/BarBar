@@ -1,5 +1,6 @@
 #include "sway/barbar-sway-subscribe.h"
 #include "sway/barbar-sway-ipc.h"
+#include <json-glib/json-glib.h>
 
 struct _BarBarSwaySubscribe {
   GObject parent_instance;
@@ -23,7 +24,6 @@ static GParamSpec *sway_sub_props[NUM_PROPERTIES] = {
 };
 
 static guint event_signal;
-static guint event_string_signal;
 
 /**
  * g_barbar_sway_susbscribe_set_interest:
@@ -88,16 +88,29 @@ static void event_cb(GObject *object, GAsyncResult *res, gpointer data) {
   char *str = NULL;
   guint32 type;
   gsize len;
+  JsonParser *parser;
 
   gboolean ret =
       g_barbar_sway_ipc_read_finish(stream, res, &type, &str, &len, &error);
 
   if (!ret || error) {
+    g_printerr("Sway subscribe ipc error: %s", error->message);
+    g_error_free(error);
+    return;
+  }
+  parser = json_parser_new();
+  ret = json_parser_load_from_data(parser, str, len, &error);
+
+  if (!ret || error) {
+    g_printerr("Sway subscribe couldn't parse json: %s", error->message);
+    g_error_free(error);
+    g_object_unref(parser);
     return;
   }
 
-  g_signal_emit(self, event_signal, 0, type, str, len);
+  g_signal_emit(self, event_signal, 0, type, parser);
   g_free(str);
+  g_object_unref(parser);
 
   g_barbar_sway_ipc_read_async(stream, NULL, event_cb, data);
 }
@@ -137,19 +150,11 @@ g_barbar_sway_subscribe_class_init(BarBarSwaySubscribeClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     sway_sub_props);
 
-  event_signal = g_signal_new(
-      "event", G_TYPE_FROM_CLASS(class), G_SIGNAL_RUN_FIRST, 0, NULL, NULL,
-      NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_POINTER, G_TYPE_UINT);
-
-  // TODO: Change to this in the future
-  // event_signal = g_signal_new("event", G_TYPE_FROM_CLASS(class),
-  //                             G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
-  //                             G_TYPE_NONE, 3, G_TYPE_UINT, JSON_TYPE_PARSER);
-
-  event_string_signal = g_signal_new(
-      "event-string", G_TYPE_FROM_CLASS(class), G_SIGNAL_RUN_FIRST, 0, NULL,
-      NULL, NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_STRING);
+  event_signal = g_signal_new("event", G_TYPE_FROM_CLASS(class),
+                              G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
+                              G_TYPE_NONE, 2, G_TYPE_UINT, JSON_TYPE_PARSER);
 }
+
 static void g_barbar_sway_subscribe_init(BarBarSwaySubscribe *self) {}
 
 /**

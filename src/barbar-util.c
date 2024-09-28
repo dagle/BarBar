@@ -235,22 +235,12 @@ G_MODULE_EXPORT char *g_barbar_print_bytes(gpointer *ptr, const char *format,
   return g_string_free_and_steal(str);
 }
 
-/**
- * g_barbar_default_style_provider:
- * @path: path relative in config to find config
- *
- * Load the css style in config
- *
- */
-void g_barbar_default_style_provider(const char *path) {
+static void g_barbar_style_provider(const char *path) {
   GtkCssProvider *css_provider;
   GdkDisplay *display;
-  char *style_path;
 
   css_provider = gtk_css_provider_new();
-  style_path = g_strdup_printf("%s/%s", g_get_user_config_dir(), path);
-  gtk_css_provider_load_from_path(css_provider, style_path);
-  g_free(style_path);
+  gtk_css_provider_load_from_path(css_provider, path);
 
   display = gdk_display_get_default();
 
@@ -258,6 +248,57 @@ void g_barbar_default_style_provider(const char *path) {
                                              GTK_STYLE_PROVIDER(css_provider),
                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
   g_object_unref(css_provider);
+}
+
+/**
+ * g_barbar_default_style_provider:
+ * @path: path relative in config to find config
+ *
+ * Load the css style in xdg config,
+ * $XDG_CONFIG_HOME/barbar/style.css*
+ * ~/.config/barbar/style.css*
+ *
+ */
+void g_barbar_default_style_provider(const char *path) {
+  char *style_path;
+
+  style_path = g_strdup_printf("%s/%s", g_get_user_config_dir(), path);
+  g_barbar_style_provider(style_path);
+  g_free(style_path);
+}
+
+#define CHECK_AND_USE_STYLE_PATH(style_path)                                   \
+  do {                                                                         \
+    if (g_file_test(style_path, G_FILE_TEST_IS_REGULAR)) {                     \
+      g_barbar_style_provider(style_path);                                     \
+      g_free(style_path);                                                      \
+      return;                                                                  \
+    }                                                                          \
+  } while (0)
+
+/**
+ * g_barbar_search_style_provider:
+ * @path: path relative in config to find config
+ *
+ * Like `g_barbar_default_style_provider` but loads
+ * also searches the system for a style provider for a style
+ * if none is to be found en the user config
+ *
+ */
+void g_barbar_search_style_provider(const char *path) {
+  char *style_path;
+  style_path = g_strdup_printf("%s/%s", g_get_user_config_dir(), path);
+  CHECK_AND_USE_STYLE_PATH(style_path);
+  g_free(style_path);
+
+  const gchar *const *args = g_get_system_config_dirs();
+  while (*args) {
+    char *style_path;
+    style_path = g_strdup_printf("%s/%s", *args, path);
+    CHECK_AND_USE_STYLE_PATH(style_path);
+    g_free(style_path);
+    args++;
+  }
 }
 
 /**

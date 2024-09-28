@@ -226,7 +226,7 @@ static void g_barbar_river_layout_start(GtkWidget *widget) {
   GtkWindow *window =
       GTK_WINDOW(gtk_widget_get_ancestor(GTK_WIDGET(river), GTK_TYPE_WINDOW));
   if (window == NULL || !gtk_layer_is_layer_window(window)) {
-    printf("Parent window not found!\n");
+    g_warning("Parent window not found!\n");
     return;
   }
 

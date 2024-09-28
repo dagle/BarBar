@@ -368,25 +368,12 @@ void g_barbar_sway_workspace_reload(BarBarSwayWorkspace *sway,
   // reload everythg
 }
 
-static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
-                                                   uint32_t len, uint32_t type,
+static void g_barbar_sway_handle_workspaces_change(uint32_t type,
+                                                   JsonParser *parser,
                                                    gpointer data) {
-  JsonParser *parser;
-  gboolean ret;
-  GError *err = NULL;
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
 
   if (type != SWAY_WORKSPACE_EVENT) {
-    return;
-  }
-
-  parser = json_parser_new();
-  ret = json_parser_load_from_data(parser, payload, len, &err);
-
-  if (!ret) {
-    g_printerr("Sway workspace: Failed to parse json: %s", err->message);
-    g_error_free(err);
-    g_object_unref(parser);
     return;
   }
 
@@ -405,7 +392,6 @@ static void g_barbar_sway_handle_workspaces_change(const gchar *payload,
   } else if (!strcmp(change, "move")) {
     g_barbar_sway_workspace_move(sway, reader);
   } else if (!strcmp(change, "rename")) {
-    printf("%.*s\n", len, payload);
     g_barbar_sway_workspace_rename(sway, reader);
   } else if (!strcmp(change, "urgent")) {
     g_barbar_sway_workspace_urgent(sway, reader);
@@ -512,9 +498,9 @@ static void g_barbar_sway_handle_workspaces(BarBarSwayWorkspace *sway,
 }
 
 static void event_listner(BarBarSwaySubscribe *sub, guint type,
-                          const char *payload, guint length, gpointer data) {
+                          JsonParser *parser, gpointer data) {
   BarBarSwayWorkspace *sway = BARBAR_SWAY_WORKSPACE(data);
-  g_barbar_sway_handle_workspaces_change(payload, length, type, sway);
+  g_barbar_sway_handle_workspaces_change(type, parser, sway);
 }
 
 static void workspaces_cb(GObject *object, GAsyncResult *res, gpointer data) {

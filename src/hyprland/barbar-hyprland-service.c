@@ -1,5 +1,6 @@
 #include "hyprland/barbar-hyprland-service.h"
 #include "barbar-error.h"
+#include "hyprland/barbar-hyprland-ipc.h"
 #include <gio/gio.h>
 #include <gio/gunixinputstream.h>
 #include <stdint.h>
@@ -379,25 +380,22 @@ static void g_barbar_hyprland_service_constructed(GObject *self) {
   G_OBJECT_CLASS(g_barbar_hyprland_service_parent_class)->constructed(self);
   BarBarHyprlandService *service = BARBAR_HYPRLAND_SERVICE(self);
   GError *error = NULL;
+  GSocketAddress *address;
 
-  const char *his = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+  address =
+      g_barbar_hyprland_ipc_address(BARBAR_HYPERLAND_EVENT_SOCKET, &error);
 
-  if (!his) {
-    g_printerr("HYPRLAND_INSTANCE_SIGNATURE not set\n");
+  if (error) {
+    g_printerr("Hyprland service: %s\n", error->message);
     return;
   }
 
-  char *socket_path = g_strdup_printf("/tmp/hypr/%s/.socket2.sock", his);
-
   service->socket_client = g_socket_client_new();
-  GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   service->connection = g_socket_client_connect(
       service->socket_client, G_SOCKET_CONNECTABLE(address), NULL, &error);
   g_object_unref(service->socket_client);
   g_object_unref(address);
-
-  g_free(socket_path);
 
   if (!service->connection) {
     return;
@@ -411,7 +409,6 @@ static void g_barbar_hyprland_service_constructed(GObject *self) {
                                       NULL, g_barbar_hyprland_line_reader,
                                       service);
 }
-// static void g_barbar_service_start(BarBarSensor *sensor) {}
 
 static void
 g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
@@ -423,7 +420,6 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
 
   gobject_class->constructor = g_barbar_hyprland_service_constructor;
   gobject_class->constructed = g_barbar_hyprland_service_constructed;
-  // sensor_class->start = g_barbar_service_start;
 
   hypr_service_props[PROP_SUBMAP] =
       g_param_spec_string("submap", NULL, NULL, NULL, G_PARAM_READABLE);
@@ -785,6 +781,11 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
 
 static void g_barbar_hyprland_service_init(BarBarHyprlandService *self) {}
 
+/**
+ * g_barbar_hyprland_service_new:
+ *
+ * Returs: (transfer full): a `BarBarHyprlandService`
+ */
 BarBarHyprlandService *g_barbar_hyprland_service_new(void) {
   BarBarHyprlandService *hypr =
       g_object_new(BARBAR_TYPE_HYPRLAND_SERVICE, NULL);

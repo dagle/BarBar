@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarHyprlandWindow, g_barbar_hyprland_window, BARBAR,
                      HYPRLAND_WINDOW, GtkWidget)
 
+GtkWidget *g_barbar_hyprland_window_new(void);
+
 G_END_DECLS

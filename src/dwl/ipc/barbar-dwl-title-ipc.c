@@ -198,3 +198,16 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
 
   wl_display_roundtrip(wl_display);
 }
+
+/**
+ * g_barbar_dwl_title_ipc_new:
+ *
+ * Returs: (transfer full): a `BarBarDwlTitleIpc`
+ */
+GtkWidget *g_barbar_dwl_title_ipc_new(void) {
+  BarBarDwlTitleIpc *dwl;
+
+  dwl = g_object_new(BARBAR_TYPE_DWL_TITLE_IPC, NULL);
+
+  return GTK_WIDGET(dwl);
+}

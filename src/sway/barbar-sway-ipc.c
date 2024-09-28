@@ -28,7 +28,7 @@ void g_sway_async_send_free(SwaySendIpc *send) {
   g_free(send);
 }
 
-typedef struct NiriIpcAction {
+typedef struct SwayIpcCmd {
   GSocketClient *socket_client;
   GSocketConnection *connection;
   BarBarSwayMessageType type;
@@ -74,6 +74,16 @@ const char *g_barbar_sway_ipc_get_payload(SwayIpc *ipc) { return ipc->payload; }
 
 guint32 g_barbar_sway_ipc_get_type(SwayIpc *ipc) { return ipc->type; }
 
+static GSocketAddress *g_barbar_sway_ipc_address(GError **error) {
+  const char *socket_path = getenv("SWAYSOCK");
+  if (!socket_path) {
+    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_SWAY_IPC,
+                "No socket path found, is sway running?");
+    return NULL;
+  }
+  return g_unix_socket_address_new(socket_path);
+}
+
 /**
  * g_barbar_sway_ipc_connect:
  * @error: (out) (optional):  a #GError, or %NULL
@@ -85,17 +95,17 @@ guint32 g_barbar_sway_ipc_get_type(SwayIpc *ipc) { return ipc->type; }
 GSocketConnection *g_barbar_sway_ipc_connect(GError **error) {
   GSocketClient *socket_client;
   GSocketConnection *connection;
+  GSocketAddress *address;
+  GError *err = NULL;
 
-  const char *socket_path = getenv("SWAYSOCK");
+  address = g_barbar_sway_ipc_address(&err);
 
-  if (!socket_path) {
-    g_set_error(error, BARBAR_ERROR, BARBAR_ERROR_BAD_SWAY_IPC,
-                "No socket path found, is sway running?");
+  if (err) {
+    g_propagate_error(error, err);
     return NULL;
   }
 
   socket_client = g_socket_client_new();
-  GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   connection = g_socket_client_connect(
       socket_client, G_SOCKET_CONNECTABLE(address), NULL, error);
@@ -720,25 +730,25 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
                                const char *format, ...) {
   va_list args;
   GTask *task;
+  GSocketAddress *address;
+  GError *error = NULL;
 
-  SwayIpcCmd *ipc = g_malloc0(sizeof(SwayIpcCmd));
-
-  const char *socket_path = getenv("SWAYSOCK");
+  SwayIpcCmd *ipc;
 
   task = g_task_new(NULL, cancellable, callback, data);
 
-  if (!socket_path) {
-    g_task_return_new_error(task, BARBAR_ERROR, BARBAR_ERROR_BAD_SWAY_IPC,
-                            "No socket path found, is sway running?");
+  address = g_barbar_sway_ipc_address(&error);
+
+  if (error) {
+    g_task_return_error(task, error);
     g_object_unref(task);
-    g_sway_ipc_cmd_free(ipc);
     return;
   }
+  ipc = g_malloc0(sizeof(SwayIpcCmd));
 
   ipc->socket_client = g_socket_client_new();
   ipc->cb = callback != NULL || result;
   ipc->type = type;
-  GSocketAddress *address = g_unix_socket_address_new(socket_path);
 
   va_start(args, format);
   ipc->message = g_strdup_vprintf(format, args);
@@ -749,5 +759,6 @@ void g_barbar_sway_ipc_oneshot(BarBarSwayMessageType type, gboolean result,
   g_socket_client_connect_async(ipc->socket_client,
                                 G_SOCKET_CONNECTABLE(address), cancellable,
                                 connect_cb, task);
+
   g_object_unref(address);
 }
