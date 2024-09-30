@@ -219,3 +219,11 @@ static gboolean g_barbar_filesystem_tick(BarBarIntervalSensor *sensor) {
 
   return G_SOURCE_CONTINUE;
 }
+
+BarBarSensor *g_barbar_filesystem_new(const char *path) {
+  BarBarFilesystem *fs;
+
+  fs = g_object_new(BARBAR_TYPE_FILESYSTEM, "path", path, NULL);
+
+  return BARBAR_SENSOR(fs);
+}

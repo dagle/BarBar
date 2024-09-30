@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarNetwork, g_barbar_network, BARBAR, NETWORK,
                      BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_network_new(const char *interface);
+
 G_END_DECLS

@@ -220,3 +220,11 @@ static gboolean g_barbar_disk_tick(BarBarIntervalSensor *sensor) {
 
   return G_SOURCE_CONTINUE;
 }
+
+BarBarSensor *g_barbar_disk_new(void) {
+  BarBarDisk *disk;
+
+  disk = g_object_new(BARBAR_TYPE_DISK, NULL);
+
+  return BARBAR_SENSOR(disk);
+}

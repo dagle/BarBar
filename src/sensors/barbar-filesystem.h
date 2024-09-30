@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarFilesystem, g_barbar_filesystem, BARBAR, FILESYSTEM,
                      BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_filesystem_new(const char *path);
+
 G_END_DECLS

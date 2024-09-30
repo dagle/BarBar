@@ -84,8 +84,8 @@ static void ipc_done(HyprIpc *ipc) {
                           ipc);
 }
 
-JsonParser *g_barbar_sway_ipc_oneshot_finish(GAsyncResult *result,
-                                             GError **error) {
+JsonParser *g_barbar_hyprland_ipc_oneshot_finish(GAsyncResult *result,
+                                                 GError **error) {
   GTask *task;
   HyprIpc *ipc;
   // gboolean res;

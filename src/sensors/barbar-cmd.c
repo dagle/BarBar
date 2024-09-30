@@ -175,3 +175,11 @@ static gboolean g_barbar_cmd_tick(BarBarIntervalSensor *sensor) {
 
   return G_SOURCE_CONTINUE;
 }
+
+BarBarSensor *g_barbar_cmd_new(const char *command) {
+  BarBarCmd *cmd;
+
+  cmd = g_object_new(BARBAR_TYPE_CMD, "command", command, NULL);
+
+  return BARBAR_SENSOR(cmd);
+}

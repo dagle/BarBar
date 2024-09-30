@@ -136,3 +136,11 @@ static gboolean g_barbar_cpu_tick(BarBarIntervalSensor *sensor) {
   g_signal_emit(G_OBJECT(self), cpu_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
+
+BarBarSensor *g_barbar_cpu_new(void) {
+  BarBarCpu *cpu;
+
+  cpu = g_object_new(BARBAR_TYPE_CPU, NULL);
+
+  return BARBAR_SENSOR(cpu);
+}

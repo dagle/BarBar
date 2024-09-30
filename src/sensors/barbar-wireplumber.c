@@ -276,3 +276,11 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   // g_signal_connect_swapped(wp->core, "disconnected",
   //                          (GCallback)g_main_loop_quit, ctl.loop);
 }
+
+BarBarSensor *g_barbar_wireplumber_new(void) {
+  BarBarWireplumber *wp;
+
+  wp = g_object_new(BARBAR_TYPE_WIREPLUMBER, NULL);
+
+  return BARBAR_SENSOR(wp);
+}

@@ -3,6 +3,7 @@
 #include "barbar-error.h"
 #include "glib.h"
 #include "mpris.h"
+#include "sensors/barbar-sensor.h"
 #include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
 
@@ -80,10 +81,12 @@ static void g_barbar_mpris_player_initable_iface_init(GInitableIface *iface) {
   iface->init = g_barbar_mpris_player_initable_init;
 }
 
-G_DEFINE_TYPE_WITH_CODE(
-    BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT,
-    G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE,
-                          g_barbar_mpris_player_initable_iface_init));
+G_DEFINE_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT);
+
+// G_DEFINE_TYPE_WITH_CODE(
+//     BarBarMprisPlayer, g_barbar_mpris_player, G_TYPE_OBJECT,
+//     G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE,
+//                           g_barbar_mpris_player_initable_iface_init));
 
 static void
 g_barbar_mpris_player_set_playback_status_(BarBarMprisPlayer *player,
@@ -93,6 +96,35 @@ g_barbar_mpris_player_set_playback_status_(BarBarMprisPlayer *player,
   }
 
   player->playback = playback;
+  g_object_notify_by_pspec(G_OBJECT(player),
+                           mpris_player_props[PROP_PLAYBACK_STATUS]);
+}
+
+static void mpris_play_cb(GObject *mpris, GAsyncResult *res,
+                          gpointer user_data) {
+  BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(user_data);
+
+  player->playback = BARBAR_PLAYBACK_STATUS_PLAYING;
+
+  g_object_notify_by_pspec(G_OBJECT(player),
+                           mpris_player_props[PROP_PLAYBACK_STATUS]);
+}
+
+static void mpris_stop_cb(GObject *mpris, GAsyncResult *res,
+                          gpointer user_data) {
+  BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(user_data);
+
+  player->playback = BARBAR_PLAYBACK_STATUS_STOPPED;
+
+  g_object_notify_by_pspec(G_OBJECT(player),
+                           mpris_player_props[PROP_PLAYBACK_STATUS]);
+}
+static void mpris_pause_cb(GObject *mpris, GAsyncResult *res,
+                           gpointer user_data) {
+  BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(user_data);
+
+  player->playback = BARBAR_PLAYBACK_STATUS_PAUSED;
+
   g_object_notify_by_pspec(G_OBJECT(player),
                            mpris_player_props[PROP_PLAYBACK_STATUS]);
 }
@@ -107,21 +139,22 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
     return;
   }
 
-  player->playback = playback;
+  // player->playback = playback;
 
   switch (player->playback) {
   case BARBAR_PLAYBACK_STATUS_PLAYING:
-    mpris_org_mpris_media_player2_player_call_play(player, NULL);
+    mpris_org_mpris_media_player2_player_call_play(player->proxy, NULL,
+                                                   mpris_play_cb, player);
     break;
   case BARBAR_PLAYBACK_STATUS_PAUSED:
-    mpris_org_mpris_media_player2_player_call_pause(player, NULL);
+    mpris_org_mpris_media_player2_player_call_pause(player->proxy, NULL,
+                                                    mpris_pause_cb, player);
     break;
   case BARBAR_PLAYBACK_STATUS_STOPPED:
-    mpris_org_mpris_media_player2_player_call_stop(player, NULL);
+    mpris_org_mpris_media_player2_player_call_stop(player->proxy, NULL,
+                                                   mpris_stop_cb, player);
     break;
   }
-  g_object_notify_by_pspec(G_OBJECT(player),
-                           mpris_player_props[PROP_PLAYBACK_STATUS]);
 }
 static void g_barbar_mpris_player_set_loop_status_(BarBarMprisPlayer *player,
                                                    BarBarMprisLoopStatus loop) {
@@ -257,24 +290,42 @@ static void g_barbar_mpris_player_get_property(GObject *object,
   case PROP_ARTIST:
     g_value_set_string(value, player->artist);
     break;
-  case PROP_CAN_CONTROL:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_control);
+  case PROP_CAN_CONTROL: {
+    gboolean control =
+        mpris_org_mpris_media_player2_player_get_can_control(player->proxy);
+    g_value_set_boolean(value, control);
     break;
-  case PROP_CAN_PLAY:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_play);
+  }
+  case PROP_CAN_PLAY: {
+    gboolean play =
+        mpris_org_mpris_media_player2_player_get_can_play(player->proxy);
+    g_value_set_boolean(value, play);
     break;
-  case PROP_CAN_PAUSE:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_pause);
+  }
+  case PROP_CAN_PAUSE: {
+    gboolean pause =
+        mpris_org_mpris_media_player2_player_get_can_pause(player->proxy);
+    g_value_set_boolean(value, pause);
     break;
-  case PROP_CAN_SEEK:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_seek);
+  }
+  case PROP_CAN_SEEK: {
+    gboolean seek =
+        mpris_org_mpris_media_player2_player_get_can_seek(player->proxy);
+    g_value_set_boolean(value, seek);
     break;
-  case PROP_CAN_GO_NEXT:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_go_next);
+  }
+  case PROP_CAN_GO_NEXT: {
+    gboolean next =
+        mpris_org_mpris_media_player2_player_get_can_go_next(player->proxy);
+    g_value_set_boolean(value, next);
     break;
-  case PROP_CAN_GO_PREV:
-    get_bool_value(mpris_org_mpris_media_player2_player_get_can_go_previous);
+  }
+  case PROP_CAN_GO_PREV: {
+    gboolean prev =
+        mpris_org_mpris_media_player2_player_get_can_go_previous(player->proxy);
+    g_value_set_boolean(value, prev);
     break;
+  }
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -411,6 +462,9 @@ static void g_barbar_mpris_player_set_length_(BarBarMprisPlayer *player,
   g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_LENGTH]);
 }
 
+void g_barbar_mpris_player_set_shuffle(BarBarMprisPlayer *player,
+                                       gboolean shuffle) {}
+
 static void playerctl_player_properties_changed_callback(
     GDBusProxy *_proxy, GVariant *changed_properties,
     const gchar *const *invalidated_properties, gpointer user_data) {
@@ -429,7 +483,7 @@ static void playerctl_player_properties_changed_callback(
   shuffle = g_variant_lookup_value(changed_properties, "Shuffle", NULL);
   if (shuffle) {
     gboolean shuffle_value = g_variant_get_boolean(shuffle);
-    // g_barbar_mpris_player_set_shuffle();
+    g_barbar_mpris_player_set_shuffle(player, shuffle_value);
     g_variant_unref(shuffle);
   }
 
@@ -472,7 +526,7 @@ static void playerctl_player_properties_changed_callback(
     title = g_variant_lookup_value(metadata, "xesam:title", NULL);
     if (title) {
       const char *title_value = g_variant_get_string(title, NULL);
-      g_barbar_mpris_player_set_title(player, title_vaule);
+      g_barbar_mpris_player_set_title(player, title_value);
     }
 
     length = g_variant_lookup_value(metadata, "mpris:length", NULL);

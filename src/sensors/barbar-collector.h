@@ -30,9 +30,11 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_NETWORK (g_barbar_network_get_type())
+#define BARBAR_TYPE_COLLECTOR (g_barbar_collector_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarCollector, g_barbar_collector, BARBAR, COLLECTOR,
                      BarBarSensor)
+
+BarBarSensor *g_barbar_collector_new(void);
 
 G_END_DECLS

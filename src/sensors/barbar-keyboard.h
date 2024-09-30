@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarKeyboard, g_barbar_keyboard, BARBAR, KEYBOARD,
                      BarBarSensor)
 
+BarBarSensor *g_barbar_keyboard_new(void);
+
 G_END_DECLS

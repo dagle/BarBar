@@ -34,4 +34,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarCmd, g_barbar_cmd, BARBAR, CMD, BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_cmd_new(const char *command);
+
 G_END_DECLS

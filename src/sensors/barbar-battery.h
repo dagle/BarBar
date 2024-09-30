@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarBattery, g_barbar_battery, BARBAR, BATTERY,
                      BarBarSensor)
 
+BarBarSensor *g_barbar_battery_new(void);
+
 G_END_DECLS

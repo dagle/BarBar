@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarInhibitor, g_barbar_inhibitor, BARBAR, INHIBITOR,
                      GObject)
 
+GObject *g_barbar_inhibitor_new(void);
+
 G_END_DECLS

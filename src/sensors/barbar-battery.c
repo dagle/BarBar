@@ -1,4 +1,5 @@
 #include "barbar-battery.h"
+#include "glib-object.h"
 #include "sensors/barbar-sensor.h"
 #include <libupower-glib/upower.h>
 #include <stdio.h>
@@ -192,4 +193,12 @@ static void g_barbar_battery_start(BarBarSensor *sensor) {
 
   g_signal_connect(battery->dev, "notify::percentage",
                    G_CALLBACK(g_barbar_battery_cb), battery);
+}
+
+BarBarSensor *g_barbar_battery_new(void) {
+  BarBarBattery *battery;
+
+  battery = g_object_new(BARBAR_TYPE_BATTERY, NULL);
+
+  return BARBAR_SENSOR(battery);
 }

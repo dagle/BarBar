@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarGameMode, g_barbar_game_mode, BARBAR, GAME_MODE,
                      BarBarSensor)
 
+BarBarSensor *g_barbar_game_mode_new(void);
+
 G_END_DECLS

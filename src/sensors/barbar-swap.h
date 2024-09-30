@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarSwap, g_barbar_swap, BARBAR, SWAP,
                      BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_swap_new(void);
+
 G_END_DECLS

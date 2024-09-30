@@ -1,4 +1,5 @@
 #include "barbar-inhibitor.h"
+#include "glib-object.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 #include "sensors/barbar-sensorcontext.h"
 #include <gdk/wayland/gdkwayland.h>
@@ -176,4 +177,12 @@ static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr) {
 
   wl_registry_add_listener(wl_registry, &wl_registry_listener, inhibitor);
   wl_display_roundtrip(wl_display);
+}
+
+GObject *g_barbar_inhibitor_new(void) {
+  BarBarInhibitor *inhibitor;
+
+  inhibitor = g_object_new(BARBAR_TYPE_INHIBITOR, NULL);
+
+  return G_OBJECT(inhibitor);
 }

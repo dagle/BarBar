@@ -35,8 +35,8 @@ libbarbar_src = [
   'sensors/barbar-uptime.c',
   'sensors/barbar-disk.c',
 
-  'sensors/barbar-mpris.c',
-  # 'sensors/mpris/barbar-mpris-player.c',
+  # 'sensors/barbar-mpris.c',
+  'sensors/mpris/barbar-mpris-player.c',
 
   'river/barbar-river-layout.c',
   'river/barbar-river-tags.c',
@@ -113,8 +113,8 @@ libbarbar_headers = [
   'sensors/barbar-uptime.h',
   'sensors/barbar-disk.h',
 
-  'sensors/barbar-mpris.h',
-  # 'sensors/mpris/barbar-mpris-player.h',
+  # 'sensors/barbar-mpris.h',
+  'sensors/mpris/barbar-mpris-player.h',
 
   'river/barbar-river-layout.h',
   'river/barbar-river-tags.h',
@@ -314,7 +314,7 @@ if get_option('vala')
 endif
 
 executable('barbar',
-  libbarbar_src + 'main.c', wayland_src, status_notifier_src, power_profiles_src,
+  libbarbar_src + 'main.c', wayland_src, status_notifier_src, power_profiles_src, mpris_src,
   dependencies: deps + bin_deps,
   link_args: ['-Wl,--export-dynamic'],
   install: true

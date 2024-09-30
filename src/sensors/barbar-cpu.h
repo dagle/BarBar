@@ -34,4 +34,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarCpu, g_barbar_cpu, BARBAR, CPU, BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_cpu_new(void);
+
 G_END_DECLS

@@ -38,4 +38,6 @@ GType g_barbar_bus_type_get_type(void);
 G_DECLARE_FINAL_TYPE(BarBarSystemdUnits, g_barbar_systemd_units, BARBAR,
                      SYSTEMD_UNITS, BarBarSensor)
 
+BarBarSensor *g_barbar_systemd_units_new(void);
+
 G_END_DECLS

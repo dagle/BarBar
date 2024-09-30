@@ -180,3 +180,11 @@ static gboolean g_barbar_temperature_tick(BarBarIntervalSensor *sensor) {
   g_signal_emit(temperature, temperature_signals[TICK], 0);
   return TRUE;
 }
+
+BarBarSensor *g_barbar_temperature_new(const char *device) {
+  BarBarTemperature *temp;
+
+  temp = g_object_new(BARBAR_TYPE_TEMPERATURE, "device", device, NULL);
+
+  return BARBAR_SENSOR(temp);
+}

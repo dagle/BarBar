@@ -308,3 +308,11 @@ static void g_barbar_backlight_start(BarBarSensor *sensor) {
   backlight->id = g_io_add_watch(io_channel, G_IO_IN,
                                  g_barbar_backlight_callback, backlight);
 }
+
+BarBarSensor *g_barbar_backlight_new(void) {
+  BarBarBacklight *bl;
+
+  bl = g_object_new(BARBAR_TYPE_BACKLIGHT, NULL);
+
+  return BARBAR_SENSOR(bl);
+}

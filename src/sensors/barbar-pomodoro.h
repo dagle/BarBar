@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarPomodoro, g_barbar_pomodoro, BARBAR, POMODORO,
                      BarBarSensor)
 
+BarBarSensor *g_barbar_pomodoro_new(void);
+
 G_END_DECLS

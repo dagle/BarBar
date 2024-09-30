@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarBluetooth, g_barbar_bluetooth, BARBAR, BLUETOOTH,
                      BarBarSensor)
 
+BarBarSensor *g_barbar_bluetooth_new(void);
+
 G_END_DECLS

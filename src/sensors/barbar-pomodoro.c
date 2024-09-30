@@ -344,3 +344,11 @@ static void g_barbar_pomodoro_constructed(GObject *object) {
 }
 
 static void g_barbar_pomodoro_start(BarBarSensor *sensor) {}
+
+BarBarSensor *g_barbar_pomodoro_new(void) {
+  BarBarPomodoro *pd;
+
+  pd = g_object_new(BARBAR_TYPE_POMODORO, NULL);
+
+  return BARBAR_SENSOR(pd);
+}

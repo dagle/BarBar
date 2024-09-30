@@ -253,3 +253,11 @@ static void g_barbar_clock_start(BarBarSensor *sensor) {
   clock->source_id = g_timeout_add_full(0, clock->interval,
                                         g_barbar_clock_update, clock, NULL);
 }
+
+BarBarSensor *g_barbar_clock_new(const char *format) {
+  BarBarClock *clock;
+
+  clock = g_object_new(BARBAR_TYPE_CLOCK, "format", format, NULL);
+
+  return BARBAR_SENSOR(clock);
+}

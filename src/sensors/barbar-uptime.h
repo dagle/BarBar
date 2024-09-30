@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarUptime, g_barbar_uptime, BARBAR, UPTIME,
                      BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_uptime_new(void);
+
 G_END_DECLS

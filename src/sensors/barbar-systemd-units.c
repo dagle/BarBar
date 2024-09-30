@@ -216,3 +216,11 @@ static void g_barbar_systemd_units_start(BarBarSensor *sensor) {
       "org.freedesktop.systemd1", "/org/freedesktop/systemd1",
       "org.freedesktop.DBus.Properties", NULL, units_cb, units);
 }
+
+BarBarSensor *g_barbar_systemd_units_new(void) {
+  BarBarSystemdUnits *sys;
+
+  sys = g_object_new(BARBAR_TYPE_SYSTEMD_UNITS, NULL);
+
+  return BARBAR_SENSOR(sys);
+}

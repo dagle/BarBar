@@ -137,3 +137,11 @@ static void g_barbar_collector_class_init(BarBarCollectorClass *class) {
 }
 
 static void g_barbar_collector_init(BarBarCollector *self) {}
+
+BarBarSensor *g_barbar_collector_new(void) {
+  BarBarCollector *collector;
+
+  collector = g_object_new(BARBAR_TYPE_COLLECTOR, NULL);
+
+  return BARBAR_SENSOR(collector);
+}

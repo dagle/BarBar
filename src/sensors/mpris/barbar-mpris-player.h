@@ -33,4 +33,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, BARBAR,
                      MPRIS_PLAYER, GObject)
 
+BarBarSensor *g_barbar_battery_new(void);
+
 G_END_DECLS

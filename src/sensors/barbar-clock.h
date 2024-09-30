@@ -34,4 +34,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarClock, g_barbar_clock, BARBAR, CLOCK, BarBarSensor)
 
+BarBarSensor *g_barbar_clock_new(const char *format);
+
 G_END_DECLS

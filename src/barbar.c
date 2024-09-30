@@ -42,7 +42,7 @@ void g_barbar_init(void) {
   g_barbar_github_activity_get_type();
 
   g_barbar_wireplumber_get_type();
-  g_barbar_mpris_get_type();
+  g_barbar_mpris_player_get_type();
   g_barbar_temperature_get_type();
   g_barbar_network_get_type();
   g_barbar_cmd_get_type();

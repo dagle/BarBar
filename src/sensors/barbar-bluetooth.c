@@ -175,3 +175,11 @@ static void g_barbar_bluetooth_start(BarBarSensor *sensor) {
       G_BUS_TYPE_SESSION, G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
       "org.bluez", "/", NULL, NULL, NULL, NULL, manager_cb, bt);
 }
+
+BarBarSensor *g_barbar_bluetooth_new(void) {
+  BarBarBluetooth *bt;
+
+  bt = g_object_new(BARBAR_TYPE_BLUETOOTH, NULL);
+
+  return BARBAR_SENSOR(bt);
+}

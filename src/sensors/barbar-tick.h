@@ -34,4 +34,6 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarTick, g_barbar_tick, BARBAR, TICK, BarBarSensor)
 
+BarBarSensor *g_barbar_tick_new(void);
+
 G_END_DECLS

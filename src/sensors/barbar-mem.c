@@ -1,4 +1,6 @@
 #include "barbar-mem.h"
+#include "glib-object.h"
+#include "sensors/barbar-sensor.h"
 #include <glibtop.h>
 #include <glibtop/mem.h>
 #include <glibtop/swap.h>
@@ -160,4 +162,12 @@ static gboolean g_barbar_mem_tick(BarBarIntervalSensor *sensor) {
   g_object_notify_by_pspec(G_OBJECT(self), mem_props[PROP_MEM_TOTAL]);
   g_signal_emit(G_OBJECT(self), mem_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
+}
+
+BarBarSensor *g_barbar_mem_new(void) {
+  BarBarMem *mem;
+
+  mem = g_object_new(BARBAR_TYPE_MEM, NULL);
+
+  return BARBAR_SENSOR(mem);
 }

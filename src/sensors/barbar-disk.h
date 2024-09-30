@@ -35,4 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDisk, g_barbar_disk, BARBAR, DISK,
                      BarBarIntervalSensor)
 
+BarBarSensor *g_barbar_disk_new(void);
+
 G_END_DECLS

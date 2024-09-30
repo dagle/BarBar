@@ -16,7 +16,6 @@
 #include "sensors/barbar-interval-sensor.h"
 #include "sensors/barbar-keyboard.h"
 #include "sensors/barbar-mem.h"
-#include "sensors/barbar-mpris.h"
 #include "sensors/barbar-network.h"
 #include "sensors/barbar-pomodoro.h"
 #include "sensors/barbar-power-profiles.h"
@@ -28,6 +27,7 @@
 #include "sensors/barbar-uptime.h"
 #include "sensors/barbar-weather.h"
 #include "sensors/barbar-wireplumber.h"
+#include "sensors/mpris/barbar-mpris-player.h"
 
 #include "river/barbar-river-layout.h"
 #include "river/barbar-river-mode.h"

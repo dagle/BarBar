@@ -150,3 +150,11 @@ static gboolean g_barbar_swap_tick(BarBarIntervalSensor *sensor) {
   g_signal_emit(G_OBJECT(self), swap_signals[TICK], 0);
   return G_SOURCE_CONTINUE;
 }
+
+BarBarSensor *g_barbar_swap_new(void) {
+  BarBarSwap *swap;
+
+  swap = g_object_new(BARBAR_TYPE_SWAP, NULL);
+
+  return BARBAR_SENSOR(swap);
+}

@@ -157,3 +157,11 @@ static void g_barbar_tick_start(BarBarSensor *sensor) {
   tick->source_id =
       g_timeout_add_full(0, tick->interval, g_barbar_tick_update, tick, NULL);
 }
+
+BarBarSensor *g_barbar_tick_new(void) {
+  BarBarTick *tick;
+
+  tick = g_object_new(BARBAR_TYPE_TICK, NULL);
+
+  return BARBAR_SENSOR(tick);
+}
