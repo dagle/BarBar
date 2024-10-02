@@ -26,12 +26,9 @@ GType g_barbar_playback_status_get_type(void) {
   if (g_once_init_enter(&barbar_playback_status_type)) {
 
     static const GEnumValue pattern_types[] = {
-        {BARBAR_PLAYBACK_STATUS_PLAYING, "BARBAR_PLAYBACK_STATUS_PLAYING",
-         "Playing"},
-        {BARBAR_PLAYBACK_STATUS_PAUSED, "BARBAR_PLAYBACK_STATUS_PAUSED",
-         "Paused"},
-        {BARBAR_PLAYBACK_STATUS_STOPPED, "BARBAR_PLAYBACK_STATUS_STOPPED",
-         "Stopped"},
+        {BARBAR_PLAYBACK_STATUS_PLAYING, "Playing", "Playing"},
+        {BARBAR_PLAYBACK_STATUS_PAUSED, "Paused", "Paused"},
+        {BARBAR_PLAYBACK_STATUS_STOPPED, "Stopped", "Stopped"},
         {0, NULL, NULL},
     };
 

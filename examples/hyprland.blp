@@ -11,12 +11,19 @@ BarBar.Bar {
     [center]
     BarBar.HyprlandWindow {}
 
-    // [end]
-    // Gtk.Label {
-    //   label: bind cpu.percent;
-    // }
+    [end]
+    BarBar.Label network_label {
+      sensor: mpris;
+      templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.playback_status}}";
+
+      [child]
+      Gtk.Label {}
+    }
   }
 }
 
-// BarBar.Cpu cpu {
-// }
+BarBar.Cpu cpu {}
+
+BarBar.MprisPlayer mpris {
+  player-instance: "mpd";
+}

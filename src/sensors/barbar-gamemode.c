@@ -210,7 +210,7 @@ static void g_barbar_game_mode_start(BarBarSensor *sensor) {
       "org.freedesktop.DBus.Properties", NULL, mode_cb, mode);
 }
 
-BarBarSensor *g_barbar_wireplumber_new(void) {
+BarBarSensor *g_barbar_game_mode_new(void) {
   BarBarGameMode *gm;
 
   gm = g_object_new(BARBAR_TYPE_GAME_MODE, NULL);

@@ -100,10 +100,17 @@ JsonParser *g_barbar_hyprland_ipc_oneshot_finish(GAsyncResult *result,
 
 static void json_parsed(GObject *source, GAsyncResult *result, gpointer data) {
   JsonParser *parser = JSON_PARSER(source);
-  gboolean res;
+  GTask *task = data;
   GError *err = NULL;
 
-  res = json_parser_load_from_stream_finish(parser, result, &err);
+  json_parser_load_from_stream_finish(parser, result, &err);
+  if (err) {
+    g_task_return_error(task, err);
+    g_object_unref(task);
+    return;
+  }
+  g_task_return_boolean(task, TRUE);
+  g_object_unref(task);
 }
 
 static void send_cb(GObject *source, GAsyncResult *res, gpointer data) {
@@ -151,8 +158,8 @@ static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
 }
 
 void g_barbar_hyprland_ipc_oneshot(GCancellable *cancellable,
-                                   GAsyncReadyCallback callback, gpointer data,
-                                   const char *msg) {
+                                   GAsyncReadyCallback callback,
+                                   const char *msg, gpointer data) {
   HyprIpc *ipc;
   GSocketAddress *address;
   GError *err = NULL;

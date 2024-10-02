@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "json-glib/json-glib.h"
 #include <gio/gio.h>
 #include <glib-object.h>
 #include <glib.h>
@@ -97,7 +98,10 @@ g_barbar_hyprland_ipc_listner(BarBarHyprlandSubscribeCallback cb, gpointer data,
                               GDestroyNotify destroy, GError **error);
 
 void g_barbar_hyprland_ipc_oneshot(GCancellable *cancellable,
-                                   GAsyncReadyCallback callback, gpointer data,
-                                   const char *msg);
+                                   GAsyncReadyCallback callback,
+                                   const char *msg, gpointer data);
+
+JsonParser *g_barbar_hyprland_ipc_oneshot_finish(GAsyncResult *result,
+                                                 GError **error);
 
 G_END_DECLS

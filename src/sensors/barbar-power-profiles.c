@@ -169,7 +169,7 @@ static void g_barbar_power_profile_start(BarBarSensor *sensor) {
       "/org/freedesktop/UPower/PowerProfiles", NULL, menu_callback, profile);
 }
 
-BarBarSensor *g_barbar_wireplumber_new(void) {
+BarBarSensor *g_barbar_power_profile_new(void) {
   BarBarPowerProfile *pp;
 
   pp = g_object_new(BARBAR_TYPE_POWER_PROFILE, NULL);
