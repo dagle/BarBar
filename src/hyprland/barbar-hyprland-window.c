@@ -91,6 +91,13 @@ static void g_barbar_hyprland_window_get_property(GObject *object,
   }
 }
 
+static void g_barbar_hyprland_window_finalize(GObject *object) {
+  BarBarHyprlandWindow *hypr = BARBAR_HYPRLAND_WINDOW(object);
+
+  g_free(hypr->output_name);
+  G_OBJECT_CLASS(g_barbar_hyprland_window_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_hyprland_window_class_init(BarBarHyprlandWindowClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -98,6 +105,7 @@ g_barbar_hyprland_window_class_init(BarBarHyprlandWindowClass *class) {
 
   gobject_class->set_property = g_barbar_hyprland_window_set_property;
   gobject_class->get_property = g_barbar_hyprland_window_get_property;
+  gobject_class->finalize = g_barbar_hyprland_window_finalize;
   widget_class->root = g_barbar_hyprland_window_map;
 
   hypr_window_props[PROP_OUTPUT] = g_param_spec_string(
@@ -232,7 +240,7 @@ static void window_async(GObject *source_object, GAsyncResult *res,
 
   if (error) {
     g_printerr("Failed to setup hyprland active window: %s\n", error->message);
-    g_object_unref(parser);
+    g_clear_object(&parser);
     g_error_free(error);
     return;
   }
@@ -260,7 +268,7 @@ static void active_async(GObject *source_object, GAsyncResult *res,
   if (error) {
     g_printerr("Failed to setup hyprland active workspace: %s\n",
                error->message);
-    g_object_unref(parser);
+    g_clear_object(&parser);
     g_error_free(error);
     return;
   }

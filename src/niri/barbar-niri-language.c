@@ -75,7 +75,7 @@ static void g_barbar_niri_language_set_kbd(BarBarNiriLanguage *niri,
   g_strfreev(split);
 }
 
-static void g_barbar_sway_language_set_property(GObject *object,
+static void g_barbar_niri_language_set_property(GObject *object,
                                                 guint property_id,
                                                 const GValue *value,
                                                 GParamSpec *pspec) {
@@ -83,38 +83,38 @@ static void g_barbar_sway_language_set_property(GObject *object,
 
   switch (property_id) {
   case PROP_IDENTIFIER:
-    // g_barbar_sway_language_set_identifier(sway, g_value_get_string(value));
+    // g_barbar_niri_language_set_identifier(niri, g_value_get_string(value));
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-static void g_barbar_sway_language_get_property(GObject *object,
+static void g_barbar_niri_language_get_property(GObject *object,
                                                 guint property_id,
                                                 GValue *value,
                                                 GParamSpec *pspec) {
-  BarBarNiriLanguage *sway = BARBAR_NIRI_LANGUAGE(object);
+  BarBarNiriLanguage *niri = BARBAR_NIRI_LANGUAGE(object);
 
   switch (property_id) {
   case PROP_IDENTIFIER:
-    g_value_set_string(value, sway->identifier);
+    g_value_set_string(value, niri->identifier);
     break;
   case PROP_LANGUAGE:
-    g_value_set_string(value, sway->language);
+    g_value_set_string(value, niri->language);
     break;
   case PROP_KEYBOARD:
-    g_value_set_string(value, sway->keyboard);
+    g_value_set_string(value, niri->keyboard);
     break;
   case PROP_LAYOUT:
-    g_value_set_string(value, sway->variant);
+    g_value_set_string(value, niri->variant);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
 
-static void g_barbar_sway_language_finalize(GObject *object) {
+static void g_barbar_niri_language_finalize(GObject *object) {
   BarBarNiriLanguage *language = BARBAR_NIRI_LANGUAGE(object);
 
   // g_clear_object(&language->sub);
@@ -132,9 +132,9 @@ static void g_barbar_niri_language_class_init(BarBarNiriLanguageClass *class) {
 
   sensor_class->start = g_barbar_niri_language_start;
 
-  gobject_class->set_property = g_barbar_sway_language_set_property;
-  gobject_class->get_property = g_barbar_sway_language_get_property;
-  gobject_class->finalize = g_barbar_sway_language_finalize;
+  gobject_class->set_property = g_barbar_niri_language_set_property;
+  gobject_class->get_property = g_barbar_niri_language_get_property;
+  gobject_class->finalize = g_barbar_niri_language_finalize;
 
   niri_language_props[PROP_IDENTIFIER] = g_param_spec_string(
       "identifer", NULL, NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT);

@@ -6,6 +6,8 @@ as a device? This would be great for batteries, mpris etc since we could just re
 - Add https://wayland.app/protocols/xdg-output-unstable-v1 so we can restrict stuff
 to one screen
 
+- Figure out a way to make dynamic properties (or something like them) that work at runtime
+
 -  [x] How to change a widget on click? To have 2 alternating widgets and on click we change.
 
 - [-] Create helper functions for beings and such

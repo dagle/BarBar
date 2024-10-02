@@ -410,6 +410,16 @@ static void g_barbar_hyprland_service_constructed(GObject *self) {
                                       service);
 }
 
+static void g_barbar_hyprland_window_finalize(GObject *object) {
+  BarBarHyprlandService *hypr = BARBAR_HYPRLAND_SERVICE(object);
+
+  g_free(hypr->submap);
+  g_free(hypr->keyboard);
+  g_free(hypr->layout);
+
+  G_OBJECT_CLASS(g_barbar_hyprland_service_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -420,6 +430,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
 
   gobject_class->constructor = g_barbar_hyprland_service_constructor;
   gobject_class->constructed = g_barbar_hyprland_service_constructed;
+  gobject_class->finalize = g_barbar_hyprland_window_finalize;
 
   hypr_service_props[PROP_SUBMAP] =
       g_param_spec_string("submap", NULL, NULL, NULL, G_PARAM_READABLE);

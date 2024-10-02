@@ -138,11 +138,20 @@ static void sub_cb(GObject *object, GAsyncResult *res, gpointer data) {
   g_free(str);
 }
 
+static void g_barbar_sway_subscribe_finalize(GObject *object) {
+  BarBarSwaySubscribe *hypr = BARBAR_SWAY_SUBSCRIBE(object);
+
+  g_free(hypr->interest);
+
+  G_OBJECT_CLASS(g_barbar_sway_subscribe_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_sway_subscribe_class_init(BarBarSwaySubscribeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   gobject_class->set_property = g_barbar_sway_subscribe_set_property;
   gobject_class->get_property = g_barbar_sway_subscribe_get_property;
+  gobject_class->finalize = g_barbar_sway_subscribe_finalize;
 
   sway_sub_props[PROP_INTEREST] = g_param_spec_string(
       "interest", NULL, NULL, NULL,

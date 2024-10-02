@@ -51,11 +51,20 @@ static void g_barbar_niri_subscribe_get_property(GObject *object,
   }
 }
 
+static void g_barbar_niri_workspace_finalize(GObject *object) {
+  BarBarNiriSubscribe *hypr = BARBAR_NIRI_SUBSCRIBE(object);
+
+  g_free(hypr->interest);
+
+  G_OBJECT_CLASS(g_barbar_niri_subscribe_parent_class)->finalize(object);
+}
+
 static void
 g_barbar_niri_subscribe_class_init(BarBarNiriSubscribeClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   gobject_class->set_property = g_barbar_niri_subscribe_set_property;
   gobject_class->get_property = g_barbar_niri_subscribe_get_property;
+  gobject_class->finalize = g_barbar_niri_workspace_finalize;
 
   event_signal =
       g_signal_new("event", G_TYPE_FROM_CLASS(class), G_SIGNAL_RUN_FIRST, 0,

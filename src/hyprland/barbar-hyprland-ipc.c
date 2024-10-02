@@ -84,6 +84,17 @@ static void ipc_done(HyprIpc *ipc) {
                           ipc);
 }
 
+/**
+ * g_barbar_hyprland_ipc_oneshot_finish:
+ * @result: a #GAsyncResult
+ * @error: a #GError, or %NULL
+ *
+ * Finishes an asynchronous sway ipc response that was started
+ * with g_barbar_hyprland_ipc_oneshot().
+ *
+ * Returns: (transfer full) (nullable): A `JsonParser` or %NULL if an error.
+ * In that case error is set.
+ */
 JsonParser *g_barbar_hyprland_ipc_oneshot_finish(GAsyncResult *result,
                                                  GError **error) {
   GTask *task;
@@ -157,6 +168,21 @@ static void connect_cb(GObject *source, GAsyncResult *res, gpointer data) {
                                   g_task_get_cancellable(task), send_cb, task);
 }
 
+/**
+ * g_barbar_hyprland_ipc_oneshot:
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @callback: (scope async): a #GAsyncReadyCallback
+ *     to call when the request is satisfied
+ * @msg: a message to send
+ * @data: the data to pass to callback function
+ *
+ * Opens a new connection and sends a command to hyprland async.
+ * a callback is set we will try to read the output. Use
+ * g_barbar_hyprland_ipc_oneshot_finish() in the callback function to get the
+ * result. After the message is sent, all data is freed and connections are
+ * closed.
+ *
+ */
 void g_barbar_hyprland_ipc_oneshot(GCancellable *cancellable,
                                    GAsyncReadyCallback callback,
                                    const char *msg, gpointer data) {

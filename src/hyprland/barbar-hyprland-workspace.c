@@ -33,8 +33,6 @@ struct _BarBarHyprlandWorkspace {
   struct zxdg_output_manager_v1 *xdg_output_manager;
   struct zxdg_output_v1 *xdg_output;
 
-  // struct wl_output *output;
-
   GList *workspaces; // A list of workspaces;
 };
 
@@ -127,6 +125,13 @@ static void g_barbar_hyprland_workspace_get_property(GObject *object,
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
+static void g_barbar_hyprland_workspace_finalize(GObject *object) {
+  BarBarHyprlandWorkspace *hypr = BARBAR_HYPRLAND_WORKSPACE(object);
+
+  g_free(hypr->output_name);
+
+  G_OBJECT_CLASS(g_barbar_hyprland_workspace_parent_class)->finalize(object);
+}
 
 static void
 g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
@@ -135,6 +140,7 @@ g_barbar_hyprland_workspace_class_init(BarBarHyprlandWorkspaceClass *class) {
 
   gobject_class->set_property = g_barbar_hyprland_workspace_set_property;
   gobject_class->get_property = g_barbar_hyprland_workspace_get_property;
+  gobject_class->finalize = g_barbar_hyprland_workspace_finalize;
   widget_class->root = g_barbar_hyprland_workspace_map;
 
   // this shouldn't need to be here in the future
@@ -515,7 +521,7 @@ static void active_async(GObject *source_object, GAsyncResult *res,
   if (error) {
     g_printerr("Failed to setup hyprland active workspace: %s\n",
                error->message);
-    g_object_unref(parser);
+    g_clear_object(&parser);
     g_error_free(error);
     return;
   }
@@ -557,7 +563,7 @@ static void worspace_async(GObject *source_object, GAsyncResult *res,
 
   if (error) {
     g_printerr("Failed to setup hyprland workspaces: %s\n", error->message);
-    g_object_unref(parser);
+    g_clear_object(&parser);
     g_error_free(error);
     return;
   }
