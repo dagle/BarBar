@@ -181,6 +181,11 @@ static gboolean g_barbar_temperature_tick(BarBarIntervalSensor *sensor) {
   return TRUE;
 }
 
+/**
+ * g_barbar_temperature_new:
+ *
+ * Returns: (transfer full): a `BarBarTemperature`
+ */
 BarBarSensor *g_barbar_temperature_new(const char *device) {
   BarBarTemperature *temp;
 

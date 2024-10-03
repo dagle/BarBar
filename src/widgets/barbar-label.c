@@ -124,7 +124,7 @@ static void g_barbar_label_set_templ(BarBarLabel *label, const char *templ) {
   label->tmpl = tmpl_template_new(NULL);
 
   if (!tmpl_template_parse_string(label->tmpl, label->templ, &error)) {
-    g_printerr("Label: Error building template: %s\n", error->message);
+    g_warning("Label: Error building template: %s\n", error->message);
     g_error_free(error);
   }
 }
@@ -168,7 +168,7 @@ static void update(gpointer data, BarBarSensor *sensor) {
 
   char *str;
   if (!(str = tmpl_template_expand_string(label->tmpl, scope, &error))) {
-    g_printerr("Label: Error expanding the template: %s\n", error->message);
+    g_warning("Label: Error expanding the template: %s\n", error->message);
     g_error_free(error);
     return;
   }

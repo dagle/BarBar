@@ -345,6 +345,11 @@ static void g_barbar_pomodoro_constructed(GObject *object) {
 
 static void g_barbar_pomodoro_start(BarBarSensor *sensor) {}
 
+/**
+ * g_barbar_pomodoro_new:
+ *
+ * Returns: (transfer full): a `BarBarPomodoro`
+ */
 BarBarSensor *g_barbar_pomodoro_new(void) {
   BarBarPomodoro *pd;
 

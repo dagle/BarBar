@@ -220,6 +220,11 @@ static gboolean g_barbar_filesystem_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_filesystem_new:
+ *
+ * Returns: (transfer full): a `BarBarFilesystem`
+ */
 BarBarSensor *g_barbar_filesystem_new(const char *path) {
   BarBarFilesystem *fs;
 

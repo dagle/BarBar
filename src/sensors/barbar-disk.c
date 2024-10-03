@@ -221,6 +221,11 @@ static gboolean g_barbar_disk_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_disk_new:
+ *
+ * Returns: (transfer full): a `BarBarDisk`
+ */
 BarBarSensor *g_barbar_disk_new(void) {
   BarBarDisk *disk;
 

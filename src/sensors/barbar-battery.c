@@ -195,6 +195,11 @@ static void g_barbar_battery_start(BarBarSensor *sensor) {
                    G_CALLBACK(g_barbar_battery_cb), battery);
 }
 
+/**
+ * g_barbar_battery_new:
+ *
+ * Returns: (transfer full): a `BarBarBattery`
+ */
 BarBarSensor *g_barbar_battery_new(void) {
   BarBarBattery *battery;
 

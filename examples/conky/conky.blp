@@ -235,8 +235,6 @@ BarBar.Background background {
         }
       }
 
-      // TODO: pretty print cpu
-
       [child]
       Gtk.Label {
         label: bind $g_barbar_print_percent(cpu.percent, 2, 1) as <string>;

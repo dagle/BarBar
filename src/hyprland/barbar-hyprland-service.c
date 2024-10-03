@@ -171,6 +171,12 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
   line =
       g_data_input_stream_read_line_finish(data_stream, res, &length, &error);
 
+  if (error) {
+    g_warning("Hyprland service failed: %s", error->message);
+    g_error_free(error);
+    return;
+  }
+
   const char *args;
 
   EVENT_TYPE(line, workspacev2, {
@@ -386,7 +392,8 @@ static void g_barbar_hyprland_service_constructed(GObject *self) {
       g_barbar_hyprland_ipc_address(BARBAR_HYPERLAND_EVENT_SOCKET, &error);
 
   if (error) {
-    g_printerr("Hyprland service: %s\n", error->message);
+    g_warning("Hyprland service: %s\n", error->message);
+    g_error_free(error);
     return;
   }
 
@@ -795,7 +802,7 @@ static void g_barbar_hyprland_service_init(BarBarHyprlandService *self) {}
 /**
  * g_barbar_hyprland_service_new:
  *
- * Returs: (transfer full): a `BarBarHyprlandService`
+ * Returns: (transfer full): a `BarBarHyprlandService`
  */
 BarBarHyprlandService *g_barbar_hyprland_service_new(void) {
   BarBarHyprlandService *hypr =

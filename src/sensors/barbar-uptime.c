@@ -174,6 +174,11 @@ static gboolean g_barbar_uptime_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_uptime_new:
+ *
+ * Returns: (transfer full): a `BarBarUptime`
+ */
 BarBarSensor *g_barbar_uptime_new(void) {
   BarBarUptime *uptime;
 

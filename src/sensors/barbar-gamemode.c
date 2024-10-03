@@ -127,9 +127,14 @@ static void get_clients(GObject *object, GAsyncResult *res, gpointer data) {
 
   GVariant *ret = g_dbus_proxy_call_finish(G_DBUS_PROXY(object), res, &error);
 
-  if (error || !ret) {
-    g_printerr("Failed to get initial game-mode: %s\n", error->message);
+  if (error) {
+    g_warning("Failed to get initial game-mode: %s\n", error->message);
     g_error_free(error);
+    return;
+  }
+
+  if (!ret) {
+    return;
   }
 
   gint games;
@@ -210,6 +215,11 @@ static void g_barbar_game_mode_start(BarBarSensor *sensor) {
       "org.freedesktop.DBus.Properties", NULL, mode_cb, mode);
 }
 
+/**
+ * g_barbar_game_mode_new:
+ *
+ * Returns: (transfer full): a `BarBarGameMode`
+ */
 BarBarSensor *g_barbar_game_mode_new(void) {
   BarBarGameMode *gm;
 

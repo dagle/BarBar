@@ -239,7 +239,7 @@ static void window_async(GObject *source_object, GAsyncResult *res,
   parser = g_barbar_hyprland_ipc_oneshot_finish(res, &error);
 
   if (error) {
-    g_printerr("Failed to setup hyprland active window: %s\n", error->message);
+    g_warning("Failed to setup hyprland active window: %s\n", error->message);
     g_clear_object(&parser);
     g_error_free(error);
     return;
@@ -327,7 +327,7 @@ static void g_barbar_hyprland_window_map(GtkWidget *widget) {
 /**
  * g_barbar_hyprland_window_new:
  *
- * Returs: (transfer none): a `BarBarHyprlandWindow`
+ * Returns: (transfer none): a `BarBarHyprlandWindow`
  */
 GtkWidget *g_barbar_hyprland_window_new(void) {
   BarBarHyprlandWindow *hypr;

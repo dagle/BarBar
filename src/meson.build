@@ -58,7 +58,6 @@ libbarbar_src = [
 
   'hyprland/barbar-hyprland-ipc.c',
   'hyprland/barbar-hyprland-service.c',
-  # 'hyprland/barbar-hyprland-submap.c',
   'hyprland/barbar-hyprland-workspace.c',
   'hyprland/barbar-hyprland-window.c',
 
@@ -73,11 +72,6 @@ libbarbar_src = [
   'widgets/barbar-eventswitcher.c',
 
   'widgets/barbar-github-activity.c',
-
-  'tray/barbar-watcher.c',
-  'tray/barbar-tray.c',
-  'tray/barbar-tray-item.c',
-  'tray/barbar-dbusmenu.c',
 ]
 
 libbarbar_headers = [
@@ -133,17 +127,11 @@ libbarbar_headers = [
 
   'widgets/barbar-github-activity.h',
 
-  # 'hyprland/barbar-hyprland-ipc.h',
+  'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-service.h',
-  # 'hyprland/barbar-hyprland-submap.h',
   'hyprland/barbar-hyprland-workspace.h',
   'hyprland/barbar-hyprland-window.h',
 
-  # 'dwl/barbar-dwl-service.h',
-  # 'dwl/barbar-dwl-tags.h',
-  # 'dwl/barbar-dwl-layout.h',
-  # 'dwl/barbar-dwl-title.h',
- 
   'sway/barbar-sway-ipc.h',
   'sway/barbar-sway-subscribe.h',
   'sway/barbar-sway-workspace.h',
@@ -157,10 +145,6 @@ libbarbar_headers = [
   'niri/barbar-niri-workspace.h',
   'niri/barbar-niri-window.h',
 
-  'tray/barbar-watcher.h',
-  'tray/barbar-tray.h',
-  # 'tray/barbar-tray-item.h',
-  # 'tray/barbar-dbusmenu.h',
 ]
 
 wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
@@ -262,19 +246,9 @@ mpris_src = gnome.gdbus_codegen('mpris',
   namespace: 'Mpris',
 )
 
-# content_files += gnome.gdbus_codegen(
-#   meson.project_name(),
-#   sources: dbus_xml['org.freedesktop.UPower.PowerProfiles'],
-#   interface_prefix: 'org.freedesktop.UPower',
-#   namespace: 'PowerProfiles',
-#   docbook: 'docs',
-#   build_by_default: true,
-# )
-
 libbarbar = library(barbar_package, libbarbar_src, wayland_src,
   status_notifier_src, power_profiles_src, mpris_src,
   dependencies : deps, install: true)
-
 
 pkg.generate(libbarbar,
   name: meson.project_name(),

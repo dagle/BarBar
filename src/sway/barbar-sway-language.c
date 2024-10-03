@@ -339,7 +339,7 @@ static void g_barbar_sway_language_start(BarBarSensor *sensor) {
 /**
  * g_barbar_sway_language_new:
  *
- * Returs: (transfer full): a new sensor
+ * Returns: (transfer full): a new sensor
  */
 BarBarSensor *g_barbar_sway_language_new(void) {
   BarBarSwayLanguage *sensor;

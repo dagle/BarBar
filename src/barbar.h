@@ -71,9 +71,9 @@
 
 #include "widgets/barbar-github-activity.h"
 
-#include "tray/barbar-dbusmenu.h"
-#include "tray/barbar-tray-item.h"
-#include "tray/barbar-tray.h"
-#include "tray/barbar-watcher.h"
+/*#include "tray/barbar-dbusmenu.h"*/
+/*#include "tray/barbar-tray-item.h"*/
+/*#include "tray/barbar-tray.h"*/
+/*#include "tray/barbar-watcher.h"*/
 
 void g_barbar_init(void);

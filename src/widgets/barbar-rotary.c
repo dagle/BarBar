@@ -403,6 +403,11 @@ static void g_barbar_rotary_init(BarBarRotary *self) {
   gtk_widget_get_color(GTK_WIDGET(self), &self->color);
 }
 
+/**
+ * g_barbar_rotary_new:
+ *
+ * Returns: (transfer full): a `BarBarRotary`
+ */
 GtkWidget *g_barbar_rotary_new(void) {
   BarBarRotary *self;
 

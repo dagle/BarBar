@@ -176,6 +176,11 @@ static void g_barbar_bluetooth_start(BarBarSensor *sensor) {
       "org.bluez", "/", NULL, NULL, NULL, NULL, manager_cb, bt);
 }
 
+/**
+ * g_barbar_bluetooth_new:
+ *
+ * Returns: (transfer full): a `BarBarBluetooth`
+ */
 BarBarSensor *g_barbar_bluetooth_new(void) {
   BarBarBluetooth *bt;
 

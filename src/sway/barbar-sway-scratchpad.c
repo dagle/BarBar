@@ -284,7 +284,7 @@ static void g_barbar_sway_scratchpad_start(BarBarSensor *sensor) {
 /**
  * g_barbar_sway_scratchpad_new:
  *
- * Returs: (transfer full): a new sensor
+ * Returns: (transfer full): a new sensor
  */
 BarBarSensor *g_barbar_sway_scratchpad_new(void) {
   BarBarSwayScratchpad *sensor;

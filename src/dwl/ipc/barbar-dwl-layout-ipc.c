@@ -248,7 +248,7 @@ static void g_barbar_dwl_layout_ipc_root(GtkWidget *widget) {
 /**
  * g_barbar_dwl_layout_ipc_new:
  *
- * Returs: (transfer full): a `BarBarDwlLayoutIpc`
+ * Returns: (transfer full): a `BarBarDwlLayoutIpc`
  */
 GtkWidget *g_barbar_dwl_layout_ipc_new(void) {
   BarBarDwlLayoutIpc *dwl;

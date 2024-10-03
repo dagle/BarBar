@@ -1,6 +1,5 @@
 using Gtk 4.0;
 using BarBar 1.0;
-using Statusnotifier 0.1;
 // At toplevel, you should define windows or signals
 // Barbar.Bar is a window
 BarBar.Bar {
@@ -10,7 +9,6 @@ BarBar.Bar {
   // screen-num: 1
   Gtk.ActionBar {
     // // We have custom widgets for river, hyprland, dwl etc
-    //
 
     [start]
     BarBar.RiverTag {
@@ -23,254 +21,23 @@ BarBar.Bar {
 
       [tag]
       Gtk.Label {
-        label: "apa";
-        tooltip-markup: "bepa";
+        label: "irc";
+        tooltip-markup: "my cool irc tag";
       }
     }
 
     [start]
     BarBar.RiverLayout {}
 
-    // if we want an item that reveals it self when hovering, we can simple do this.
-
-    [start]
-    Gtk.Box {
-      Gtk.EventControllerMotion hover {}
-
-      Gtk.Label {
-        label: "rev";
-      }
-
-      Gtk.Revealer {
-        transition-duration: 350;
-        transition-type: slide_right;
-        reveal-child: bind hover.contains-pointer;
-
-        Gtk.Label {
-          label: "ealer";
-        }
-      }
-    }
+    [center]
+    BarBar.RiverView {}
 
     [end]
-    Statusnotifier.Systray {}
-
-    // // BarBar.Tray {}
-    // // [start]
-    // // BarBar.RevealLabel {
-    // //   Gtk.Label {}
-    // // }
-    //
-
-    [start]
     Gtk.Label {
-      label: "apapapa_papapapapapapapapapapp";
-      // ellipsize: end;
-      // wrap: false;
-      // width-chars: 8;
+      label: bind mode.mode;
     }
-
-    // 
-    // [center]
-    // BarBar.RiverView {}
-    // 
-    // // [end]
-    // // BarBar.ActivityGraph {}
-    // // [end]
-    // // BarBar.Box {}
-    // 
-    // [end]
-    // Gtk.ScaleButton volume {
-    //   tooltip-markup: bind $barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
-    //   // tooltip-markup: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-    //   // Gtk.Label {
-    //   // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-    //   // use-markup: true;
-    //   // }
-    //   adjustment: Adjustment {
-    //     lower: 0.0;
-    //     upper: 1.0;
-    //     page-increment: 0.1;
-    //     step-increment: 0.1;
-    //     value: bind plumb.percent bidirectional;
-    //   };
-    // }
-    // 
-    // // [end]
-    // // BarBar.RiverLayout {
-    // // }
-    // // A simple clock containing a clock, it's binds to the signal
-    // // and that is it.
-    // 
-    // [end]
-    // Gtk.Label {
-    //   label: bind clock.time;
-    // }
-    // 
-    // [end]
-    // Gtk.Label {
-    //   label: bind key.num-lock;
-    // }
-    // 
-    // // We are not limited to labels, we can do more fancy stuff too.
-    // 
-    // [end]
-    // Gtk.LevelBar {
-    //   value: bind mem.percent;
-    //   orientation: vertical;
-    //   inverted: true;
-    // }
-    // 
-    // [end]
-    // Gtk.LevelBar {
-    //   value: bind cpu.percent;
-    //   orientation: vertical;
-    //   inverted: true;
-    // }
-    // 
-    // // But what if we want if we want to do something with the value before we print it to the label?
-    // // We use an experession for this! Here we use the printf function.
-    // // If you need more powerful things, you can define your own functions in a programming language.
-    // // See manual for this
-    // // [end]
-    // // Gtk.Label {
-    // // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-    // // use-markup: true;
-    // // }
-    // // But wait there is more! We have a custom label widget. It's a bit different.
-    // // The difference is that it takes a signal from a sensor and then uses a template
-    // // to display it. It uses template-glib and have access to all properties and can 
-    // // loops, if's and much more.
-    // 
-    // [end]
-    // BarBar.Label network_label {
-    //   sensor: network;
-    //   templ: "{{BarBarNetwork.interface}}: {{BarBarNetwork.down_speed}}b ⬇️ | {{BarBarNetwork.up_speed}}b ⬆️ ";
-    // 
-    //   [child]
-    //   Gtk.Label {}
-    // }
-    // 
-    // [end]
-    // BarBar.Label temp {
-    //   sensor: temperature;
-    //   // Here we don't care about floats, so we cast it to a i32.
-    //   templ: "{{i32(BarBarTemperature.temperature)}} ";
-    // 
-    //   [child]
-    //   Gtk.Label {}
-    // }
-    // 
-    // [end]
-    // Gtk.LevelBar {
-    //   value: bind battery.percent;
-    //   orientation: vertical;
-    //   inverted: true;
-    // }
-    // 
-    // [end]
-    // BarBar.SensorWidget {
-    //   sensor: BarBar.Inhibitor inhibit {};
-    // 
-    //   child: Gtk.ToggleButton {
-    //     label: "inhibitor";
-    //     active: bind inhibit.enabled bidirectional;
-    //   };
-    // }
-    // 
-    // [end]
-    // Gtk.ScaleButton backbutton {
-    //   adjustment: Adjustment {
-    //     lower: 0.0;
-    //     upper: 1.0;
-    //     page-increment: 0.1;
-    //     step-increment: 0.1;
-    //     value: bind backlight.percent bidirectional;
-    //   };
-    // }
-    // 
-    // [end]
-    // BarBar.Graph {
-    //   value: bind cpu.percent;
-    // }
-    // 
-    // [end]
-    // BarBar.Rotary {
-    //   value: bind cpu.percent;
-    // }
-    // 
-    // [end]
-    // Gtk.Label {
-    //   label: bind pomodoro.current;
-    // }
-    // 
-    // [end]
-    // Gtk.Box {
-    //   //   // play button
-    //   //   // BarBar.PlayButton {
-    //   //   // player: player;
-    //   //   // 
-    //   //   // }
-    //   //   Gtk.Button {
-    //   //     clicked => $g_barbar_player_toggle_play(player) swapped;
-    //   //   }
-    //   // 
-    //   //   // stop button
-    //   //   Gtk.Button {
-    //   //     icon-name: "media-playback-start-symbolic";
-    //   //     clicked => $g_barbar_player_stop(player) swapped;
-    //   //   }
-    //   // 
-    //   // BarBar.Label {
-    //   //   sensor: player;
-    //   //   templ: "{{BarBarPlayer.artist}} - {{BarBarPlayer.song}} | {{BarBarPlayer.position}} / {{BarBarPlayer.length}}";
-    //   // 
-    //   //   [child]
-    //   //   Gtk.Label {}
-    //   // }
-    // }
   }
 }
 
-// Here we define some sensors.
-BarBar.Clock clock {
-  interval: 1000;
-  format: "%H:%M:%S";
-}
-
-BarBar.Mem mem {}
-
-BarBar.Cpu cpu {
-  interval: 1000;
-}
-
-BarBar.Network network {
-  interface: "wlan0";
-}
-
-BarBar.Backlight backlight {}
-
-BarBar.Battery battery {}
-
-BarBar.Wireplumber plumb {}
-
-BarBar.Keyboard key {}
-
-BarBar.Temperature temperature {}
-
-BarBar.Pomodoro pomodoro {
-  length: 10;
-  running: true;
-}
-
-BarBar.PowerProfile profile {}
-
-BarBar.SystemdUnits units {
-  bus-type: session;
-}
-
+// mode is a sensor
 BarBar.RiverMode mode {}
-
-BarBar.Weather weater {}
-
-// BarBar.MprisPlayer player {}

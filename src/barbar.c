@@ -76,8 +76,8 @@ void g_barbar_init(void) {
   g_barbar_dwl_title_ipc_get_type();
   g_barbar_dwl_layout_ipc_get_type();
 
-  g_barbar_dbus_menu_get_type();
-  g_barbar_status_watcher_get_type();
-  g_barbar_tray_item_get_type();
-  g_barbar_tray_get_type();
+  // g_barbar_dbus_menu_get_type();
+  // g_barbar_status_watcher_get_type();
+  // g_barbar_tray_item_get_type();
+  // g_barbar_tray_get_type();
 }

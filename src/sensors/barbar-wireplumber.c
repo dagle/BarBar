@@ -277,6 +277,11 @@ void g_barbar_wireplumber_start(BarBarSensor *sensor) {
   //                          (GCallback)g_main_loop_quit, ctl.loop);
 }
 
+/**
+ * g_barbar_wireplumber_new:
+ *
+ * Returns: (transfer full): a `BarBarWireplumber`
+ */
 BarBarSensor *g_barbar_wireplumber_new(void) {
   BarBarWireplumber *wp;
 

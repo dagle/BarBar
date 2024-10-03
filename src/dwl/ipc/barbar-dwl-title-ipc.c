@@ -202,7 +202,7 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
 /**
  * g_barbar_dwl_title_ipc_new:
  *
- * Returs: (transfer full): a `BarBarDwlTitleIpc`
+ * Returns: (transfer full): a `BarBarDwlTitleIpc`
  */
 GtkWidget *g_barbar_dwl_title_ipc_new(void) {
   BarBarDwlTitleIpc *dwl;

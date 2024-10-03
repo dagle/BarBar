@@ -270,6 +270,11 @@ static gboolean g_barbar_network_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_network_new:
+ *
+ * Returns: (transfer full): a `BarBarNetwork`
+ */
 BarBarSensor *g_barbar_network_new(const char *interface) {
   BarBarNetwork *net;
 

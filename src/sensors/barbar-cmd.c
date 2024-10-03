@@ -176,6 +176,11 @@ static gboolean g_barbar_cmd_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_cmd_new:
+ *
+ * Returns: (transfer full): a `BarBarCmd`
+ */
 BarBarSensor *g_barbar_cmd_new(const char *command) {
   BarBarCmd *cmd;
 

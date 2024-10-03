@@ -422,6 +422,7 @@ static void g_barbar_mpris_player_initial_values(BarBarMprisPlayer *player) {
   g_barbar_mpris_player_set_title(player, metadata);
   g_barbar_mpris_player_set_artist(player, metadata);
   g_barbar_mpris_player_set_length(player, metadata);
+  g_variant_unref(metadata);
 }
 
 static void g_barbar_mpris_player_set_property(GObject *object,
@@ -775,22 +776,10 @@ static void g_barbar_mpris_player_start(BarBarSensor *sensor) {
 }
 
 BarBarSensor *g_barbar_mpris_player_new(char *player_name, GBusType type) {
-  // GError *err = NULL;
   BarBarMprisPlayer *player;
 
   player = g_object_new(BARBAR_TYPE_MPRIS_PLAYER, "player-instance",
                         player_name, "g-bus-type", type, NULL);
 
   return BARBAR_SENSOR(player);
-  //
-  // player =
-  //     g_initable_new(BARBAR_TYPE_MPRIS_PLAYER, NULL, &err, "player-instance",
-  //                    player_name, "g-bus-type", type, NULL);
-  //
-  // if (err != NULL) {
-  //   g_propagate_error(error, err);
-  //   return NULL;
-  // }
-  //
-  // return player;
 }

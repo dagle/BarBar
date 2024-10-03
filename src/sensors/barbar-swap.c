@@ -151,6 +151,11 @@ static gboolean g_barbar_swap_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_swap_new:
+ *
+ * Returns: (transfer full): a `BarBarSwap`
+ */
 BarBarSensor *g_barbar_swap_new(void) {
   BarBarSwap *swap;
 

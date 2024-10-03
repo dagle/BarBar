@@ -137,6 +137,11 @@ static gboolean g_barbar_cpu_tick(BarBarIntervalSensor *sensor) {
   return G_SOURCE_CONTINUE;
 }
 
+/**
+ * g_barbar_cpu_new:
+ *
+ * Returns: (transfer none): a `BarBarCpu`
+ */
 BarBarSensor *g_barbar_cpu_new(void) {
   BarBarCpu *cpu;
 

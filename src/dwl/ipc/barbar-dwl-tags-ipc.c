@@ -380,7 +380,7 @@ static void g_barbar_dwl_tag_root(GtkWidget *widget) {
 /**
  * g_barbar_dwl_tags_ipc_new:
  *
- * Returs: (transfer full): a `BarBarDwlTagsIpc`
+ * Returns: (transfer full): a `BarBarDwlTagsIpc`
  */
 GtkWidget *g_barbar_dwl_tags_ipc_new(void) {
   BarBarDwlTagsIpc *dwl;

@@ -620,7 +620,7 @@ static void g_barbar_hyprland_workspace_map(GtkWidget *widget) {
 /**
  * g_barbar_hyprland_workspace_new:
  *
- * Returs: (transfer none): a `BarBarHyprlandWindow`
+ * Returns: (transfer none): a `BarBarHyprlandWindow`
  */
 GtkWidget *g_barbar_hyprland_workspace_new(void) {
   BarBarHyprlandWorkspace *hypr;

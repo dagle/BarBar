@@ -179,6 +179,11 @@ static void g_barbar_inhibitor_start(BarBarSensorContext *self, void *ptr) {
   wl_display_roundtrip(wl_display);
 }
 
+/**
+ * g_barbar_inhibitor_new:
+ *
+ * Returns: (transfer full): a `BarBarInhibitor`
+ */
 GObject *g_barbar_inhibitor_new(void) {
   BarBarInhibitor *inhibitor;
 

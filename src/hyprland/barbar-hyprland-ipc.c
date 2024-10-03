@@ -6,6 +6,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/**
+ * g_barbar_hyprland_ipc_address:
+ * @socket: if we want a listen or command socket
+ * @error (out): the error, in case connection failed
+ *
+ * Returns: (nullable) (transfer full): the connection
+ */
 GSocketAddress *g_barbar_hyprland_ipc_address(const char *socket,
                                               GError **error) {
   GSocketAddress *address;
@@ -271,6 +278,12 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
   line =
       g_data_input_stream_read_line_finish(data_stream, res, &length, &error);
 
+  if (error) {
+    g_warning("hyprland ipc %s", error->message);
+    g_error_free(error);
+    return;
+  }
+
   EVENT_TYPE(ld, line, workspace, HYPRLAND_WORKSPACE);
   EVENT_TYPE(ld, line, workspacev2, HYPRLAND_WORKSPACEV2);
   EVENT_TYPE(ld, line, focusedmon, HYPRLAND_FOCUSEDMON)
@@ -311,8 +324,9 @@ static void g_barbar_hyprland_line_reader(GObject *object, GAsyncResult *res,
 /**
  * g_barbar_hyprland_ipc_listner:
  * @cb: function to run on each event
- * @data: (closure): data passed to the function
- * @destroy: function to destroy data
+ * @data: (nullable): user data that will be passed to the listner
+ * @destroy: (nullable): a function that will be called to free @user_data, or
+ * %NULL
  * @error: (out): error setting up the listner
  *
  * Returns: (transfer full): the connection

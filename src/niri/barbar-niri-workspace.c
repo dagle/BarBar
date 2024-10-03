@@ -498,7 +498,8 @@ static void g_barbar_niri_workspace_start(GtkWidget *widget) {
 
   g_barbar_niri_subscribe_connect(niri->sub, &error);
   if (error) {
-    g_printerr("can't connect: %s\n", error->message);
+    g_warning("can't connect: %s\n", error->message);
+    g_error_free(error);
     return;
   }
 }

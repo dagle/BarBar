@@ -68,7 +68,8 @@ static void brightness_callback(GObject *object, GAsyncResult *res,
   GVariant *var = g_dbus_proxy_call_finish(proxy, res, &err);
 
   if (err) {
-    g_printerr("backlight: unable to call dbus proxy: %s\n", err->message);
+    g_warning("backlight: unable to call dbus proxy: %s\n", err->message);
+    g_error_free(err);
   }
 }
 

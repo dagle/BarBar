@@ -138,6 +138,11 @@ static void g_barbar_collector_class_init(BarBarCollectorClass *class) {
 
 static void g_barbar_collector_init(BarBarCollector *self) {}
 
+/**
+ * g_barbar_collector_new:
+ *
+ * Returns: (transfer full): a `BarBarCollector`
+ */
 BarBarSensor *g_barbar_collector_new(void) {
   BarBarCollector *collector;
 

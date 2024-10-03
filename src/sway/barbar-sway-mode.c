@@ -225,7 +225,7 @@ static void g_barbar_sway_mode_start(BarBarSensor *sensor) {
 /**
  * g_barbar_sway_mode_new:
  *
- * Returs: (transfer full): a new sensor
+ * Returns: (transfer full): a new sensor
  */
 BarBarSensor *g_barbar_sway_mode_new(void) {
   BarBarSwayMode *sensor;

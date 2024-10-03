@@ -148,9 +148,12 @@ static void update_failed(GObject *object, GAsyncResult *res, gpointer data) {
 
   GVariant *ret = g_dbus_proxy_call_finish(G_DBUS_PROXY(object), res, &error);
 
-  if (error || !ret) {
+  if (error) {
     g_printerr("Failed to get failed systemd-units: %s\n", error->message);
     g_error_free(error);
+  }
+  if (!ret) {
+    return;
   }
   guint failed;
   GVariant *container;
@@ -217,6 +220,11 @@ static void g_barbar_systemd_units_start(BarBarSensor *sensor) {
       "org.freedesktop.DBus.Properties", NULL, units_cb, units);
 }
 
+/**
+ * g_barbar_systemd_units_new:
+ *
+ * Returns: (transfer full): a `BarBarSystemdUnits`
+ */
 BarBarSensor *g_barbar_systemd_units_new(void) {
   BarBarSystemdUnits *sys;
 

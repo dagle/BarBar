@@ -1,6 +1,6 @@
 project(
   'barbar', 'c',
-  version: '1.0',
+  version: '0.1',
   meson_version: '>= 1.0.0',
   license: 'LGPL-2.1-or-later'
   # default_options: [
@@ -35,7 +35,6 @@ libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
 
 libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
-playerctl = dependency('playerctl', version : ['>=2.0.0'], required: get_option('mpris'))
 wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
 # xkbcommon = dependency('xkbcommon')
@@ -63,7 +62,6 @@ deps = [
   upower_glib,
   libgtop,
   libwireplumber,
-  playerctl,
   template_glib,
   libgweather,
   libgeoclue,

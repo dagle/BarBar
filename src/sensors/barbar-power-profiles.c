@@ -150,8 +150,9 @@ static void menu_callback(GObject *object, GAsyncResult *res, gpointer data) {
       power_profiles_power_profiles_proxy_new_for_bus_finish(res, &error);
 
   if (error) {
-    g_printerr("Failed to setup PowerProfile: %s\n", error->message);
+    g_warning("Failed to setup PowerProfile: %s\n", error->message);
     g_error_free(error);
+    return;
   }
 
   g_barbar_power_profile_starting_values(profile);
@@ -169,6 +170,11 @@ static void g_barbar_power_profile_start(BarBarSensor *sensor) {
       "/org/freedesktop/UPower/PowerProfiles", NULL, menu_callback, profile);
 }
 
+/**
+ * g_barbar_power_profile_new:
+ *
+ * Returns: (transfer full): a `BarBarPowerProfile`
+ */
 BarBarSensor *g_barbar_power_profile_new(void) {
   BarBarPowerProfile *pp;
 

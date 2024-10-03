@@ -15,9 +15,7 @@ struct _BarBarKeyboard {
 enum {
   PROP_0,
 
-  PROP_CAPSLOCK,
-  PROP_NUMLOCK,
-  PROP_SCROLLLOCK,
+  PROP_DEVICE,
 
   NUM_PROPERTIES,
 };
@@ -44,17 +42,10 @@ static void g_barbar_keyboard_get_property(GObject *object, guint property_id,
   }
 
   switch (property_id) {
-  case PROP_CAPSLOCK:
-    g_value_set_boolean(value,
-                        gdk_device_get_caps_lock_state(keyboard->device));
+  case PROP_DEVICE:
+    g_value_set_object(value, keyboard->device);
     break;
-  case PROP_NUMLOCK:
-    g_value_set_boolean(value, gdk_device_get_num_lock_state(keyboard->device));
-    break;
-  case PROP_SCROLLLOCK:
-    g_value_set_boolean(value,
-                        gdk_device_get_scroll_lock_state(keyboard->device));
-    break;
+
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -68,32 +59,8 @@ static void g_barbar_keyboard_class_init(BarBarKeyboardClass *class) {
   gobject_class->get_property = g_barbar_keyboard_get_property;
   sensor->start = g_barbar_keyboard_start;
 
-  /**
-   * BarBarKeyboard:caps-lock:
-   *
-   * The name of the player we want to watch
-   *
-   */
-  keyboard_props[PROP_CAPSLOCK] =
-      g_param_spec_boolean("caps-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
-
-  /**
-   * BarBarKeyboard:num-lock:
-   *
-   * The name of the player we want to watch
-   *
-   */
-  keyboard_props[PROP_NUMLOCK] =
-      g_param_spec_boolean("num-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
-
-  /**
-   * BarBarKeyboard:scroll-lock:
-   *
-   * The name of the player we want to watch
-   *
-   */
-  keyboard_props[PROP_SCROLLLOCK] =
-      g_param_spec_boolean("scroll-lock", NULL, NULL, FALSE, G_PARAM_READABLE);
+  keyboard_props[PROP_DEVICE] = g_param_spec_object(
+      "device", NULL, NULL, GDK_TYPE_DEVICE, G_PARAM_READABLE);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     keyboard_props);
@@ -101,11 +68,23 @@ static void g_barbar_keyboard_class_init(BarBarKeyboardClass *class) {
 
 static void g_barbar_keyboard_init(BarBarKeyboard *class) {}
 
-// TODO: can update the device dynamically?
 static void g_barbar_keyboard_start(BarBarSensor *sensor) {
   BarBarKeyboard *keyboard = BARBAR_KEYBOARD(sensor);
 
   GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
 
   keyboard->device = gdk_seat_get_keyboard(seat);
+}
+
+/**
+ * g_barbar_uptime_new:
+ *
+ * Returns: (transfer full): a `BarBarUptime`
+ */
+BarBarSensor *g_barbar_keyboard_new(void) {
+  BarBarKeyboard *kb;
+
+  kb = g_object_new(BARBAR_TYPE_KEYBOARD, NULL);
+
+  return BARBAR_SENSOR(kb);
 }

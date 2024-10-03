@@ -254,6 +254,11 @@ static void g_barbar_clock_start(BarBarSensor *sensor) {
                                         g_barbar_clock_update, clock, NULL);
 }
 
+/**
+ * g_barbar_clock_new:
+ *
+ * Returns: (transfer full): a `BarBarClock`
+ */
 BarBarSensor *g_barbar_clock_new(const char *format) {
   BarBarClock *clock;
 
