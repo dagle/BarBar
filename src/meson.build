@@ -272,7 +272,7 @@ if get_option('introspection')
     nsversion: '1.0',
     symbol_prefix: ['g_barbar', 'barbar'],
     identifier_prefix : ['BarBar'],
-    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Playerctl-2.0', 'Gtk4LayerShell-1.0', 'Json-1.0' ],
+    includes: [ 'GObject-2.0', 'Gio-2.0', 'Gtk-4.0', 'Gtk4LayerShell-1.0', 'Json-1.0' ],
     dependencies: deps,
     extra_args: gir_args,
     fatal_warnings: true,

@@ -665,7 +665,7 @@ static void g_barbar_seeked(GDBusProxy *_proxy, gint64 position,
   player->position = position;
 }
 
-static void playerctl_player_properties_changed_callback(
+static void g_barbar_mpris_player_properties_changed_callback(
     GDBusProxy *_proxy, GVariant *changed_properties,
     const gchar *const *invalidated_properties, gpointer user_data) {
 
@@ -760,15 +760,15 @@ static void g_barbar_mpris_player_start(BarBarSensor *sensor) {
 
   g_barbar_mpris_player_initial_values(player);
   g_signal_emit(G_OBJECT(player), mpris_signal, 0);
-  g_signal_connect(player->proxy, "g-properties-changed",
-                   G_CALLBACK(playerctl_player_properties_changed_callback),
-                   player);
+  g_signal_connect(
+      player->proxy, "g-properties-changed",
+      G_CALLBACK(g_barbar_mpris_player_properties_changed_callback), player);
 
   g_signal_connect(player->proxy, "seeked", G_CALLBACK(g_barbar_seeked),
                    player);
 
   // g_signal_connect(player->proxy, "notify::g-name-owner",
-  //                  G_CALLBACK(playerctl_player_name_owner_changed_callback),
+  //                  G_CALLBACK(g_barbar_mpris_player_name_owner_changed_callback),
   //                  player);
 
   // player->priv->initted = TRUE;

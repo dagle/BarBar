@@ -29,7 +29,6 @@ udev = dependency('libudev')
 module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0')
-systray = dependency('statusnotifier-systray-gtk4', required: get_option('systray'))
 
 libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
@@ -47,6 +46,35 @@ gtk = dependency('gtk4')
 gtk_layer_shell_dep = dependency('gtk4-layer-shell',
         required: true,
         fallback : ['gtk4-layer-shell', 'gtk_layer_shell'])
+
+systray = dependency('statusnotifier-systray-gtk4', 
+  required: get_option('systray'),
+  fallback: ['statusnotifier-systray-gtk4'])
+
+scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-page'))
+if scdoc.found()
+	scdoc_prog = find_program(scdoc.get_variable(pkgconfig: 'scdoc'), native: true)
+	mandir = get_option('mandir')
+	man_files = [
+    'barbar.5.scd',
+	]
+	foreach filename : man_files
+		topic = filename.split('.')[-3].split('/')[-1]
+		section = filename.split('.')[-2]
+		output = '@0@.@1@'.format(topic, section)
+
+		custom_target(
+			output,
+			input: filename,
+			output: output,
+			command: scdoc_prog,
+			install: true,
+			feed: true,
+			capture: true,
+			install_dir: '@0@/man@1@'.format(mandir, section)
+		)
+	endforeach
+endif
 
 deps = [
   gtk_layer_shell_dep,
@@ -85,15 +113,14 @@ wayland_protos = dependency('wayland-protocols')
 subdir('src')
 
 if get_option('docs')
-  # subdir('docs')
+  subdir('docs')
 endif
 
 install_data('barbar.desktop', install_dir: barbar_applicationsdir)
 
 install_data('barbar.svg', install_dir: barbar_icondir)
 
-install_data('style.css', install_dir: sysconfdir)
-
+install_data('style.css', install_dir: sysconfdir / 'xdg/barbar')
 
 summary({'Install Prefix': get_option('prefix'),
         'Compiler': cc.get_id(),

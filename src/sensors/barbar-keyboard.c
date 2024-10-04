@@ -36,11 +36,6 @@ static void g_barbar_keyboard_get_property(GObject *object, guint property_id,
                                            GValue *value, GParamSpec *pspec) {
   BarBarKeyboard *keyboard = BARBAR_KEYBOARD(object);
 
-  if (!keyboard->device) {
-    g_value_set_boolean(value, FALSE);
-    return;
-  }
-
   switch (property_id) {
   case PROP_DEVICE:
     g_value_set_object(value, keyboard->device);
@@ -77,9 +72,9 @@ static void g_barbar_keyboard_start(BarBarSensor *sensor) {
 }
 
 /**
- * g_barbar_uptime_new:
+ * g_barbar_keyboard_new:
  *
- * Returns: (transfer full): a `BarBarUptime`
+ * Returns: (transfer full): a `BarBarKeyboard`
  */
 BarBarSensor *g_barbar_keyboard_new(void) {
   BarBarKeyboard *kb;
