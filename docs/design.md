@@ -47,6 +47,7 @@ to a different widget, since it's decoupled.
 For other widgets, it takes a references to a sensor.
 
 ```blueprint
+# TODO: this is wrong
 BarBar.MprisControl {
   child: mpris; // we take a reference to the child.
 }

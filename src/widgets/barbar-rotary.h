@@ -33,6 +33,20 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarRotary, g_barbar_rotary, BARBAR, ROTARY, GtkWidget)
 
+void g_barbar_rotary_set_mode(BarBarRotary *rotary, guint mode);
+
+void g_barbar_rotary_set_value(BarBarRotary *self, double value);
+
+void g_barbar_rotary_set_background(BarBarRotary *self, const char *background);
+
+void g_barbar_rotary_set_width_procentage(BarBarRotary *self, float procent);
+
+void g_barbar_rotary_set_min_value(BarBarRotary *self, double value);
+
+void g_barbar_rotary_set_max_value(BarBarRotary *self, double value);
+
+void g_barbar_rotary_set_inverted(BarBarRotary *self, gboolean inverted);
+
 GtkWidget *g_barbar_rotary_new(void);
 
 G_END_DECLS

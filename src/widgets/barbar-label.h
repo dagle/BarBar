@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "sensors/barbar-sensor.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -25,5 +26,16 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_LABEL (g_barbar_label_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarLabel, g_barbar_label, BARBAR, LABEL, GtkWidget)
+
+void barbar_label_set_child(BarBarLabel *label, GtkLabel *child);
+GtkWidget *g_barbar_label_get_child(BarBarLabel *label);
+
+void g_barbar_label_set_sensor(BarBarLabel *label, BarBarSensor *sensor);
+BarBarSensor *g_barbar_label_get_sensor(BarBarLabel *label);
+
+void g_barbar_label_set_templ(BarBarLabel *label, const char *templ);
+const char *g_barbar_label_get_templ(BarBarLabel *label);
+
+GtkWidget *g_barbar_label_new(void);
 
 G_END_DECLS

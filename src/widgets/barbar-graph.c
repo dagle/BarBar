@@ -604,6 +604,11 @@ static void g_barbar_graph_start(GtkWidget *widget) {
       g_timeout_add_full(0, self->interval, g_barbar_graph_update, self, NULL);
 }
 
+/**
+ * g_barbar_graph_new:
+ *
+ * Returns: (transfer full): a `BarBarGraph`
+ */
 GtkWidget *g_barbar_graph_new(void) {
   return g_object_new(BARBAR_TYPE_GRAPH, NULL);
 }

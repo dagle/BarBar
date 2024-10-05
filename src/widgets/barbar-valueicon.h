@@ -27,4 +27,17 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarValueIcon, g_barbar_value_icon, BARBAR, VALUE_ICON,
                      GtkWidget)
 
+void g_barbar_value_icon_set_icons(BarBarValueIcon *icons, const char **names);
+
+void g_barbar_value_icon_set_upper(BarBarValueIcon *icons, double upper);
+double g_barbar_value_icon_get_upper(BarBarValueIcon *icons);
+
+void g_barbar_value_icon_set_lower(BarBarValueIcon *icons, double lower);
+double g_barbar_value_icon_get_lower(BarBarValueIcon *icons);
+
+void g_barbar_value_icon_set_value(BarBarValueIcon *icons, double value);
+double g_barbar_value_icon_get_value(BarBarValueIcon *icons);
+
+GtkWidget *g_barbar_value_icon_new(char **icons);
+
 G_END_DECLS

@@ -99,14 +99,29 @@ static void g_barbar_rotary_set_value_internal(BarBarRotary *self,
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_VALUE]);
 }
 
-static void g_barbar_rotary_set_value(BarBarRotary *self, double value) {
+/**
+ * g_barbar_rotary_set_value:
+ * @self: a `BarBarRotary`
+ * @value: the current value
+ *
+ * Updates the current value
+ */
+void g_barbar_rotary_set_value(BarBarRotary *self, double value) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
   g_barbar_rotary_set_value_internal(self, value);
 }
 
-static void g_barbar_rotary_set_background(BarBarRotary *self,
-                                           const char *background) {
+/**
+ * g_barbar_rotary_set_background:
+ * @self: a `BarBarRotary`
+ * @background: a color string
+ *
+ * Sets the background color of the rotary.
+ * It's used color the unfilled arena
+ */
+void g_barbar_rotary_set_background(BarBarRotary *self,
+                                    const char *background) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
   gdk_rgba_parse(&self->circle_color, background);
@@ -120,7 +135,15 @@ static void update_stroke(BarBarRotary *self) {
   self->stroke = gsk_stroke_new(size);
 }
 
-static void g_barbar_rotary_set_procentage(BarBarRotary *self, float procent) {
+/**
+ * g_barbar_rotary_set_width_procentage:
+ * @self: a `BarBarRotary`
+ * @procent: amout to fill
+ *
+ * How much of the circle should be filled. If it's
+ * less than 1 there will a hole in the middle.
+ */
+void g_barbar_rotary_set_width_procentage(BarBarRotary *self, float procent) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
   self->procentage = procent;
@@ -128,7 +151,15 @@ static void g_barbar_rotary_set_procentage(BarBarRotary *self, float procent) {
   update_stroke(self);
 }
 
-static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
+/**
+ * g_barbar_rotary_set_max_value:
+ * @self: a `BarBarRotary`
+ * @value: the max value
+ *
+ * Sets the max value, used with the current
+ * value to calculate how much of the circle to fill
+ */
+void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
   if (value == self->max_value)
@@ -143,7 +174,15 @@ static void g_barbar_rotary_set_max_value(BarBarRotary *self, double value) {
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MAX_VALUE]);
 }
 
-static void g_barbar_rotary_set_min_value(BarBarRotary *self, double value) {
+/**
+ * g_barbar_rotary_set_min_value:
+ * @self: a `BarBarRotary`
+ * @value: a color string
+ *
+ * Sets the min value, used with the current
+ * value to calculate how much of the circle to fill
+ */
+void g_barbar_rotary_set_min_value(BarBarRotary *self, double value) {
   g_return_if_fail(BARBAR_IS_ROTARY(self));
 
   if (value == self->min_value)
@@ -158,16 +197,36 @@ static void g_barbar_rotary_set_min_value(BarBarRotary *self, double value) {
   g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MIN_VALUE]);
 }
 
-static void g_barbar_rotary_set_inverted(BarBarRotary *rotary, gboolean value) {
-  g_return_if_fail(BARBAR_IS_ROTARY(rotary));
+/**
+ * g_barbar_rotary_set_inverted:
+ * @self: a `BarBarRotary`
+ * @inverted: mode to set
+ *
+ * Sets if the rotary should be inverted.
+ * Inverted means that it filled clockwise
+ * or counter clockwise.
+ */
+void g_barbar_rotary_set_inverted(BarBarRotary *self, gboolean inverted) {
+  g_return_if_fail(BARBAR_IS_ROTARY(self));
 
-  if (rotary->inverted == value) {
+  if (self->inverted == inverted) {
     return;
   }
-  rotary->inverted = value;
+  self->inverted = inverted;
+
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_INVERTED]);
 }
 
-static void g_barbar_rotary_set_mode(BarBarRotary *rotary, guint mode) {
+/**
+ * g_barbar_rotary_set_mode:
+ * @rotary: a `BarBarRotary`
+ * @mode: what mode to set
+ *
+ * Sets what mode we should use.
+ * If we should use height for width or
+ * width for height.
+ */
+void g_barbar_rotary_set_mode(BarBarRotary *rotary, GtkSizeRequestMode mode) {
   g_return_if_fail(BARBAR_IS_ROTARY(rotary));
 
   if (rotary->mode == mode) {
@@ -194,7 +253,7 @@ static void g_barbar_rotary_set_property(GObject *object, guint property_id,
     g_barbar_rotary_set_background(rotary, g_value_get_string(value));
     break;
   case PROP_WIDTH_PROCENT:
-    g_barbar_rotary_set_procentage(rotary, g_value_get_float(value));
+    g_barbar_rotary_set_width_procentage(rotary, g_value_get_float(value));
     break;
   case PROP_MIN_VALUE:
     g_barbar_rotary_set_min_value(rotary, g_value_get_double(value));

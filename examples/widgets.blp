@@ -155,40 +155,42 @@ BarBar.Bar {
       label: bind pomodoro.current;
     }
 
-    [end]
-    BarBar.Label {
-      sensor: mpris;
-      templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.playback_status}}";
-
-      [child]
-      Gtk.Label {}
-    }
-
     // [end]
-    // Gtk.Box {
-    //   // play button
-    //   // BarBar.PlayButton {
-    //   // player: player;
-    //   // 
-    //   // }
-    //   Gtk.Button {
-    //     clicked => $g_barbar_player_toggle_play(player) swapped;
-    //   }
+    // BarBar.Label {
+    //   sensor: mpris;
+    //   templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.playback_status}}";
     // 
-    //   // stop button
-    //   Gtk.Button {
-    //     icon-name: "media-playback-start-symbolic";
-    //     clicked => $g_barbar_player_stop(player) swapped;
-    //   }
-    // 
-    //   BarBar.Label {
-    //     sensor: player;
-    //     templ: "{{BarBarMrpisPlayer.artist}} - {{BarBarMprisPlayer.song}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
-    // 
-    //     [child]
-    //     Gtk.Label {}
-    //   }
+    //   [child]
+    //   Gtk.Label {}
     // }
+
+    [end]
+    Gtk.Box {
+      // play button
+      // BarBar.PlayButton {
+      // player: player;
+      // 
+      // }
+      // Gtk.Button {
+      // clicked => $g_barbar_player_toggle_play(player) swapped;
+      // }
+      // stop button
+      Gtk.Button {
+        icon-name: "media-playback-start-symbolic";
+        // clicked => $g_barbar_player_stop(player) swapped;
+      }
+
+      // Gtk.Label {
+      //   label: "apa";
+      // }
+      BarBar.Label {
+        sensor: mpris;
+        templ: "{{BarBarMrpisPlayer.artist}} - {{BarBarMprisPlayer.song}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
+
+        [child]
+        Gtk.Label {}
+      }
+    }
   }
 }
 

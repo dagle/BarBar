@@ -89,8 +89,7 @@ static void g_barbar_value_icon_update_icon(BarBarValueIcon *icons) {
   gtk_image_set_from_icon_name(GTK_IMAGE(icons->image), name);
 }
 
-static void g_barbar_value_icon_set_icons(BarBarValueIcon *icons,
-                                          const char **names) {
+void g_barbar_value_icon_set_icons(BarBarValueIcon *icons, const char **names) {
   char **tmp;
   g_return_if_fail(BARBAR_IS_VALUE_ICON(icons));
 
@@ -102,8 +101,14 @@ static void g_barbar_value_icon_set_icons(BarBarValueIcon *icons,
   g_object_notify_by_pspec(G_OBJECT(icons), icons_props[PROP_ICONS]);
 }
 
-static void g_barbar_value_icon_set_upper(BarBarValueIcon *icons,
-                                          double upper) {
+/**
+ * g_barbar_value_icon_set_upper:
+ * @icons: a `BarBarValueIcon`
+ * @upper: upper treshold
+ *
+ * Sets the upper value which control when the value will swap
+ */
+void g_barbar_value_icon_set_upper(BarBarValueIcon *icons, double upper) {
   g_return_if_fail(BARBAR_IS_VALUE_ICON(icons));
   if (icons->upper == upper) {
     return;
@@ -113,8 +118,14 @@ static void g_barbar_value_icon_set_upper(BarBarValueIcon *icons,
   g_object_notify_by_pspec(G_OBJECT(icons), icons_props[PROP_UPPER]);
 }
 
-static void g_barbar_value_icon_set_lower(BarBarValueIcon *icons,
-                                          double lower) {
+/**
+ * g_barbar_value_icon_set_lower:
+ * @icons: a `BarBarValueIcon`
+ * @lower: lower treshold
+ *
+ * Sets the lower value which control when the value will swap
+ */
+void g_barbar_value_icon_set_lower(BarBarValueIcon *icons, double lower) {
   g_return_if_fail(BARBAR_IS_VALUE_ICON(icons));
   if (icons->lower == lower) {
     return;
@@ -125,8 +136,14 @@ static void g_barbar_value_icon_set_lower(BarBarValueIcon *icons,
   g_object_notify_by_pspec(G_OBJECT(icons), icons_props[PROP_LOWER]);
 }
 
-static void g_barbar_value_icon_set_value(BarBarValueIcon *icons,
-                                          double value) {
+/**
+ * g_barbar_value_icon_set_value:
+ * @icons: a `BarBarValueIcon`
+ * @value: current value treshold
+ *
+ * Sets the current value
+ */
+void g_barbar_value_icon_set_value(BarBarValueIcon *icons, double value) {
   g_return_if_fail(BARBAR_IS_VALUE_ICON(icons));
   if (icons->value == value) {
     return;
@@ -258,4 +275,42 @@ static void g_barbar_value_icon_init(BarBarValueIcon *icons) {
   icons->image = gtk_image_new();
 
   gtk_widget_set_parent(icons->image, GTK_WIDGET(icons));
+}
+
+/**
+ * g_barbar_value_icon_get_upper:
+ * @icons: a `BarBarValueIcon`
+ *
+ * Returns: the upper value
+ */
+double g_barbar_value_icon_get_upper(BarBarValueIcon *icons) {
+  return icons->upper;
+}
+
+/**
+ * g_barbar_value_icon_get_lower:
+ * @icons: a `BarBarValueIcon`
+ *
+ * Returns: the lower value
+ */
+double g_barbar_value_icon_get_lower(BarBarValueIcon *icons) {
+  return icons->lower;
+}
+
+/**
+ * g_barbar_value_icon_get_value:
+ * @icons: a `BarBarValueIcon`
+ *
+ * Returns: the current value
+ */
+double g_barbar_value_icon_get_value(BarBarValueIcon *icons) {
+  return icons->value;
+}
+/**
+ * g_barbar_value_icon_new:
+ *
+ * Returns: (transfer full): a `BarBarValueIcon`
+ */
+GtkWidget *g_barbar_value_icon_new(char **icons) {
+  return g_object_new(BARBAR_TYPE_VALUE_ICON, "icons", icons);
 }
