@@ -543,8 +543,8 @@ static void g_barbar_mpris_player_get_property(GObject *object,
     g_value_set_boolean(value, prev);
     break;
   }
-  case N_PROPERTIES: {
-    g_value_set_string(value, "apa");
+  case PROP_LENGTH: {
+    g_value_set_uint64(value, 8);
     break;
   }
   default:
@@ -650,13 +650,7 @@ static void g_barbar_mpris_player_class_init(BarBarMprisPlayerClass *class) {
 }
 
 static void g_barbar_mpris_player_init(BarBarMprisPlayer *self) {
-  GParamSpec *pspec;
   self->bus_type = G_BUS_TYPE_SESSION;
-
-  pspec = g_param_spec_string("dyn", NULL, "A dynamic property", NULL,
-                              G_PARAM_READWRITE);
-  g_object_class_install_property(G_OBJECT_GET_CLASS(self), N_PROPERTIES,
-                                  pspec);
 }
 
 static void g_barbar_seeked(GDBusProxy *_proxy, gint64 position,

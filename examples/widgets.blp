@@ -175,17 +175,16 @@ BarBar.Bar {
       // clicked => $g_barbar_player_toggle_play(player) swapped;
       // }
       // stop button
-      Gtk.Button {
-        icon-name: "media-playback-start-symbolic";
-        // clicked => $g_barbar_player_stop(player) swapped;
-      }
-
+      // Gtk.Button {
+      // icon-name: "media-playback-start-symbolic";
+      // clicked => $g_barbar_player_stop(player) swapped;
+      // }
       // Gtk.Label {
       //   label: "apa";
       // }
       BarBar.Label {
         sensor: mpris;
-        templ: "{{BarBarMrpisPlayer.artist}} - {{BarBarMprisPlayer.song}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
+        templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.title}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
 
         [child]
         Gtk.Label {}
@@ -206,7 +205,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "wlan0";
+  interface: "br0";
 }
 
 BarBar.Backlight backlight {}
