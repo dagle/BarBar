@@ -10,7 +10,9 @@
 struct _BarBarPlayButton {
   GtkButton parent_instance;
   BarBarMprisPlaybackStatus status;
-  char *str;
+
+  // GArray *widgets;
+  // guint index;
 };
 
 enum {
@@ -18,10 +20,10 @@ enum {
 
   PROP_STATUS,
 
-  NUM_PROPERTIES,
+  N_PROPERTIES,
 };
 
-static GParamSpec *button_props[NUM_PROPERTIES] = {
+static GParamSpec *button_props[N_PROPERTIES] = {
     NULL,
 };
 
@@ -32,8 +34,8 @@ void g_barbar_play_button_set_status(BarBarPlayButton *button,
   g_return_if_fail(BARBAR_IS_PLAY_BUTTON(button));
   const char *icon_name;
 
-  if (button->status == status)
-    return;
+  // if (button->status == status)
+  //   return;
 
   button->status = status;
 
@@ -100,10 +102,12 @@ static void g_barbar_play_button_class_init(BarBarPlayButtonClass *class) {
    *
    * [enum@BarBarPlayback.status] status of the player connected to the button
    */
-  button_props[PROP_STATUS] =
-      g_param_spec_enum("status", NULL, NULL, BARBAR_TYPE_PLAYBACK_STATUS,
-                        BARBAR_PLAYBACK_STATUS_STOPPED,
-                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  button_props[PROP_STATUS] = g_param_spec_enum(
+      "status", NULL, NULL, BARBAR_TYPE_PLAYBACK_STATUS,
+      BARBAR_PLAYBACK_STATUS_STOPPED,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties(gobject_class, N_PROPERTIES, button_props);
 }
 
 static void g_barbar_play_button_init(BarBarPlayButton *self) {

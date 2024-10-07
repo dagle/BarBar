@@ -25,6 +25,7 @@
 #pragma once
 
 #include "gio/gio.h"
+#include "sensors/barbar-interval-sensor.h"
 #include "sensors/barbar-sensor.h"
 #include <glib-object.h>
 #include <glib.h>
@@ -32,6 +33,7 @@
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_MPRIS_PLAYER (g_barbar_mpris_player_get_type())
+
 G_DECLARE_FINAL_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, BARBAR,
                      MPRIS_PLAYER, BarBarSensor)
 

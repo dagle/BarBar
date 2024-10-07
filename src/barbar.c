@@ -38,6 +38,7 @@ void g_barbar_init(void) {
   g_barbar_value_icon_get_type();
   g_barbar_cpu_processes_get_type();
   g_barbar_event_switcher_get_type();
+  g_barbar_play_button_get_type();
 
   g_barbar_github_activity_get_type();
 

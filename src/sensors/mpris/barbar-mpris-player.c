@@ -3,6 +3,7 @@
 #include "barbar-error.h"
 #include "glib.h"
 #include "mpris.h"
+#include "sensors/barbar-interval-sensor.h"
 #include "sensors/barbar-sensor.h"
 #include "sensors/mpris/barbar-mpris-constants.h"
 #include <gio/gio.h>
@@ -38,6 +39,9 @@ struct _BarBarMprisPlayer {
   gboolean can_control;
   gint64 position;
   double volume;
+
+  guint source_id;
+  guint interval;
 };
 
 // 17
@@ -66,6 +70,8 @@ enum {
   PROP_CAN_GO_NEXT,
   PROP_CAN_GO_PREV,
 
+  PROP_INTERVAL,
+
   N_PROPERTIES
 };
 
@@ -82,9 +88,12 @@ static GParamSpec *mpris_player_props[N_PROPERTIES] = {
 
 static guint mpris_signal;
 
-static guint connection_signals[LAST_SIGNAL] = {0};
+// static guint connection_signals[LAST_SIGNAL] = {0};
 
 static void g_barbar_mpris_player_start(BarBarSensor *sensor);
+
+static void g_barbar_mpris_player_start_timer(BarBarMprisPlayer *player);
+static void g_barbar_mpris_player_stop_timer(BarBarMprisPlayer *player);
 
 // static gboolean g_barbar_mpris_player_initable_init(GInitable *initable,
 //                                                     GCancellable
@@ -113,6 +122,13 @@ g_barbar_mpris_player_set_playback_status_(BarBarMprisPlayer *player,
   }
 
   player->playback = playback;
+
+  if (player->playback == BARBAR_PLAYBACK_STATUS_PLAYING) {
+    g_barbar_mpris_player_start_timer(player);
+  } else {
+    g_barbar_mpris_player_stop_timer(player);
+  }
+
   g_object_notify_by_pspec(G_OBJECT(player),
                            mpris_player_props[PROP_PLAYBACK_STATUS]);
 }
@@ -156,9 +172,7 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
     return;
   }
 
-  player->playback = playback;
-
-  switch (player->playback) {
+  switch (playback) {
   case BARBAR_PLAYBACK_STATUS_PLAYING:
     mpris_org_mpris_media_player2_player_call_play(player->proxy, NULL,
                                                    mpris_play_cb, player);
@@ -172,6 +186,7 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
                                                    mpris_stop_cb, player);
     break;
   }
+  g_barbar_mpris_player_set_playback_status_(player, playback);
 }
 
 static void g_barbar_mpris_player_set_loop_status_(BarBarMprisPlayer *player,
@@ -385,6 +400,7 @@ static void g_barbar_mpris_player_initial_values(BarBarMprisPlayer *player) {
 
   const gchar *playback_status_str =
       mpris_org_mpris_media_player2_player_get_playback_status(player->proxy);
+  // printf("playback: %s\n", playback_status_str);
 
   if (g_barbar_playback_status_enum(playback_status_str, &playback)) {
     g_barbar_mpris_player_set_playback_status_(player, playback);
@@ -446,8 +462,7 @@ static void g_barbar_mpris_player_set_property(GObject *object,
   //   break;
   // }
   case PROP_PLAYBACK_STATUS:
-    // g_barbar_mpris_player_set_playback_status(player,
-    // g_value_get_enum(value));
+    g_barbar_mpris_player_set_playback_status(player, g_value_get_enum(value));
     break;
   case PROP_LOOP_STATUS:
     g_barbar_mpris_player_set_loop_status(player, g_value_get_enum(value));
@@ -457,6 +472,10 @@ static void g_barbar_mpris_player_set_property(GObject *object,
     break;
   case PROP_POSITION:
     break;
+  case PROP_INTERVAL: {
+    player->interval = g_value_get_uint(value);
+    break;
+  }
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -544,7 +563,11 @@ static void g_barbar_mpris_player_get_property(GObject *object,
     break;
   }
   case PROP_LENGTH: {
-    g_value_set_uint64(value, 8);
+    g_value_set_uint64(value, player->length);
+    break;
+  }
+  case PROP_INTERVAL: {
+    g_value_set_uint(value, player->interval);
     break;
   }
   default:
@@ -632,6 +655,10 @@ static void g_barbar_mpris_player_class_init(BarBarMprisPlayerClass *class) {
   mpris_player_props[PROP_CAN_GO_PREV] = g_param_spec_boolean(
       "can-go-prev", "Can go prev", "If the player can go to the previous",
       FALSE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  mpris_player_props[PROP_INTERVAL] = g_param_spec_uint(
+      "interval", NULL, NULL, 0, G_MAXUINT, 1000,
+      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, N_PROPERTIES,
                                     mpris_player_props);
@@ -766,7 +793,34 @@ static void g_barbar_mpris_player_start(BarBarSensor *sensor) {
   //                  player);
 
   // player->priv->initted = TRUE;
+
   return;
+}
+
+static gboolean tick(gpointer data) {
+  BarBarMprisPlayer *player = BARBAR_MPRIS_PLAYER(data);
+
+  player->position += player->interval;
+  g_object_notify_by_pspec(G_OBJECT(player), mpris_player_props[PROP_POSITION]);
+
+  g_signal_emit(G_OBJECT(player), mpris_signal, 0);
+  return TRUE;
+}
+
+static void g_barbar_mpris_player_start_timer(BarBarMprisPlayer *player) {
+  if (player->source_id > 0) {
+    g_source_remove(player->source_id);
+  }
+
+  player->source_id =
+      g_timeout_add_full(0, player->interval, tick, player, NULL);
+}
+
+static void g_barbar_mpris_player_stop_timer(BarBarMprisPlayer *player) {
+  if (player->source_id > 0) {
+    g_source_remove(player->source_id);
+    player->source_id = 0;
+  }
 }
 
 BarBarSensor *g_barbar_mpris_player_new(char *player_name, GBusType type) {

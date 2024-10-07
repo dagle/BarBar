@@ -18,10 +18,11 @@ enum {
   PROP_0,
 
   PROP_CHILD,
-  NUM_PROPERTIES,
+  PROP_INDEX,
+  N_PROPERTIES,
 };
 
-static GParamSpec *properties[NUM_PROPERTIES] = {
+static GParamSpec *properties[N_PROPERTIES] = {
     NULL,
 };
 
@@ -64,8 +65,13 @@ static void g_barbar_event_switcher_set_property(GObject *object,
                                                  guint property_id,
                                                  const GValue *value,
                                                  GParamSpec *pspec) {
+  BarBarEventSwitcher *switcher = BARBAR_EVENT_SWITCHER(object);
+
   switch (property_id) {
   default:
+  case PROP_INDEX:
+    g_barbar_event_switcher_set_index(switcher, g_value_get_uint(value));
+    break;
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
@@ -80,6 +86,9 @@ static void g_barbar_event_switcher_get_property(GObject *object,
   switch (property_id) {
   case PROP_CHILD:
     g_value_set_object(value, switcher->stack);
+    break;
+  case PROP_INDEX:
+    g_value_set_uint(value, switcher->index);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -107,6 +116,15 @@ g_barbar_event_switcher_class_init(BarBarEventSwitcherClass *class) {
    */
   properties[PROP_CHILD] = g_param_spec_object(
       "child", NULL, NULL, GTK_TYPE_STACK, G_PARAM_READABLE);
+  /**
+   * BarBarEventSwitcher:index:
+   *
+   * The current index in the stack
+   */
+  properties[PROP_INDEX] =
+      g_param_spec_uint("index", NULL, NULL, 0, 100, 0, G_PARAM_READWRITE);
+
+  g_object_class_install_properties(gobject_class, N_PROPERTIES, properties);
 
   gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name(widget_class, "eventswitcher");
@@ -123,6 +141,19 @@ void g_barbar_event_switcher_next(BarBarEventSwitcher *switcher, gint n_press,
   guint num = g_list_model_get_n_items(G_LIST_MODEL(pages));
   switcher->index = (switcher->index + 1) % num;
   gtk_selection_model_select_item(pages, switcher->index, TRUE);
+  g_object_notify_by_pspec(G_OBJECT(switcher), properties[PROP_INDEX]);
+}
+
+void g_barbar_event_switcher_set_index(BarBarEventSwitcher *switcher,
+                                       uint index) {
+  GtkSelectionModel *pages;
+
+  pages = gtk_stack_get_pages(switcher->stack);
+  guint num = g_list_model_get_n_items(G_LIST_MODEL(pages));
+  switcher->index = index % num;
+  gtk_selection_model_select_item(pages, switcher->index, TRUE);
+
+  g_object_notify_by_pspec(G_OBJECT(switcher), properties[PROP_INDEX]);
 }
 
 void g_barbar_event_switcher_previous(BarBarEventSwitcher *switcher,
@@ -139,6 +170,7 @@ void g_barbar_event_switcher_previous(BarBarEventSwitcher *switcher,
     switcher->index--;
   }
   gtk_selection_model_select_item(pages, switcher->index, TRUE);
+  g_object_notify_by_pspec(G_OBJECT(switcher), properties[PROP_INDEX]);
 }
 
 void g_barbar_event_switcher_select(BarBarEventSwitcher *switcher,

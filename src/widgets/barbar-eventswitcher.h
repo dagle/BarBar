@@ -51,4 +51,6 @@ void g_barbar_event_switcher_select(BarBarEventSwitcher *switcher,
                                     guint position, gint n_press, gdouble x,
                                     gdouble y, GtkGestureClick *self);
 
+void g_barbar_event_switcher_set_index(BarBarEventSwitcher *switcher,
+                                       uint index);
 G_END_DECLS

@@ -168,8 +168,14 @@ static void update(gpointer data, BarBarSensor *sensor) {
 }
 
 void g_barbar_label_set_sensor(BarBarLabel *label, BarBarSensor *sensor) {
-
   g_return_if_fail(BARBAR_IS_LABEL(label));
+
+  if (sensor == NULL) {
+    g_clear_object(&label->sensor);
+    g_object_notify_by_pspec(G_OBJECT(label), label_props[PROP_SENSOR]);
+    return;
+  }
+
   g_return_if_fail(BARBAR_IS_SENSOR(sensor));
 
   if (sensor == label->sensor) {
@@ -254,7 +260,7 @@ static void g_barbar_label_class_init(BarBarLabelClass *class) {
    */
   label_props[PROP_SENSOR] = g_param_spec_object(
       "sensor", "Sensor", "Sensor producing data", BARBAR_TYPE_SENSOR,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, label_props);
 

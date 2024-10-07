@@ -70,6 +70,7 @@ libbarbar_src = [
   'widgets/barbar-activity-graph.c',
   'widgets/barbar-box.c',
   'widgets/barbar-eventswitcher.c',
+  'widgets/barbar-playbutton.c',
 
   'widgets/barbar-github-activity.c',
 ]
@@ -124,6 +125,7 @@ libbarbar_headers = [
   'widgets/barbar-box.h',
   'widgets/barbar-valueicon.h',
   'widgets/barbar-eventswitcher.h',
+  'widgets/barbar-playbutton.h',
 
   'widgets/barbar-github-activity.h',
 

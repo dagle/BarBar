@@ -166,11 +166,25 @@ BarBar.Bar {
 
     [end]
     Gtk.Box {
-      // play button
-      // BarBar.PlayButton {
-      // player: player;
-      // 
-      // }
+      BarBar.EventSwitcher switcher {
+        index: bind mpris.playback-status bidirectional;
+
+        Gtk.GestureClick left {
+          button: 1;
+          released => $g_barbar_event_switcher_next(switcher) swapped;
+        }
+
+        Gtk.Stack stack {
+          Gtk.Image {
+            icon-name: "media-playback-pause-symbolic";
+          }
+
+          Gtk.Image {
+            icon-name: "media-playback-start-symbolic";
+          }
+        }
+      }
+
       // Gtk.Button {
       // clicked => $g_barbar_player_toggle_play(player) swapped;
       // }
@@ -178,9 +192,6 @@ BarBar.Bar {
       // Gtk.Button {
       // icon-name: "media-playback-start-symbolic";
       // clicked => $g_barbar_player_stop(player) swapped;
-      // }
-      // Gtk.Label {
-      //   label: "apa";
       // }
       BarBar.Label {
         sensor: mpris;
@@ -205,7 +216,7 @@ BarBar.Cpu cpu {
 }
 
 BarBar.Network network {
-  interface: "br0";
+  interface: "wlan0";
 }
 
 BarBar.Backlight backlight {}
