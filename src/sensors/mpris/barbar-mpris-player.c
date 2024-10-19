@@ -162,9 +162,8 @@ static void mpris_pause_cb(GObject *mpris, GAsyncResult *res,
                            mpris_player_props[PROP_PLAYBACK_STATUS]);
 }
 
-static void
-g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
-                                          BarBarMprisPlaybackStatus playback) {
+void g_barbar_mpris_player_set_playback_status(
+    BarBarMprisPlayer *player, BarBarMprisPlaybackStatus playback) {
 
   g_return_if_fail(BARBAR_IS_MPRIS_PLAYER(player));
 
@@ -187,6 +186,35 @@ g_barbar_mpris_player_set_playback_status(BarBarMprisPlayer *player,
     break;
   }
   g_barbar_mpris_player_set_playback_status_(player, playback);
+}
+
+void next_cb(GObject *source_object, GAsyncResult *res, gpointer data) {}
+
+void prev_cb(GObject *source_object, GAsyncResult *res, gpointer data) {}
+
+void g_barbar_mpris_player_next(BarBarMprisPlayer *player) {
+  mpris_org_mpris_media_player2_player_call_next(player->proxy, NULL, next_cb,
+                                                 player);
+}
+
+void g_barbar_mpris_player_previous(BarBarMprisPlayer *player) {
+  mpris_org_mpris_media_player2_player_call_previous(player->proxy, NULL,
+                                                     prev_cb, player);
+}
+
+void g_barbar_mpris_player_stop(BarBarMprisPlayer *player) {
+  g_barbar_mpris_player_set_playback_status(player,
+                                            BARBAR_PLAYBACK_STATUS_STOPPED);
+}
+
+void g_barbar_mpris_player_play(BarBarMprisPlayer *player) {
+  g_barbar_mpris_player_set_playback_status(player,
+                                            BARBAR_PLAYBACK_STATUS_PLAYING);
+}
+
+void g_barbar_mpris_player_pause(BarBarMprisPlayer *player) {
+  g_barbar_mpris_player_set_playback_status(player,
+                                            BARBAR_PLAYBACK_STATUS_PAUSED);
 }
 
 static void g_barbar_mpris_player_set_loop_status_(BarBarMprisPlayer *player,
@@ -527,39 +555,27 @@ static void g_barbar_mpris_player_get_property(GObject *object,
     g_value_set_string(value, player->artist);
     break;
   case PROP_CAN_CONTROL: {
-    gboolean control =
-        mpris_org_mpris_media_player2_player_get_can_control(player->proxy);
-    g_value_set_boolean(value, control);
+    g_value_set_boolean(value, player->can_control);
     break;
   }
   case PROP_CAN_PLAY: {
-    gboolean play =
-        mpris_org_mpris_media_player2_player_get_can_play(player->proxy);
-    g_value_set_boolean(value, play);
+    g_value_set_boolean(value, player->can_play);
     break;
   }
   case PROP_CAN_PAUSE: {
-    gboolean pause =
-        mpris_org_mpris_media_player2_player_get_can_pause(player->proxy);
-    g_value_set_boolean(value, pause);
+    g_value_set_boolean(value, player->can_pause);
     break;
   }
   case PROP_CAN_SEEK: {
-    gboolean seek =
-        mpris_org_mpris_media_player2_player_get_can_seek(player->proxy);
-    g_value_set_boolean(value, seek);
+    g_value_set_boolean(value, player->can_seek);
     break;
   }
   case PROP_CAN_GO_NEXT: {
-    gboolean next =
-        mpris_org_mpris_media_player2_player_get_can_go_next(player->proxy);
-    g_value_set_boolean(value, next);
+    g_value_set_boolean(value, player->can_next);
     break;
   }
   case PROP_CAN_GO_PREV: {
-    gboolean prev =
-        mpris_org_mpris_media_player2_player_get_can_go_previous(player->proxy);
-    g_value_set_boolean(value, prev);
+    g_value_set_boolean(value, player->can_prev);
     break;
   }
   case PROP_LENGTH: {

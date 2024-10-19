@@ -1,8 +1,10 @@
 #include "barbar-util.h"
 #include "barbar.h"
+#include "config.h"
+#include "glib.h"
 #include <gtk/gtk.h>
 #include <gtk4-layer-shell.h>
-#ifdef STATUSNOTIFIER_SYSTRAY
+#ifdef SYSTRAY
 #include <snsystray.h>
 #endif
 #include <string.h>
@@ -11,8 +13,18 @@
 
 GList *sensors;
 
-G_MODULE_EXPORT char *barbar_strdup_printf(GtkWidget *label, const char *format,
-                                           ...) {
+void on_button_clicked1(GtkButton *button, gpointer user_data) {
+  g_print("Button1 Clicked!\n");
+}
+void on_button_clicked2(GtkButton *button, gpointer user_data) {
+  g_print("Button2 Clicked!\n");
+}
+void on_button_clicked3(GtkButton *button, gpointer user_data) {
+  g_print("Button3 Clicked!\n");
+}
+
+G_MODULE_EXPORT char *g_barbar_strdup_printf(GtkWidget *label,
+                                             const char *format, ...) {
   gchar *buffer;
   va_list args;
 
@@ -67,24 +79,37 @@ void g_barbar_toggle_stack(GtkToggleButton *button, gpointer user_data) {
   gtk_selection_model_select_item(pages, idx, TRUE);
 }
 
+static void g_barbar_resources_install(void) {
+  GError *error = NULL;
+  GResource *resource;
+
+  resource = g_resource_load(PKGDATADIR "/barbar.gresource", &error);
+  printf("path: %s\n", PKGDATADIR "/barbar.gresource");
+  if (error) {
+    g_printerr("Error loading resources: %s\n", error->message);
+    return;
+  }
+
+  g_resources_register(resource);
+}
+
 static void activate(GtkApplication *app, void *data) {
   GtkBuilderScope *scope;
   GtkBuilder *builder;
+  g_barbar_resources_install();
 
   scope = gtk_builder_cscope_new();
 
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
-                                  barbar_strdup_printf);
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
-                                  barbar_header_static);
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
-                                  g_barbar_event_switcher_select);
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
-                                  g_barbar_event_switcher_next);
-  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
-                                  g_barbar_event_switcher_previous);
+                                  g_barbar_strdup_printf);
   gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
                                   g_barbar_toggle_stack);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_mpris_player_play);
+  gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+                                  g_barbar_mpris_player_pause);
+  // gtk_builder_cscope_add_callback(GTK_BUILDER_CSCOPE(scope),
+  //                                 g_barbar_mpris_player_stop);
 
   g_barbar_default_style_provider("barbar/style.css");
 
@@ -98,7 +123,7 @@ static void activate(GtkApplication *app, void *data) {
     if (GTK_IS_WINDOW(object)) {
       GtkWindow *window = GTK_WINDOW(object);
       gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(window));
-      gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+      gtk_window_present(window);
     } else if (BARBAR_IS_SENSOR(object)) {
       g_object_ref(object);
       BarBarSensor *sensor = BARBAR_SENSOR(object);
@@ -128,7 +153,7 @@ int main(int argc, char **argv) {
   gtk_init();
   g_barbar_init();
 
-#ifdef STATUSNOTIFIER_SYSTRAY
+#ifdef SYSTRAY
   g_type_ensure(SN_TYPE_SYSTRAY);
 #endif
 

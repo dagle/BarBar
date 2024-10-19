@@ -1,0 +1,44 @@
+using Gtk 4.0;
+using BarBar 1.0;
+
+Gtk.Window {
+  // bar-pos: bot;
+  Gtk.ActionBar {
+    [start]
+    Gtk.Button button1 {
+      label: "button 1";
+      clicked => $on_button_clicked1();
+    }
+
+    [start]
+    Gtk.Button button2 {
+      label: "button 2";
+      clicked => $on_button_clicked2();
+    }
+
+    [start]
+    Gtk.Button button3 {
+      label: "button 3";
+      clicked => $on_button_clicked3();
+    }
+
+    [end]
+    Gtk.ScaleButton volume {
+      tooltip-markup: bind $barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
+      // tooltip-markup: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // Gtk.Label {
+      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      // use-markup: true;
+      // }
+      adjustment: Adjustment {
+        lower: 0.0;
+        upper: 1.0;
+        page-increment: 0.1;
+        step-increment: 0.1;
+        value: bind plumb.percent bidirectional;
+      };
+    }
+  }
+}
+
+BarBar.Wireplumber plumb {}

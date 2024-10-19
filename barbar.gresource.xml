@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/dagle/BarBar/icons/scalable/actions/">
+    <file alias="media-playlist-repeat-song.svg">data/icons/media-playlist-repeat-song-symbolic.svg</file>
+    <file alias="media-playlist-repeat.svg">data/icons/media-playlist-repeat-symbolic.svg</file>
+    <file alias="media-playlist-shuffle.svg">data/icons/media-playlist-shuffle-symbolic.svg</file>
+    <file alias="media-skip-backward-symbolic.svg">data/icons/media-skip-backward-symbolic.svg</file>
+    <file alias="media-skip-forward-symbolic.svg">data/icons/media-skip-forward-symbolic.svg</file>
+  </gresource>
+</gresources>

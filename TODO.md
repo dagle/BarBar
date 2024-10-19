@@ -1,6 +1,8 @@
 Can we create a auto-manager, that works that configure a device and presents it self
 as a device? This would be great for batteries, mpris etc since we could just read the device directly.
 
+- [ ] Install icons
+
 - Add https://wayland.app/protocols/xdg-output-unstable-v1 so we can restrict stuff
 to one screen
 

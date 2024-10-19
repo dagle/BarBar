@@ -1,6 +1,8 @@
 #include "barbar-eventswitcher.h"
 #include "gio/gio.h"
 #include "glib-object.h"
+#include "glib.h"
+#include "gtk/gtk.h"
 
 /**
  * BarBarEventSwitcher:
@@ -39,6 +41,7 @@ G_DEFINE_TYPE_WITH_CODE(
 void g_barbar_event_switcher_set_stack(BarBarEventSwitcher *self,
                                        GtkStack *stack) {
   // ref/unref stuff?
+  g_clear_object(&self->stack);
   self->stack = GTK_STACK(stack);
   gtk_widget_set_parent(GTK_WIDGET(self->stack), GTK_WIDGET(self));
 }
@@ -48,6 +51,7 @@ static void g_barbar_event_switcher_add_child(GtkBuildable *buildable,
                                               GObject *child,
                                               const char *type) {
   BarBarEventSwitcher *self = BARBAR_EVENT_SWITCHER(buildable);
+  GtkGesture *gesture;
 
   if (GTK_IS_STACK(child)) {
     g_barbar_event_switcher_set_stack(self, GTK_STACK(child));
@@ -132,13 +136,35 @@ g_barbar_event_switcher_class_init(BarBarEventSwitcherClass *class) {
 
 static void g_barbar_event_switcher_init(BarBarEventSwitcher *self) {}
 
+GtkWidget *get_child_by_index(GtkWidget *stack, int index) {
+  GtkWidget *child = gtk_widget_get_first_child(stack);
+  int current_index = 0;
+
+  while (child != NULL) {
+    if (current_index == index) {
+      return child;
+    }
+    child = gtk_widget_get_next_sibling(child); // Move to the next child
+    current_index++;
+  }
+
+  return NULL; // Return NULL if the index is out of bounds
+}
+
 void g_barbar_event_switcher_next(BarBarEventSwitcher *switcher, gint n_press,
                                   gdouble x, gdouble y, GtkGestureClick *self) {
 
   GtkSelectionModel *pages;
+  GtkWidget *child;
+
+  child = get_child_by_index(GTK_WIDGET(switcher->stack), switcher->index);
+  if (!child || !gtk_widget_is_sensitive(child)) {
+    return;
+  }
 
   pages = gtk_stack_get_pages(switcher->stack);
   guint num = g_list_model_get_n_items(G_LIST_MODEL(pages));
+
   switcher->index = (switcher->index + 1) % num;
   gtk_selection_model_select_item(pages, switcher->index, TRUE);
   g_object_notify_by_pspec(G_OBJECT(switcher), properties[PROP_INDEX]);
@@ -150,6 +176,7 @@ void g_barbar_event_switcher_set_index(BarBarEventSwitcher *switcher,
 
   pages = gtk_stack_get_pages(switcher->stack);
   guint num = g_list_model_get_n_items(G_LIST_MODEL(pages));
+
   switcher->index = index % num;
   gtk_selection_model_select_item(pages, switcher->index, TRUE);
 
@@ -160,6 +187,12 @@ void g_barbar_event_switcher_previous(BarBarEventSwitcher *switcher,
                                       gint n_press, gdouble x, gdouble y,
                                       GtkGestureClick *self) {
   GtkSelectionModel *pages;
+  GtkWidget *child;
+
+  child = get_child_by_index(GTK_WIDGET(switcher->stack), switcher->index);
+  if (!child || !gtk_widget_is_sensitive(child)) {
+    return;
+  }
 
   pages = gtk_stack_get_pages(switcher->stack);
 

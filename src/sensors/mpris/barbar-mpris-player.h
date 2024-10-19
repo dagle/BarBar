@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "barbar-enum.h"
 #include "gio/gio.h"
 #include "sensors/barbar-interval-sensor.h"
 #include "sensors/barbar-sensor.h"
@@ -36,6 +37,16 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(BarBarMprisPlayer, g_barbar_mpris_player, BARBAR,
                      MPRIS_PLAYER, BarBarSensor)
+
+void g_barbar_mpris_player_set_playback_status(
+    BarBarMprisPlayer *player, BarBarMprisPlaybackStatus playback);
+
+void g_barbar_mpris_player_stop(BarBarMprisPlayer *player);
+void g_barbar_mpris_player_play(BarBarMprisPlayer *player);
+void g_barbar_mpris_player_pause(BarBarMprisPlayer *player);
+
+void g_barbar_mpris_player_next(BarBarMprisPlayer *player);
+void g_barbar_mpris_player_previous(BarBarMprisPlayer *player);
 
 BarBarSensor *g_barbar_mpris_player_new(char *player_name, GBusType type);
 

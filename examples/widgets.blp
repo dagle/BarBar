@@ -41,8 +41,8 @@ BarBar.Bar {
 
     [end]
     Gtk.ScaleButton volume {
-      tooltip-markup: bind $barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
-      // tooltip-markup: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+      tooltip-markup: bind $g_barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
+      // tooltip-markup: bind $g_barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
       // Gtk.Label {
       // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
       // use-markup: true;
@@ -163,43 +163,94 @@ BarBar.Bar {
     //   [child]
     //   Gtk.Label {}
     // }
+    //
 
     [end]
     Gtk.Box {
       BarBar.EventSwitcher switcher {
         index: bind mpris.playback-status bidirectional;
 
-        Gtk.GestureClick left {
-          button: 1;
+        Gtk.GestureClick sleft {
+          button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
           released => $g_barbar_event_switcher_next(switcher) swapped;
+        }
+
+        Gtk.GestureClick sright {
+          button: 3; // 1 is primary, 3 is secondary, 2 is middle etc.
+          released => $g_barbar_event_switcher_previous(switcher) swapped;
         }
 
         Gtk.Stack stack {
           Gtk.Image {
-            icon-name: "media-playback-pause-symbolic";
+            sensitive: bind mpris.can-pause;
+            icon-name: "media-playback-start-symbolic";
           }
 
           Gtk.Image {
-            icon-name: "media-playback-start-symbolic";
+            sensitive: bind mpris.can-play;
+            icon-name: "media-playback-pause-symbolic";
           }
         }
       }
 
-      // Gtk.Button {
-      // clicked => $g_barbar_player_toggle_play(player) swapped;
-      // }
-      // stop button
-      // Gtk.Button {
-      // icon-name: "media-playback-start-symbolic";
-      // clicked => $g_barbar_player_stop(player) swapped;
-      // }
-      BarBar.Label {
-        sensor: mpris;
-        templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.title}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
+      BarBar.EventSwitcher loop {
+        index: bind mpris.loop-status bidirectional;
 
-        [child]
-        Gtk.Label {}
+        Gtk.GestureClick left {
+          button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
+          released => $g_barbar_event_switcher_next(loop) swapped;
+        }
+
+        Gtk.GestureClick right {
+          button: 3; // 1 is primary, 3 is secondary, 2 is middle etc.
+          released => $g_barbar_event_switcher_previous(loop) swapped;
+        }
+
+        Gtk.Stack {
+          Gtk.Image {
+            icon-name: "media-playlist-repeat";
+            // we do this create the same thing but to just fade it out
+            css-classes: [
+              "disabled"
+            ];
+          }
+
+          Gtk.Image {
+            icon-name: "media-playlist-repeat";
+          }
+
+          Gtk.Image {
+            icon-name: "media-playlist-repeat-song";
+          }
+        }
       }
+
+      Gtk.Button {
+        icon-name: "media-playback-stop-symbolic";
+        sensitive: bind mpris.can-play;
+        clicked => $g_barbar_mpris_player_stop(mpris) swapped;
+      }
+
+      Gtk.Button {
+        icon-name: "media-skip-forward-symbolic";
+        sensitive: bind mpris.can-go-next;
+        clicked => $g_barbar_mpris_player_next(mpris) swapped;
+      }
+
+      Gtk.Button {
+        icon-name: "media-skip-backward-symbolic";
+        sensitive: bind mpris.can-go-prev;
+        clicked => $g_barbar_mpris_player_previous(mpris) swapped;
+      }
+
+      // 
+      // BarBar.Label {
+      //   sensor: mpris;
+      //   templ: "{{BarBarMprisPlayer.artist}} - {{BarBarMprisPlayer.title}} | {{BarBarMprisPlayer.position}} / {{BarBarMprisPlayer.length}}";
+      // 
+      //   [child]
+      //   Gtk.Label {}
+      // }
     }
   }
 }

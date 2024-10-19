@@ -9,6 +9,9 @@ project(
 
 barbar_prefix = get_option('prefix')
 barbar_datadir = join_paths(barbar_prefix, get_option('datadir'))
+
+pkgdatadir =  barbar_datadir / meson.project_name()
+
 barbar_applicationsdir = join_paths(barbar_datadir, 'applications')
 barbar_icondir = join_paths(barbar_datadir, 'icons/hicolor/scalable/apps/')
 
@@ -43,11 +46,16 @@ sysconfdir = get_option('sysconfdir')
 
 gtk = dependency('gtk4')
 
-gtk_layer_shell_dep = dependency('gtk4-layer-shell',
+gtk_layer_shell_dep = dependency('gtk4-layer-shell-0',
         required: true,
-        fallback : ['gtk4-layer-shell', 'gtk_layer_shell'])
+        fallback : ['gtk4-layer-shell', 'gtk4-layer-shell-0'])
 
-systray = dependency('statusnotifier-systray-gtk4', 
+cava = dependency('cava',
+                  version : '>=0.10.3',
+                  required: get_option('cava'),
+                  fallback : ['cava', 'cava_dep'])
+
+systray = dependency('statusnotifier-systray-gtk4',
   required: get_option('systray'),
   fallback: ['statusnotifier-systray-gtk4'])
 
@@ -94,14 +102,12 @@ deps = [
   libgweather,
   libgeoclue,
   soup,
+  cava,
   # xkbcommon,
   m_dep,
   module,
 ]
 
-if get_option('systray')
-  add_project_arguments('-DSTATUSNOTIFIER_SYSTRAY', language: 'c')
-endif
 
 # like deps but only needed for the binary
 bin_deps = [
@@ -120,7 +126,15 @@ install_data('barbar.desktop', install_dir: barbar_applicationsdir)
 
 install_data('barbar.svg', install_dir: barbar_icondir)
 
-install_data('style.css', install_dir: sysconfdir / 'xdg/barbar')
+install_data('style.css', install_dir: sysconfdir / 'xdg'/ meson.project_name())
+
+
+gnome.compile_resources('barbar',
+  'barbar.gresource.xml',
+  gresource_bundle: true,
+  install: true,
+  install_dir: pkgdatadir,
+)
 
 summary({'Install Prefix': get_option('prefix'),
         'Compiler': cc.get_id(),

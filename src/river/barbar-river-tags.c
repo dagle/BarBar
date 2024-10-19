@@ -1,5 +1,6 @@
 #include "river/barbar-river-tags.h"
 #include "glib-object.h"
+#include "glibconfig.h"
 #include "gtk/gtkshortcut.h"
 #include "river-control-unstable-v1-client-protocol.h"
 #include "river-status-unstable-v1-client-protocol.h"
@@ -29,11 +30,9 @@
  */
 struct _BarBarRiverTag {
   GtkWidget parent_instance;
-
-  struct zriver_status_manager_v1 *status_manager;
-  struct zriver_control_v1 *control;
-  struct zriver_output_status_v1 *output_status;
-  struct wl_seat *seat;
+  guint focused_tags;
+  guint occupied_tags;
+  guint urgent_tags;
 
   uint nums;
   gboolean fill;
@@ -41,10 +40,20 @@ struct _BarBarRiverTag {
   GtkWidget *buttons[32];
 };
 
+typedef struct _BarBarRiverTagPrivate {
+  struct zriver_status_manager_v1 *status_manager;
+  struct zriver_control_v1 *control;
+  struct zriver_output_status_v1 *output_status;
+  struct wl_seat *seat;
+} BarBarRiverTagPrivate;
+
 enum {
   PROP_0,
 
   PROP_TAGNUMS,
+  PROP_FOCUSED_TAGS,
+  PROP_OCCUPIED_TAGS,
+  PROP_URGENT_TAGS,
 
   NUM_PROPERTIES,
 };
@@ -58,10 +67,11 @@ static void g_barbar_river_tag_root(GtkWidget *widget);
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data);
 
-G_DEFINE_TYPE_WITH_CODE(
+G_DEFINE_FINAL_TYPE_WITH_CODE(
     BarBarRiverTag, g_barbar_river_tag, GTK_TYPE_WIDGET,
-    G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
-                          g_barbar_river_tag_buildable_interface_init))
+    G_ADD_PRIVATE(BarBarRiverTag)
+        G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
+                              g_barbar_river_tag_buildable_interface_init))
 
 static GParamSpec *river_tags_props[NUM_PROPERTIES] = {
     NULL,
@@ -95,6 +105,36 @@ g_barbar_river_tag_buildable_interface_init(GtkBuildableIface *iface) {
  */
 guint g_barbar_river_tag_get_tagnums(BarBarRiverTag *river) {
   return river->nums;
+}
+
+/**
+ * g_barbar_river_tag_get_focused_tags:
+ * @river: a `BarBarRiverTag`
+ *
+ * Returns: Bitfield of what tags are focused
+ */
+guint g_barbar_river_tag_get_focused_tags(BarBarRiverTag *river) {
+  return river->focused_tags;
+}
+
+/**
+ * g_barbar_river_tag_get_occupied_tags:
+ * @river: a `BarBarRiverTag`
+ *
+ * Returns: Bitfield of what tags are occupied
+ */
+guint g_barbar_river_tag_get_occupied_tags(BarBarRiverTag *river) {
+  return river->occupied_tags;
+}
+
+/**
+ * g_barbar_river_tag_get_urgent_tags:
+ * @river: a `BarBarRiverTag`
+ *
+ * Returns: Bitfield of what tags are urgent
+ */
+guint g_barbar_river_tag_get_urgent_tags(BarBarRiverTag *river) {
+  return river->urgent_tags;
 }
 
 /**
@@ -138,6 +178,15 @@ static void g_barbar_river_tag_get_property(GObject *object, guint property_id,
   case PROP_TAGNUMS:
     g_value_set_uint(value, river->nums);
     break;
+  case PROP_FOCUSED_TAGS:
+    g_value_set_uint(value, river->focused_tags);
+    break;
+  case PROP_OCCUPIED_TAGS:
+    g_value_set_uint(value, river->occupied_tags);
+    break;
+  case PROP_URGENT_TAGS:
+    g_value_set_uint(value, river->urgent_tags);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
@@ -147,9 +196,10 @@ static guint click_signal;
 
 static void g_barbar_river_tag_finalize(GObject *object) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(object);
-
-  zriver_output_status_v1_destroy(river->output_status);
-  zriver_control_v1_destroy(river->control);
+  BarBarRiverTagPrivate *private =
+      g_barbar_river_tag_get_instance_private(river);
+  zriver_output_status_v1_destroy(private->output_status);
+  zriver_control_v1_destroy(private->control);
 
   G_OBJECT_CLASS(g_barbar_river_tag_parent_class)->finalize(object);
 }
@@ -173,6 +223,31 @@ static void g_barbar_river_tag_class_init(BarBarRiverTagClass *class) {
       "tagnums", NULL, NULL, 0, 32, 9,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * BarBarRiverTag:focused-tags:
+   *
+   * Bitfield of what tags are focused
+   */
+  river_tags_props[PROP_FOCUSED_TAGS] =
+      g_param_spec_uint("focused-tags", NULL, NULL, 0, G_MAXUINT, 0,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarRiverTag:occupid-tags:
+   *
+   * Bitfield of what tags are occupied
+   */
+  river_tags_props[PROP_OCCUPIED_TAGS] =
+      g_param_spec_uint("occupied-tags", NULL, NULL, 0, G_MAXUINT, 0,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarRiverTag:urgent-tags:
+   *
+   * Bitfield of what tags ar focused
+   */
+  river_tags_props[PROP_URGENT_TAGS] =
+      g_param_spec_uint("urgent-tags", NULL, NULL, 0, G_MAXUINT, 0,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES,
                                     river_tags_props);
 
@@ -190,18 +265,22 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
                                    uint32_t name, const char *interface,
                                    uint32_t version) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
+  BarBarRiverTagPrivate *private =
+      g_barbar_river_tag_get_instance_private(river);
+
   if (strcmp(interface, zriver_status_manager_v1_interface.name) == 0) {
     if (version >= ZRIVER_OUTPUT_STATUS_V1_LAYOUT_NAME_CLEAR_SINCE_VERSION) {
-      river->status_manager = wl_registry_bind(
+      private->status_manager = wl_registry_bind(
           registry, name, &zriver_status_manager_v1_interface, version);
     }
   }
   if (strcmp(interface, zriver_control_v1_interface.name) == 0) {
-    river->control =
+    private->control =
         wl_registry_bind(registry, name, &zriver_control_v1_interface, version);
   }
   if (strcmp(interface, wl_seat_interface.name) == 0) {
-    river->seat = wl_registry_bind(registry, name, &wl_seat_interface, version);
+    private->seat =
+        wl_registry_bind(registry, name, &wl_seat_interface, version);
   }
 }
 
@@ -241,6 +320,7 @@ listen_focused_tags(void *data,
                     struct zriver_output_status_v1 *zriver_output_status_v1,
                     uint32_t tags) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
+  river->focused_tags = tags;
   for (size_t i = 0; i < river->nums; ++i) {
     if ((1 << i) & tags) {
       gtk_widget_add_css_class(river->buttons[i], "focused");
@@ -248,6 +328,8 @@ listen_focused_tags(void *data,
       gtk_widget_remove_css_class(river->buttons[i], "focused");
     }
   }
+  g_object_notify_by_pspec(G_OBJECT(river),
+                           river_tags_props[PROP_FOCUSED_TAGS]);
 }
 // called when a new tag gets occupied or vacant
 static void
@@ -258,6 +340,7 @@ listen_view_tags(void *data,
   uint32_t *tag;
   uint32_t tags = 0;
   wl_array_for_each(tag, tag_array) { tags |= *tag; }
+  river->occupied_tags = tags;
 
   for (size_t i = 0; i < river->nums; ++i) {
     if ((1 << i) & tags) {
@@ -266,6 +349,8 @@ listen_view_tags(void *data,
       gtk_widget_remove_css_class(river->buttons[i], "occupied");
     }
   }
+  g_object_notify_by_pspec(G_OBJECT(river),
+                           river_tags_props[PROP_OCCUPIED_TAGS]);
 }
 
 static void
@@ -273,6 +358,7 @@ listen_urgent_tags(void *data,
                    struct zriver_output_status_v1 *zriver_output_status_v1,
                    uint32_t tags) {
   BarBarRiverTag *river = BARBAR_RIVER_TAG(data);
+  river->urgent_tags = tags;
   for (size_t i = 0; i < river->nums; ++i) {
     if ((1 << i) & tags) {
       gtk_widget_add_css_class(river->buttons[i], "urgent");
@@ -280,6 +366,7 @@ listen_urgent_tags(void *data,
       gtk_widget_remove_css_class(river->buttons[i], "urgent");
     }
   }
+  g_object_notify_by_pspec(G_OBJECT(river), river_tags_props[PROP_URGENT_TAGS]);
 }
 
 static void layout_name(void *data,
@@ -314,14 +401,16 @@ static void clicked(GtkButton *self, gpointer user_data) {
 
 static void default_clicked_handler(BarBarRiverTag *river, guint tag,
                                     gpointer user_data) {
+  BarBarRiverTagPrivate *private =
+      g_barbar_river_tag_get_instance_private(river);
   struct zriver_command_callback_v1 *callback;
   char buf[4];
 
   snprintf(buf, 4, "%d", tag);
 
-  zriver_control_v1_add_argument(river->control, "set-focused-tags");
-  zriver_control_v1_add_argument(river->control, buf);
-  callback = zriver_control_v1_run_command(river->control, river->seat);
+  zriver_control_v1_add_argument(private->control, "set-focused-tags");
+  zriver_control_v1_add_argument(private->control, buf);
+  callback = zriver_control_v1_run_command(private->control, private->seat);
   zriver_command_callback_v1_add_listener(callback, &command_callback_listener,
                                           NULL);
 }
@@ -421,6 +510,8 @@ static void g_barbar_river_tag_root(GtkWidget *widget) {
   GTK_WIDGET_CLASS(g_barbar_river_tag_parent_class)->root(widget);
 
   BarBarRiverTag *river = BARBAR_RIVER_TAG(widget);
+  BarBarRiverTagPrivate *private =
+      g_barbar_river_tag_get_instance_private(river);
   g_barbar_river_tag_defaults(river);
 
   gdk_display = gdk_display_get_default();
@@ -448,20 +539,20 @@ static void g_barbar_river_tag_root(GtkWidget *widget) {
   wl_registry_add_listener(wl_registry, &wl_registry_listener, river);
   wl_display_roundtrip(wl_display);
 
-  if (!river->status_manager) {
+  if (!private->status_manager) {
     return;
   }
 
-  river->output_status = zriver_status_manager_v1_get_river_output_status(
-      river->status_manager, output);
+  private->output_status = zriver_status_manager_v1_get_river_output_status(
+      private->status_manager, output);
 
-  zriver_output_status_v1_add_listener(river->output_status,
+  zriver_output_status_v1_add_listener(private->output_status,
                                        &output_status_listener, river);
   wl_display_roundtrip(wl_display);
 
-  zriver_status_manager_v1_destroy(river->status_manager);
+  zriver_status_manager_v1_destroy(private->status_manager);
 
-  river->status_manager = NULL;
+  private->status_manager = NULL;
 }
 
 /**

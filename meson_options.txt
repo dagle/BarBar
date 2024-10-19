@@ -1,4 +1,5 @@
 option('gtk_doc', type : 'boolean', value : false)
+option('cava', type : 'boolean', value : true)
 option('mpris', type: 'feature', value: 'auto', description: 'Enable support for mpris')
 option('logind', type: 'feature', value: 'auto', description: 'Enable support for logind')
 option('upower_glib', type: 'feature', value: 'auto', description: 'Enable support for upower')

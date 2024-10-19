@@ -1,24 +1,10 @@
 #include <barbar-enum.h>
 
-GType g_barbar_position_get_type(void) {
-
-  static gsize barbar_bar_role_type;
-  if (g_once_init_enter(&barbar_bar_role_type)) {
-
-    static GEnumValue pattern_types[] = {
-        {BARBAR_POS_TOP, "BARBAR_POS_TOP", "top"},
-        {BARBAR_POS_BOTTOM, "BARBAR_POS_BOTTOM", "bot"},
-        {BARBAR_POS_LEFT, "BARBAR_POS_LEFT", "left"},
-        {BARBAR_POS_RIGHT, "BARBAR_POS_RIGHT", "right"},
-        {0, NULL, NULL},
-    };
-
-    GType type = 0;
-    type = g_enum_register_static("BarBarBarPosition", pattern_types);
-    g_once_init_leave(&barbar_bar_role_type, type);
-  }
-  return barbar_bar_role_type;
-}
+G_DEFINE_ENUM_TYPE(BarBarBarPosition, g_barbar_position,
+                   G_DEFINE_ENUM_VALUE(BARBAR_POS_TOP, "top"),
+                   G_DEFINE_ENUM_VALUE(BARBAR_POS_BOTTOM, "bot"),
+                   G_DEFINE_ENUM_VALUE(BARBAR_POS_LEFT, "left"),
+                   G_DEFINE_ENUM_VALUE(BARBAR_POS_RIGHT, "right"));
 
 GType g_barbar_playback_status_get_type(void) {
 

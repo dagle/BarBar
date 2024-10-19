@@ -149,6 +149,19 @@ libbarbar_headers = [
 
 ]
 
+conf = configuration_data()
+conf.set('version', '@0@'.format(meson.project_version()))
+conf.set('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+conf.set('PKGDATADIR', pkgdatadir)
+if systray.found()
+  conf.set('SYSTRAY', true)
+endif
+
+config_rs = configure_file(
+  input: 'config.h.in',
+  output: 'config.h',
+  configuration: conf
+)
 wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
 
 wayland_src = []

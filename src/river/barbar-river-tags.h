@@ -46,6 +46,10 @@ void g_barbar_river_tag_set_button(BarBarRiverTag *river, uint idx,
 
 void g_barbar_river_tag_add_button(BarBarRiverTag *river, GtkWidget *child);
 
+guint g_barbar_river_tag_get_focused_tags(BarBarRiverTag *river);
+guint g_barbar_river_tag_get_occupied_tags(BarBarRiverTag *river);
+guint g_barbar_river_tag_get_urgent_tags(BarBarRiverTag *river);
+
 GtkWidget *g_barbar_river_tag_new(void);
 
 G_END_DECLS

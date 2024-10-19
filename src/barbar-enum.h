@@ -56,8 +56,8 @@ GType g_barbar_position_get_type(void);
  * Describs the playback status of a mpris player
  */
 typedef enum {
-  BARBAR_PLAYBACK_STATUS_PLAYING,
   BARBAR_PLAYBACK_STATUS_PAUSED,
+  BARBAR_PLAYBACK_STATUS_PLAYING,
   BARBAR_PLAYBACK_STATUS_STOPPED,
 } BarBarMprisPlaybackStatus;
 

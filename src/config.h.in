@@ -1,0 +1,4 @@
+#define VERSION "@version@"
+#define LOCALEDIR "@LOCALEDIR@"
+#define PKGDATADIR "@PKGDATADIR@"
+#mesondefine SYSTRAY
