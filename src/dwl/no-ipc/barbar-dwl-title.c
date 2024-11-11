@@ -131,3 +131,14 @@ static void g_barbar_dwl_title_start(GtkWidget *widget) {
   g_signal_connect(dwl->service, "title", G_CALLBACK(g_dwl_listen_cb), dwl);
   g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
 }
+
+/**
+ * g_barbar_dwl_title_new:
+ *
+ * Creates a new `DwlTitle`.
+ *
+ * Returns: (transfer full): A `DwlTitle`
+ */
+GtkWidget *g_barbar_dwl_title_new(const char *output) {
+  return g_object_new(BARBAR_TYPE_DWL_TITLE, "output", output, NULL);
+}

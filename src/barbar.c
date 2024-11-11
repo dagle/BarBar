@@ -1,4 +1,6 @@
 #include "barbar.h"
+#include "barbar-output-manager.h"
+#include "widgets/barbar-cava.h"
 #include <glibtop.h>
 
 void g_barbar_init(void) {
@@ -31,6 +33,7 @@ void g_barbar_init(void) {
 
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();
+  g_barbar_interval_graph_get_type();
   g_barbar_box_get_type();
   g_barbar_activity_graph_get_type();
   g_barbar_label_get_type();
@@ -39,6 +42,7 @@ void g_barbar_init(void) {
   g_barbar_cpu_processes_get_type();
   g_barbar_event_switcher_get_type();
   g_barbar_play_button_get_type();
+  g_barbar_cava_get_type();
 
   g_barbar_github_activity_get_type();
 
@@ -76,6 +80,9 @@ void g_barbar_init(void) {
   g_barbar_dwl_tags_ipc_get_type();
   g_barbar_dwl_title_ipc_get_type();
   g_barbar_dwl_layout_ipc_get_type();
+
+  g_barbar_output_manager_get_type();
+  g_barbar_output_head_get_type();
 
   // g_barbar_dbus_menu_get_type();
   // g_barbar_status_watcher_get_type();

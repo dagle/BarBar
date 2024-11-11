@@ -21,21 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 #pragma once
 
-#include "barbar-sensor.h"
+#include "wlr-output-management-unstable-v1-client-protocol.h"
 #include <glib-object.h>
 #include <glib.h>
-#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_WEATHER (g_barbar_weather_get_type())
+#define BARBAR_TYPE_OUTPUT_HEAD (g_barbar_output_head_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarWeather, g_barbar_weather, BARBAR, WEATHER,
-                     BarBarSensor)
+G_DECLARE_FINAL_TYPE(BarBarOutputHead, g_barbar_output_head, BARBAR,
+                     OUTPUT_HEAD, GObject)
 
-BarBarSensor *g_barbar_weather_new(const char *contact_info);
+GObject *g_barbar_output_head_new(struct zwlr_output_head_v1 *head);
+
+void g_barbar_output_run(BarBarOutputHead *self);
 
 G_END_DECLS

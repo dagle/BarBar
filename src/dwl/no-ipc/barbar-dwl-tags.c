@@ -292,3 +292,14 @@ static void g_barbar_dwl_tag_root(GtkWidget *widget) {
   g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "tags", G_CALLBACK(g_dwl_listen_cb), dwl);
 }
+
+/**
+ * g_barbar_dwl_tags_new:
+ *
+ * Creates a new `DwlTags`.
+ *
+ * Returns: (transfer full): A `DwlTags`
+ */
+GtkWidget *g_barbar_dwl_tags_new(const char *output) {
+  return g_object_new(BARBAR_TYPE_DWL_TAGS, "output", output, NULL);
+}

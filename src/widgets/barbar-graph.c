@@ -1,16 +1,30 @@
 #include "barbar-graph.h"
 
+enum {
+  PROP_0,
+
+  PROP_MIN_HEIGHT,
+  PROP_MIN_WIDTH,
+  PROP_MIN_VALUE,
+  PROP_MAX_VALUE,
+  PROP_HISTORY_LENGTH,
+  PROP_STROKE_WIDTH,
+  PROP_FILL,
+  PROP_DISCRETE,
+
+  NUM_PROPERTIES,
+};
+
 /**
  * BarBarGraph:
  *
  * Display changes over time for a value
  */
-struct _BarBarGraph {
-  GtkWidget parent_instance;
+typedef struct {
+  GtkWidgetClass parent_instance;
 
   double min_value;
   double max_value;
-  double current;
 
   double width;
   double height;
@@ -28,39 +42,17 @@ struct _BarBarGraph {
   gsize items;
   gsize capasity;
   gboolean full;
-
-  guint tick_cb;
-  guint interval;
-  // guint64 start_time;
-
-  double period;
-  // double amplitude;
-};
-
-enum {
-  PROP_0,
-
-  PROP_MIN_HEIGHT,
-  PROP_MIN_WIDTH,
-  PROP_VALUE,
-  PROP_MIN_VALUE,
-  PROP_MAX_VALUE,
-  PROP_HISTORY_LENGTH,
-  PROP_STROKE_WIDTH,
-  PROP_FILL,
-  PROP_INTERVAL,
-  PROP_DISCRETE,
-
-  NUM_PROPERTIES,
-};
+} BarBarGraphPrivate;
 
 static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
 
-G_DEFINE_TYPE(BarBarGraph, g_barbar_graph, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE_WITH_PRIVATE(BarBarGraph, g_barbar_graph, GTK_TYPE_WIDGET)
 
-static void g_barbar_graph_start(GtkWidget *widget);
+static void push_update(BarBarGraph *self, double value);
+static void update_path_discrete(BarBarGraph *self);
+static void update_path_continuous(BarBarGraph *self);
 
 /**
  * g_barbar_graph_set_stroke_width:
@@ -69,13 +61,14 @@ static void g_barbar_graph_start(GtkWidget *widget);
  */
 void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (self->stroke_size == stroke) {
+  if (private->stroke_size == stroke) {
     return;
   }
 
-  self->stroke_size = stroke;
-  self->stroke = gsk_stroke_new(stroke);
+  private->stroke_size = stroke;
+  private->stroke = gsk_stroke_new(stroke);
 }
 
 /**
@@ -89,38 +82,40 @@ void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke) {
  */
 void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (self->fill == fill) {
+  if (private->fill == fill) {
     return;
   }
 
-  self->fill = fill;
+  private->fill = fill;
   // we need to update here? Just wait for the next tick for now
 }
 
 /**
- * g_barbar_graph_history_entries:
+ * g_barbar_graph_set_history_entries:
  * @self: a `BarBarGraph`
  * @length: length
  *
  * Sets how many entries there should be in the graph (maximum).
  */
-void g_barbar_graph_history_entries(BarBarGraph *self, guint length) {
+void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (self->capasity == length) {
+  if (private->capasity == length) {
     return;
   }
 
-  if (self->capasity > length && self->items > length) {
+  if (private->capasity > length && private->items > length) {
     // drop values and call it full
-    self->full = TRUE;
+    private->full = TRUE;
   } else {
     // if we increase the size, it can't be full anymore
-    self->full = FALSE;
+    private->full = FALSE;
   }
 
-  self->capasity = length;
+  private->capasity = length;
 }
 
 /**
@@ -133,12 +128,13 @@ void g_barbar_graph_history_entries(BarBarGraph *self, guint length) {
  */
 void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (self->min_value == min) {
+  if (private->min_value == min) {
     return;
   }
 
-  self->min_value = min;
+  private->min_value = min;
 }
 
 /**
@@ -152,34 +148,72 @@ void g_barbar_graph_set_min_value(BarBarGraph *self, double min) {
 void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
-  if (self->max_value == max) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->max_value == max) {
     return;
   }
 
-  self->max_value = max;
+  private->max_value = max;
 }
 
+GQueue *g_barbar_graph_get_queue(BarBarGraph *self) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  return private->queue;
+}
+
+void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue) {
+  g_return_if_fail(BARBAR_IS_GRAPH(self));
+
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->queue != queue) {
+    if (private->queue) {
+      g_queue_free_full(queue, free);
+    }
+    private->queue = queue;
+  }
+
+  GList *link = private->queue->head;
+
+  while (link) {
+    double value = *(double *)link->data;
+    if (value > private->max_value) {
+      g_barbar_graph_set_max_value(self, value);
+    }
+    if (value < private->min_value) {
+      g_barbar_graph_set_min_value(self, value);
+    }
+    link = link->next;
+  }
+
+  if (private->discrete) {
+    update_path_discrete(self);
+  } else {
+    update_path_continuous(self);
+  }
+}
 /**
- * g_barbar_graph_set_value:
+ * g_barbar_graph_set_push_entry:
  * @self: a `BarBarGraph`
  * @value: a value
  *
  * Sets the current value of a graph.
  */
-void g_barbar_graph_set_value(BarBarGraph *self, double value) {
+void g_barbar_graph_set_push_entry(BarBarGraph *self, double value) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
-  if (self->current == value) {
-    return;
-  }
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (value > self->max_value) {
+  if (value > private->max_value) {
     g_barbar_graph_set_max_value(self, value);
   }
-  if (value < self->min_value) {
+  if (value < private->min_value) {
     g_barbar_graph_set_min_value(self, value);
   }
-  self->current = value;
+
+  push_update(self, value);
 }
 
 /**
@@ -193,11 +227,14 @@ void g_barbar_graph_set_value(BarBarGraph *self, double value) {
 void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
-  if (self->height == height) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->height == height) {
     return;
   }
 
-  self->height = height;
+  private->height = height;
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MIN_HEIGHT]);
 }
 
 /**
@@ -211,26 +248,14 @@ void g_barbar_graph_set_min_height(BarBarGraph *self, guint height) {
 void g_barbar_graph_set_min_width(BarBarGraph *self, guint width) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
-  if (self->width == width) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->width == width) {
     return;
   }
-  self->width = width;
-}
 
-/**
- * g_barbar_graph_set_interval:
- * @self: a `BarBarGraph`
- * @interval: interval
- *
- * How often the graph should tick and move a value to it's history
- */
-void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
-  g_return_if_fail(BARBAR_IS_GRAPH(self));
-
-  if (self->interval == interval) {
-    return;
-  }
-  self->interval = interval;
+  private->width = width;
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_MIN_WIDTH]);
 }
 
 /**
@@ -244,10 +269,12 @@ void g_barbar_graph_set_interval(BarBarGraph *self, guint interval) {
 void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
-  if (self->discrete == discrete) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->discrete == discrete) {
     return;
   }
-  self->discrete = discrete;
+  private->discrete = discrete;
 }
 
 static void g_barbar_graph_set_property(GObject *object, guint property_id,
@@ -256,9 +283,6 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
   BarBarGraph *graph = BARBAR_GRAPH(object);
 
   switch (property_id) {
-  case PROP_VALUE:
-    g_barbar_graph_set_value(graph, g_value_get_double(value));
-    break;
   case PROP_MIN_WIDTH:
     g_barbar_graph_set_min_width(graph, g_value_get_uint(value));
     break;
@@ -272,7 +296,7 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
     g_barbar_graph_set_fill(graph, g_value_get_boolean(value));
     break;
   case PROP_HISTORY_LENGTH:
-    g_barbar_graph_history_entries(graph, g_value_get_uint(value));
+    g_barbar_graph_set_entry_numbers(graph, g_value_get_uint(value));
     break;
   case PROP_MIN_VALUE:
     g_barbar_graph_set_min_value(graph, g_value_get_double(value));
@@ -280,9 +304,9 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
   case PROP_MAX_VALUE:
     g_barbar_graph_set_max_value(graph, g_value_get_double(value));
     break;
-  case PROP_INTERVAL:
-    g_barbar_graph_set_interval(graph, g_value_get_uint(value));
-    break;
+  // case PROP_INTERVAL:
+  //   g_barbar_graph_set_interval(graph, g_value_get_uint(value));
+  //   break;
   case PROP_DISCRETE:
     g_barbar_graph_set_discrete(graph, g_value_get_boolean(value));
     break;
@@ -294,16 +318,14 @@ static void g_barbar_graph_set_property(GObject *object, guint property_id,
 static void g_barbar_graph_get_property(GObject *object, guint property_id,
                                         GValue *value, GParamSpec *pspec) {
   BarBarGraph *graph = BARBAR_GRAPH(object);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(graph);
 
   switch (property_id) {
-  case PROP_VALUE:
-    g_value_set_double(value, graph->current);
-    break;
   case PROP_MIN_VALUE:
-    g_value_set_double(value, graph->min_value);
+    g_value_set_double(value, private->min_value);
     break;
   case PROP_MAX_VALUE:
-    g_value_set_double(value, graph->max_value);
+    g_value_set_double(value, private->max_value);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -317,8 +339,10 @@ static inline double get_y(double height, double max_value, GList *link) {
 
 static void update_path_discrete(BarBarGraph *self) {
   GskPathBuilder *builder;
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
   builder = gsk_path_builder_new();
-  GList *link = self->queue->head;
+  GList *link = private->queue->head;
 
   if (!link) {
     return;
@@ -326,15 +350,15 @@ static void update_path_discrete(BarBarGraph *self) {
 
   double x = 0;
 
-  double y = get_y(self->height, self->max_value, link);
-  double delta = self->width / self->capasity;
+  double y = get_y(private->height, private->max_value, link);
+  double delta = private->width / private->capasity;
 
   gsk_path_builder_move_to(builder, 0, y);
   double next = y;
   while (link) {
 
     gsk_path_builder_line_to(builder, x, next);
-    next = get_y(self->height, self->max_value, link);
+    next = get_y(private->height, private->max_value, link);
     gsk_path_builder_line_to(builder, x, next);
     link = link->next;
     if (link) {
@@ -342,21 +366,23 @@ static void update_path_discrete(BarBarGraph *self) {
     }
   }
 
-  if (self->fill) {
-    gsk_path_builder_line_to(builder, x, self->height);
-    gsk_path_builder_line_to(builder, 0, self->height);
+  if (private->fill) {
+    gsk_path_builder_line_to(builder, x, private->height);
+    gsk_path_builder_line_to(builder, 0, private->height);
 
     gsk_path_builder_line_to(builder, 0, y);
   }
 
-  g_clear_pointer(&self->path, gsk_path_unref);
-  self->path = gsk_path_builder_free_to_path(builder);
+  g_clear_pointer(&private->path, gsk_path_unref);
+  private->path = gsk_path_builder_free_to_path(builder);
 }
 
 static void update_path_continuous(BarBarGraph *self) {
   GskPathBuilder *builder;
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
   builder = gsk_path_builder_new();
-  GList *link = self->queue->head;
+  GList *link = private->queue->head;
 
   if (!link) {
     return;
@@ -364,12 +390,12 @@ static void update_path_continuous(BarBarGraph *self) {
 
   double x = 0;
 
-  double y = get_y(self->height, self->max_value, link);
-  double delta = self->width / self->capasity;
+  double y = get_y(private->height, private->max_value, link);
+  double delta = private->width / private->capasity;
 
   gsk_path_builder_move_to(builder, 0, y);
   while (link) {
-    double y = get_y(self->height, self->max_value, link);
+    double y = get_y(private->height, private->max_value, link);
 
     gsk_path_builder_line_to(builder, x, y);
     link = link->next;
@@ -378,15 +404,15 @@ static void update_path_continuous(BarBarGraph *self) {
     }
   }
 
-  if (self->fill) {
-    gsk_path_builder_line_to(builder, x, self->height);
-    gsk_path_builder_line_to(builder, 0, self->height);
+  if (private->fill) {
+    gsk_path_builder_line_to(builder, x, private->height);
+    gsk_path_builder_line_to(builder, 0, private->height);
 
     gsk_path_builder_line_to(builder, 0, y);
   }
 
-  g_clear_pointer(&self->path, gsk_path_unref);
-  self->path = gsk_path_builder_free_to_path(builder);
+  g_clear_pointer(&private->path, gsk_path_unref);
+  private->path = gsk_path_builder_free_to_path(builder);
 }
 
 static void rotate(GQueue *queue, double value) {
@@ -401,17 +427,19 @@ static void rotate(GQueue *queue, double value) {
 }
 
 static void push_update(BarBarGraph *self, double value) {
-  if (self->full) {
-    rotate(self->queue, value);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  if (private->full) {
+    rotate(private->queue, value);
   } else {
     double *v = g_malloc(sizeof(double));
     *v = value;
-    g_queue_push_tail(self->queue, v);
+    g_queue_push_tail(private->queue, v);
 
-    self->items++;
-    self->full = self->items >= self->capasity;
+    private->items++;
+    private->full = private->items >= private->capasity;
   }
-  if (self->discrete) {
+  if (private->discrete) {
     update_path_discrete(self);
   } else {
     update_path_continuous(self);
@@ -420,22 +448,28 @@ static void push_update(BarBarGraph *self, double value) {
 
 static void g_barbar_graph_dispose(GObject *object) {
   BarBarGraph *self = BARBAR_GRAPH(object);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  g_clear_pointer(&self->path, gsk_path_unref);
-  gsk_stroke_free(self->stroke);
+  g_clear_pointer(&private->path, gsk_path_unref);
+  gsk_stroke_free(private->stroke);
 
   G_OBJECT_CLASS(g_barbar_graph_parent_class)->dispose(object);
 }
 
 static void g_barbar_graph_snapshot(GtkWidget *widget, GtkSnapshot *snapshot) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (self->fill) {
-    gtk_snapshot_append_fill(snapshot, self->path, GSK_FILL_RULE_WINDING,
-                             &self->color);
+  if (!private->path) {
+    return;
+  }
+
+  if (private->fill) {
+    gtk_snapshot_append_fill(snapshot, private->path, GSK_FILL_RULE_WINDING,
+                             &private->color);
   } else {
-    gtk_snapshot_append_stroke(snapshot, self->path, self->stroke,
-                               &self->color);
+    gtk_snapshot_append_stroke(snapshot, private->path, private->stroke,
+                               &private->color);
   }
 }
 
@@ -445,19 +479,23 @@ static void g_barbar_graph_measure(GtkWidget *widget,
                                    int *minimum_baseline,
                                    int *natural_baseline) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+  printf("measure: %f\n", private->width);
 
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
-    *minimum = *natural = self->width;
+    *minimum = *natural = private->width;
   else
-    *minimum = *natural = self->height;
+    *minimum = *natural = private->height;
 }
 
 void g_barbar_graph_size_allocate(GtkWidget *widget, int width, int height,
                                   int baseline) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  self->width = width;
-  self->height = height;
+  printf("allocate: %f\n", private->width);
+  private->width = width;
+  private->height = height;
 }
 
 static void g_barbar_graph_class_init(BarBarGraphClass *class) {
@@ -472,8 +510,6 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   widget_class->snapshot = g_barbar_graph_snapshot;
   widget_class->measure = g_barbar_graph_measure;
   widget_class->size_allocate = g_barbar_graph_size_allocate;
-
-  widget_class->root = g_barbar_graph_start;
 
   /**
    * BarBarRotary:min-width:
@@ -501,15 +537,6 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   properties[PROP_STROKE_WIDTH] = g_param_spec_float(
       "stroke-width", NULL, NULL, 0.0, G_MAXFLOAT, 2.0,
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
-
-  /**
-   * BarBarGraph:value:
-   *
-   * Determines the currently filled value of the rotary.
-   */
-  properties[PROP_VALUE] =
-      g_param_spec_double("value", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0.0,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * BarBarGraph:min-value:
@@ -550,15 +577,6 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   /**
-   * BarBarGraph:interval:
-   *
-   * How often the graph should update
-   */
-  properties[PROP_INTERVAL] = g_param_spec_uint(
-      "interval", NULL, NULL, 0, G_MAXUINT, 1000,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
-
-  /**
    * BarBarGraph:discrete:
    *
    * If a discrete graph should be drawn, produces a bar like graph.
@@ -571,37 +589,15 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   gtk_widget_class_set_css_name(widget_class, "graph");
 }
 
-static gboolean g_barbar_graph_update(gpointer data) {
-
-  BarBarGraph *self = BARBAR_GRAPH(data);
-
-  push_update(self, self->current);
-
-  gtk_widget_queue_draw(GTK_WIDGET(self));
-
-  return G_SOURCE_CONTINUE;
-}
-
 static void g_barbar_graph_init(BarBarGraph *self) {
-  gtk_widget_get_color(GTK_WIDGET(self), &self->color);
-  self->queue = g_queue_new();
-  g_queue_init(self->queue);
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+  gtk_widget_get_color(GTK_WIDGET(self), &private->color);
 
-  self->current = 0.0;
-  self->min_value = 0.0;
-  self->max_value = 1.0;
-  self->interval = 1000;
+  private->queue = g_queue_new();
+  g_queue_init(private->queue);
 
-  push_update(self, self->current);
-}
-
-static void g_barbar_graph_start(GtkWidget *widget) {
-  GTK_WIDGET_CLASS(g_barbar_graph_parent_class)->root(widget);
-
-  BarBarGraph *self = BARBAR_GRAPH(widget);
-
-  self->tick_cb =
-      g_timeout_add_full(0, self->interval, g_barbar_graph_update, self, NULL);
+  private->min_value = 0.0;
+  private->max_value = 1.0;
 }
 
 /**

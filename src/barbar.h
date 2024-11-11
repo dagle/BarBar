@@ -61,8 +61,10 @@
 
 #include "widgets/barbar-activity-graph.h"
 #include "widgets/barbar-box.h"
+#include "widgets/barbar-cava.h"
 #include "widgets/barbar-eventswitcher.h"
 #include "widgets/barbar-graph.h"
+#include "widgets/barbar-interval-graph.h"
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-playbutton.h"
 #include "widgets/barbar-processes.h"
@@ -70,6 +72,8 @@
 #include "widgets/barbar-sensorwidget.h"
 #include "widgets/barbar-valueicon.h"
 
+#include "barbar-output-head.h"
+#include "barbar-output-manager.h"
 #include "widgets/barbar-github-activity.h"
 
 /*#include "tray/barbar-dbusmenu.h"*/

@@ -23,63 +23,47 @@
  */
 #pragma once
 
+#include "widgets/barbar-graph.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_CAVA (g_barbar_cava_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarCava, g_barbar_cava, BARBAR, CAVA, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarCava, g_barbar_cava, BARBAR, CAVA, BarBarGraph)
 
-typedef enum {
-  BARBAR_CAVA_INPUT_FIFO,
-  BARBAR_CAVA_INPUT_PORTAUDIO,
-  BARBAR_CAVA_INPUT_PIPEWIRE,
-  BARBAR_CAVA_INPUT_ALSA,
-  BARBAR_CAVA_INPUT_PULSE,
-  BARBAR_CAVA_INPUT_SNDIO,
-  BARBAR_CAVA_INPUT_OSS,
-  BARBAR_CAVA_INPUT_JACK,
-  BARBAR_CAVA_INPUT_SHMEM,
-  BARBAR_CAVA_INPUT_WINSCAP,
-} BarBarCavaInput;
+/*GArray *g_barbar_cava_cava_get_values(BarBarCava *self);*/
 
-#define BARBAR_CAVA_TYPE_CAVA (astal_cava_cava_get_type())
-
-GArray *g_barbar_cava_cava_get_values(BarBarCava *self);
-
-gint g_barbar_cava_cava_get_bars(BarBarCava *self);
-void g_barbar_cava_cava_set_bars(BarBarCava *self, gint bars);
-
-gboolean g_barbar_cava_cava_get_autosens(BarBarCava *self);
-void g_barbar_cava_cava_set_autosens(BarBarCava *self, gboolean autosens);
-
-gboolean g_barbar_cava_cava_get_stereo(BarBarCava *self);
-void g_barbar_cava_cava_set_stereo(BarBarCava *self, gboolean stereo);
-
-gdouble g_barbar_cava_cava_get_noise_reduction(BarBarCava *self);
-void g_barbar_cava_cava_set_noise_reduction(BarBarCava *self, gdouble noise);
-
-gint g_barbar_cava_cava_get_framerate(BarBarCava *self);
-void g_barbar_cava_cava_set_framerate(BarBarCava *self, gint framerate);
-
-BarBarCavaInput g_barbar_cava_cava_get_input(BarBarCava *self);
-void g_barbar_cava_cava_set_input(BarBarCava *self, BarBarCavaInput input);
-
-gchar *g_barbar_cava_cava_get_source(BarBarCava *self);
-void g_barbar_cava_cava_set_source(BarBarCava *self, const gchar *source);
-
-gint g_barbar_cava_cava_get_channels(BarBarCava *self);
-void g_barbar_cava_cava_set_channels(BarBarCava *self, gint channels);
-
-gint g_barbar_cava_cava_get_low_cutoff(BarBarCava *self);
-void g_barbar_cava_cava_set_low_cutoff(BarBarCava *self, gint low_cutoff);
-
-gint g_barbar_cava_cava_get_high_cutoff(BarBarCava *self);
-void g_barbar_cava_cava_set_high_cutoff(BarBarCava *self, gint high_cutoff);
-
-gint g_barbar_cava_cava_get_samplerate(BarBarCava *self);
-void g_barbar_cava_cava_set_samplerate(BarBarCava *self, gint samplerate);
+/*gint g_barbar_cava_cava_get_bars(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_bars(BarBarCava *self, gint bars);*/
+/**/
+/*gboolean g_barbar_cava_cava_get_autosens(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_autosens(BarBarCava *self, gboolean autosens);*/
+/**/
+/*gboolean g_barbar_cava_cava_get_stereo(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_stereo(BarBarCava *self, gboolean stereo);*/
+/**/
+/*gdouble g_barbar_cava_cava_get_noise_reduction(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_noise_reduction(BarBarCava *self, gdouble
+ * noise);*/
+/**/
+/*gint g_barbar_cava_cava_get_framerate(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_framerate(BarBarCava *self, gint framerate);*/
+/**/
+/*gchar *g_barbar_cava_cava_get_source(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_source(BarBarCava *self, const gchar *source);*/
+/**/
+/*gint g_barbar_cava_cava_get_channels(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_channels(BarBarCava *self, gint channels);*/
+/**/
+/*gint g_barbar_cava_cava_get_low_cutoff(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_low_cutoff(BarBarCava *self, gint low_cutoff);*/
+/**/
+/*gint g_barbar_cava_cava_get_high_cutoff(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_high_cutoff(BarBarCava *self, gint high_cutoff);*/
+/**/
+/*gint g_barbar_cava_cava_get_samplerate(BarBarCava *self);*/
+/*void g_barbar_cava_cava_set_samplerate(BarBarCava *self, gint samplerate);*/
 
 GtkWidget *g_barbar_cava_new(void);
 

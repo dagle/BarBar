@@ -1,3 +1,4 @@
+#include "barbar-output-manager.h"
 #include "barbar-util.h"
 #include "barbar.h"
 #include "config.h"
@@ -84,7 +85,6 @@ static void g_barbar_resources_install(void) {
   GResource *resource;
 
   resource = g_resource_load(PKGDATADIR "/barbar.gresource", &error);
-  printf("path: %s\n", PKGDATADIR "/barbar.gresource");
   if (error) {
     g_printerr("Error loading resources: %s\n", error->message);
     return;
@@ -133,6 +133,11 @@ static void activate(GtkApplication *app, void *data) {
   }
   g_slist_free(list);
   g_object_unref(builder);
+
+  BarBarOutputManager *output =
+      BARBAR_OUTPUT_MANAGER(g_barbar_output_manager_new());
+
+  g_barbar_output_manager_run(output);
 }
 
 void shutdown(GApplication *self, gpointer user_data) {
@@ -157,5 +162,5 @@ int main(int argc, char **argv) {
   g_type_ensure(SN_TYPE_SYSTRAY);
 #endif
 
-  run(argc, argv);
+  return run(argc, argv);
 }

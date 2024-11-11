@@ -459,7 +459,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * workspace change, and is not emitted on mouse movements (see activemon)
    */
   hyprland_service_signals[WORKSPACEV2] = g_signal_new(
-      "workspace", G_TYPE_FROM_CLASS(class),
+      "workspace", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
@@ -472,7 +472,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted on the active monitor being changed.
    */
   hyprland_service_signals[FOCUSEDMON] = g_signal_new(
-      "focused-monitor", G_TYPE_FROM_CLASS(class),
+      "focused-monitor", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -485,7 +485,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted on the active window being changed.
    */
   hyprland_service_signals[ACTIVEWINDOW] = g_signal_new(
-      "active-window", G_TYPE_FROM_CLASS(class),
+      "active-window", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -498,7 +498,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted on the active window being changed.
    */
   hyprland_service_signals[ACTIVEWINDOWV2] =
-      g_signal_new("active-window-v2", G_TYPE_FROM_CLASS(class),
+      g_signal_new("active-window-v2", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -511,7 +511,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a fullscreen status of a window changes.
    */
   hyprland_service_signals[FULLSCREEN] =
-      g_signal_new("fullscreen", G_TYPE_FROM_CLASS(class),
+      g_signal_new("fullscreen", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
@@ -523,7 +523,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a monitor is removed (disconnected)
    */
   hyprland_service_signals[MONITORREMOVED] =
-      g_signal_new("monitor-removed", G_TYPE_FROM_CLASS(class),
+      g_signal_new("monitor-removed", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -537,7 +537,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a monitor is added (connected)
    */
   hyprland_service_signals[MONITORADDEDV2] = g_signal_new(
-      "monitor-added", G_TYPE_FROM_CLASS(class),
+      "monitor-added", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -550,7 +550,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a workspace is created
    */
   hyprland_service_signals[CREATEWORKSPACEV2] = g_signal_new(
-      "create-workspace", G_TYPE_FROM_CLASS(class),
+      "create-workspace", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
@@ -563,7 +563,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a workspace is destroyed
    */
   hyprland_service_signals[DESTROYWORKSPACEV2] = g_signal_new(
-      "destroy-workspace", G_TYPE_FROM_CLASS(class),
+      "destroy-workspace", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
@@ -577,7 +577,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a workspace is moved to a different monitor.
    */
   hyprland_service_signals[MOVEWORKSPACEV2] = g_signal_new(
-      "move-workspace", G_TYPE_FROM_CLASS(class),
+      "move-workspace", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 3, G_TYPE_UINT, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -590,7 +590,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a workspace is renamed
    */
   hyprland_service_signals[RENAMEWORKSPACE] = g_signal_new(
-      "rename-workspace", G_TYPE_FROM_CLASS(class),
+      "rename-workspace", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
@@ -604,7 +604,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * results in an empty WORKSPACENAME)
    */
   hyprland_service_signals[ACTIVESPECIAL] = g_signal_new(
-      "activespecial", G_TYPE_FROM_CLASS(class),
+      "activespecial", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -632,7 +632,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window is opened
    */
   hyprland_service_signals[OPENWINDOW] =
-      g_signal_new("open-window", G_TYPE_FROM_CLASS(class),
+      g_signal_new("open-window", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 4, G_TYPE_STRING,
                    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
@@ -645,7 +645,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window is closed
    */
   hyprland_service_signals[CLOSEWINDOW] =
-      g_signal_new("close-window", G_TYPE_FROM_CLASS(class),
+      g_signal_new("close-window", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -659,7 +659,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window is moved to a workspace
    */
   hyprland_service_signals[MOVEWINDOWV2] = g_signal_new(
-      "move-window", G_TYPE_FROM_CLASS(class),
+      "move-window", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -671,7 +671,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a layerSurface is mapped
    */
   hyprland_service_signals[OPENLAYER] =
-      g_signal_new("open-layer", G_TYPE_FROM_CLASS(class),
+      g_signal_new("open-layer", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
   /**
@@ -682,7 +682,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a layerSurface is unmapped
    */
   hyprland_service_signals[CLOSELAYER] =
-      g_signal_new("close-layer", G_TYPE_FROM_CLASS(class),
+      g_signal_new("close-layer", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
   /**
@@ -693,7 +693,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window changes its floating mode.
    */
   hyprland_service_signals[CHANGEFLOATINGMODE] =
-      g_signal_new("floating-mode", G_TYPE_FROM_CLASS(class),
+      g_signal_new("floating-mode", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
@@ -705,7 +705,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window requests an urgent state
    */
   hyprland_service_signals[URGENT] =
-      g_signal_new("urgent", G_TYPE_FROM_CLASS(class),
+      g_signal_new("urgent", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -718,7 +718,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window requests a change to its minimized state.
    */
   hyprland_service_signals[MINIMIZE] = g_signal_new(
-      "minimized", G_TYPE_FROM_CLASS(class),
+      "minimized", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
@@ -732,7 +732,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * might be multiple separate clients.
    */
   hyprland_service_signals[SCREENCAST] = g_signal_new(
-      "screencast", G_TYPE_FROM_CLASS(class),
+      "screencast", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN);
 
@@ -744,7 +744,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window title changes.
    */
   hyprland_service_signals[WINDOWTITLE] =
-      g_signal_new("window-title", G_TYPE_FROM_CLASS(class),
+      g_signal_new("window-title", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -756,7 +756,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when ignoregrouplock is toggled.
    */
   hyprland_service_signals[IGNOREGROUPLOCK] =
-      g_signal_new("ignore-grouplock", G_TYPE_FROM_CLASS(class),
+      g_signal_new("ignore-grouplock", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
@@ -768,7 +768,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when lockgroups is toggled.
    */
   hyprland_service_signals[LOCKGROUPS] =
-      g_signal_new("lock-group", G_TYPE_FROM_CLASS(class),
+      g_signal_new("lock-group", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0, G_TYPE_BOOLEAN);
 
@@ -779,7 +779,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when the config is done reloading
    */
   hyprland_service_signals[CONFIGRELOADED] =
-      g_signal_new("config-reloaded", G_TYPE_FROM_CLASS(class),
+      g_signal_new("config-reloaded", BARBAR_TYPE_HYPRLAND_SERVICE,
                    G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
@@ -792,7 +792,7 @@ g_barbar_hyprland_service_class_init(BarBarHyprlandServiceClass *class) {
    * emitted when a window is pinned or unpinned
    */
   hyprland_service_signals[PIN] = g_signal_new(
-      "pin", G_TYPE_FROM_CLASS(class),
+      "pin", BARBAR_TYPE_HYPRLAND_SERVICE,
       G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 }

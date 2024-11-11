@@ -123,3 +123,14 @@ static void g_barbar_dwl_layout_start(GtkWidget *widget) {
   g_barbar_sensor_start(BARBAR_SENSOR(dwl->service));
   g_signal_connect(dwl->service, "layout", G_CALLBACK(g_dwl_listen_cb), dwl);
 }
+
+/**
+ * g_barbar_dwl_layout_new:
+ *
+ * Creates a new `DwlLayout`.
+ *
+ * Returns: (transfer full): A `DwlLayout`
+ */
+GtkWidget *g_barbar_dwl_layout_new(const char *output) {
+  return g_object_new(BARBAR_TYPE_DWL_LAYOUT, "output", output, NULL);
+}

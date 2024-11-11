@@ -2,16 +2,30 @@
 #include "cava/config.h"
 #include "cava/input/common.h"
 #include "cava/output/common.h"
+#include "glib.h"
+#include "gtk/gtk.h"
+#include "widgets/barbar-graph.h"
+
+#include <pipewire/impl-metadata.h>
+#include <pipewire/pipewire.h>
+#include <spa/param/audio/format-utils.h>
+#include <spa/param/audio/type-info.h>
+#include <spa/param/latency-utils.h>
+#include <stdint.h>
+
+#define SAMPLE_RATE 44100
 
 struct _BarBarCava {
-  GtkWidget parent_instance;
+  BarBarGraph parent_instance;
 
-  gint bars; // maybe not
+  struct pw_main_loop *loop;
+  struct pw_stream *stream;
+  struct spa_audio_info format;
+
   gboolean auto_sens;
   gboolean stereo;
   gdouble noise_reduction;
   gint framerate;
-  BarBarCavaInput input;
   gchar *audio_source;
   gboolean active;
   gint channels;
@@ -19,87 +33,33 @@ struct _BarBarCava {
   gint high_cutoff;
   gint samplerate;
 
-  GArray *values;
+  // GArray *values;
 };
 
 enum {
   PROP_0,
 
-  PROP_BARS,
   PROP_AUTO_SENSE,
   PROP_STEREO,
   PROP_NOISE_REDUCTION,
   PROP_FRAME_RATE,
+
   PROP_INPUT,
   PROP_SOURCE,
   PROP_CHANNELS,
   PROP_LOW_CUTOFF,
   PROP_HIGH_CUTOFF,
-  PROP_SAMPLERATE,
-
-  PROP_VALUES,
 
   NUM_PROPERTIES,
 };
-
-typedef struct {
-  struct cava_plan plan;
-  struct config_params cfg;
-  struct audio_data audio_data;
-  struct audio_raw audio_raw;
-  // ptr input_src;
-
-  // gboolean constructed;
-  // GThread* input_thread;
-  // guint timer_id;
-
-} BarBarCavaPrivate;
 
 static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
 
-G_DEFINE_TYPE(BarBarCava, g_barbar_cava, GTK_TYPE_WIDGET)
+G_DEFINE_TYPE(BarBarCava, g_barbar_cava, BARBAR_TYPE_GRAPH)
 
-G_DEFINE_ENUM_TYPE(BarBarCavaInput, g_barbar_cava_input,
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_FIFO, "fifo"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_PORTAUDIO,
-                                       "portaudio"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_PIPEWIRE, "pipewire"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_ALSA, "alsa"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_PULSE, "pulse"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_SNDIO, "sndio"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_SHMEM, "shmem"),
-                   G_DEFINE_ENUM_VALUE(BARBAR_CAVA_INPUT_WINSCAP, "winscap"));
-
-static void g_barbar_cava_tick(BarBarCava *cava) {
-  BarBarCavaPrivate *priv = g_barbar_cava_get_instance_private(cava);
-
-  // pthread_mutex_lock(&priv->audio_data.lock);
-  cava_execute(priv->audio_data.cava_in, priv->audio_data.samples_counter,
-               priv->audio_raw.cava_out, &priv->plan);
-  // if (priv->audio_data.samples_counter > 0) priv->audio_data.samples_counter
-  // = 0; pthread_mutex_unlock(&priv->audio_data.lock);
-
-  // g_array_remove_range(self->values, 0, priv->audio_raw.number_of_bars);
-  // g_array_insert_vals(self->values, 0, priv->audio_raw.cava_out,
-  // priv->audio_raw.number_of_bars);
-
-  g_object_notify_by_pspec(G_OBJECT(cava), properties[PROP_VALUES]);
-}
-
-static void g_barbar_graph_start(GtkWidget *widget);
-
-static void g_barbar_graph_set_stroke_width(BarBarCava *self, float stroke) {
-  // g_return_if_fail(BARBAR_IS(self));
-  //
-  // if (self->stroke_size == stroke) {
-  //   return;
-  // }
-  //
-  // self->stroke_size = stroke;
-  // self->stroke = gsk_stroke_new(stroke);
-}
+static void g_barbar_cava_start(GtkWidget *widget);
 
 static void g_barbar_cava_set_property(GObject *object, guint property_id,
                                        const GValue *value, GParamSpec *pspec) {
@@ -123,76 +83,369 @@ static void g_barbar_cava_get_property(GObject *object, guint property_id,
 
 static void g_barbar_cava_class_init(BarBarCavaClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
-  // GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
 
   gobject_class->set_property = g_barbar_cava_set_property;
   gobject_class->get_property = g_barbar_cava_get_property;
 
   // gobject_class->dispose = g_barbar_cava_dispose;
 
-  // widget_class->root = g_barbar_graph_start;
+  widget_class->root = g_barbar_cava_start;
 
   /**
-   * BarBarGraph:discrete:
+   * BarBarCava:auto-sense:
    *
-   * If a discrete graph should be drawn, produces a bar like graph.
+   * How many bars we should render
    */
-  properties[PROP_BARS] = g_param_spec_boolean(
-      "bars", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
-  properties[PROP_AUTO_SENSE] = g_param_spec_boolean(
-      "auto-sense", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+  properties[PROP_AUTO_SENSE] =
+      g_param_spec_boolean("auto-sense", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:stero:
+   *
+   * How many bars we should render
+   */
   properties[PROP_STEREO] = g_param_spec_boolean(
-      "stereo", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
-  properties[PROP_NOISE_REDUCTION] = g_param_spec_boolean(
-      "bars", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
-  properties[PROP_FRAME_RATE] = g_param_spec_boolean(
-      "bars", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
-  properties[PROP_INPUTE] = g_param_spec_boolean(
-      "bars", NULL, NULL, FALSE,
-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
+      "stereo", NULL, NULL, FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:noice-reduction:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_NOISE_REDUCTION] =
+      g_param_spec_boolean("noice-reduction", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:framerate:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_FRAME_RATE] =
+      g_param_spec_boolean("framerate", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:input:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_INPUT] = g_param_spec_boolean(
+      "input", NULL, NULL, FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:source:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_SOURCE] = g_param_spec_boolean(
+      "source", NULL, NULL, FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:channels:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_CHANNELS] =
+      g_param_spec_boolean("channels", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:low-cutoff:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_LOW_CUTOFF] =
+      g_param_spec_boolean("low-cutoff", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
+   * BarBarCava:high-cutoff:
+   *
+   * How many bars we should render
+   */
+  properties[PROP_HIGH_CUTOFF] =
+      g_param_spec_boolean("high-cutoff", NULL, NULL, FALSE,
+                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
-  gtk_widget_class_set_css_name(widget_class, "graph");
 }
 
-static gboolean g_barbar_graph_update(gpointer data) {
+#define BUFFER_SIZE2 1024 // FFT size (must be a power of 2)
 
-  BarBarGraph *self = BARBAR_GRAPH(data);
+static void g_barbar_cava_init(BarBarCava *self) { self->framerate = 44100; }
 
-  push_update(self, self->current);
+static void on_process(void *userdata) {
+  struct pw_buffer *b;
+  struct spa_buffer *buf;
+  uint32_t n_samples;
+  // int16_t *samples;
+  int16_t *data;
 
-  gtk_widget_queue_draw(GTK_WIDGET(self));
+  BarBarCava *cava = BARBAR_CAVA(userdata);
 
-  return G_SOURCE_CONTINUE;
+  // if (data->cava_audio->terminate == 1)
+  //   pw_main_loop_quit(data->loop);
+  //
+  if ((b = pw_stream_dequeue_buffer(cava->stream)) == NULL) {
+    pw_log_warn("out of buffers: %m\n");
+    return;
+  }
+
+  buf = b->buffer;
+
+  if (!buf->datas || !buf->datas[0].data) {
+    pw_stream_queue_buffer(cava->stream, b);
+    printf("error:\n");
+    return;
+  }
+
+  data = buf->datas[0].data;
+  n_samples = buf->datas[0].chunk->size / sizeof(int16_t);
+
+  if (n_samples < BUFFER_SIZE2) {
+    pw_stream_queue_buffer(cava->stream, b);
+    return; // Wait until enough samples are available
+  }
+
+  double *input = (double *)fftw_malloc(sizeof(double) * BUFFER_SIZE2);
+  fftw_complex *output = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) *
+                                                     (BUFFER_SIZE2 / 2 + 1));
+
+  fftw_plan plan =
+      fftw_plan_dft_r2c_1d(BUFFER_SIZE2, input, output, FFTW_ESTIMATE);
+
+  for (int i = 0; i < BUFFER_SIZE2; i++) {
+    input[i] = data[i] / 32768.0; // Normalize 16-bit PCM to range -1 to 1
+  }
+
+  // Execute the FFT
+  fftw_execute(plan);
+
+  // int num_bands = g_barbar_graph_get_history_length();
+  // int band_size = (BUFFER_SIZE / 2) /
+  //                 num_bands; // Calculate the number of FFT bins per band
+  //
+  // GQueue *queue = g_barbar_graph_get_queue(BARBAR_GRAPH(cava));
+  // GList *head = queue->head;
+  // for (int band = 0; band < num_bands; band++) {
+  //
+  //   double sum_magnitude = 0.0;
+  //   int start = band * band_size;
+  //   int end = start + band_size;
+  //
+  //   for (int i = start; i < end; i++) {
+  //     double real = output[i][0];
+  //     double imag = output[i][1];
+  //     sum_magnitude += sqrt(real * real + imag * imag);
+  //   }
+  //
+  //   // Store average magnitude for the band
+  //   double *v = head->data;
+  //   *v = sum_magnitude / band_size;
+  //   head = head->next;
+  //   // g_queue_push_tail(queue, 5);
+  // }
+
+  // g_barbar_graph_set_entries(BARBAR_GRAPH(cava), cava->queue);
+  gtk_widget_queue_draw(GTK_WIDGET(cava));
+
+  // Print the 10 frequency band magnitudes
+  // printf("Frequency Bands:\n");
+  // for (int i = 0; i < num_bands; i++) {
+  //   printf("Band %d: Magnitude %.2f\n", i + 1, band_magnitudes[i]);
+  // }
+
+  // Cleanup
+  fftw_destroy_plan(plan);
+  fftw_free(input);
+  fftw_free(output);
+
+  // Re-queue the buffer
+  pw_stream_queue_buffer(cava->stream, b);
 }
 
-static void g_barbar_graph_init(BarBarGraph *self) {
-  gtk_widget_get_color(GTK_WIDGET(self), &self->color);
-  self->queue = g_queue_new();
-  g_queue_init(self->queue);
+static void on_stream_param_changed(void *userdata, uint32_t id,
+                                    const struct spa_pod *param) {
+  // printf("param changed!\n");
+  BarBarCava *cava = BARBAR_CAVA(userdata);
 
-  self->current = 0.0;
-  self->min_value = 0.0;
-  self->max_value = 1.0;
-  self->interval = 1000;
+  if (param == NULL || id != SPA_PARAM_Format) {
+    return;
+  }
 
-  push_update(self, self->current);
+  if (spa_format_parse(param, &cava->format.media_type,
+                       &cava->format.media_subtype) < 0) {
+    return;
+  }
+
+  if (cava->format.media_type != SPA_MEDIA_TYPE_audio ||
+      cava->format.media_subtype != SPA_MEDIA_SUBTYPE_raw) {
+    return;
+  }
+
+  if (spa_format_audio_raw_parse(param, &cava->format.info.raw) < 0) {
+    return;
+  }
+
+  // printf("got video format:\n");
+  // printf("  format: %d %d\n", cava->format.info.raw.format,
+  //        SPA_AUDIO_FORMAT_S16_LE);
+  // spa_debug_type_find_name(spa_type_video_format,
+  //                          cava->format.info.raw.format));
+  // printf("  size: %dx%d\n", cava->format.info.raw.size.width,
+  //        cava->format.info.raw.size.height);
+  // printf("  framerate: %d/%d\n", cava->format.info.raw.framerate.num,
+  //        cava->format.info.raw.framerate.denom);
 }
 
-static void g_barbar_graph_start(GtkWidget *widget) {
-  GTK_WIDGET_CLASS(g_barbar_graph_parent_class)->root(widget);
+static const struct pw_stream_events stream_events = {
+    PW_VERSION_STREAM_EVENTS,
+    .param_changed = on_stream_param_changed,
+    .process = on_process,
+};
 
-  BarBarGraph *self = BARBAR_GRAPH(widget);
+static gboolean on_pipewire_event(GIOChannel *channel, GIOCondition condition,
+                                  gpointer data) {
+  struct pw_loop *loop = (struct pw_loop *)data;
 
-  self->tick_cb =
-      g_timeout_add_full(0, self->interval, g_barbar_graph_update, self, NULL);
+  // Run PipeWire's loop to process pending events
+  pw_loop_iterate(loop, 0); // Non-blocking iteration
+
+  // Return TRUE to keep the event source active, FALSE to remove it
+  return TRUE;
 }
 
-GtkWidget *g_barbar_graph_new(void) {
-  return g_object_new(BARBAR_TYPE_GRAPH, NULL);
+static void setup_eventloop(BarBarCava *self) {
+  struct pw_loop *pw_loop = pw_main_loop_get_loop(self->loop);
+  // Get the file descriptor associated with PipeWire's loop
+  int pw_fd = pw_loop_get_fd(pw_loop);
+
+  // Create a GIOChannel from the PipeWire file descriptor
+  GIOChannel *gio_channel = g_io_channel_unix_new(pw_fd);
+
+  // Add the PipeWire file descriptor to the GLib main loop
+  g_io_add_watch(gio_channel, G_IO_IN | G_IO_ERR | G_IO_HUP, on_pipewire_event,
+                 pw_loop);
+
+  // Cleanup: unreference the GIOChannel (the event source will keep it alive)
+  g_io_channel_unref(gio_channel);
+}
+
+static void g_barbar_cava_start(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(g_barbar_cava_parent_class)->root(widget);
+  BarBarCava *self = BARBAR_CAVA(widget);
+  struct pw_properties *props;
+  const struct spa_pod *params[1];
+  pw_init(NULL, NULL);
+
+  // TODO: better buffer size
+  uint8_t buffer[BUFFER_SIZE2];
+  struct spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
+
+  uint32_t nom;
+  nom = nearbyint((10000 * self->framerate) / 1000000.0);
+
+  self->loop = pw_main_loop_new(NULL);
+  if (self->loop == NULL) {
+    g_printerr("failed to instantiate main loop");
+    return;
+    // goto err;
+  }
+
+  props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY,
+                            "Capture", PW_KEY_MEDIA_ROLE, "Music", NULL);
+
+  struct pw_loop *pw_loop = pw_main_loop_get_loop(self->loop);
+
+  const char *source = "auto";
+  if (strcmp(source, "auto") == 0) {
+    pw_properties_set(props, PW_KEY_STREAM_CAPTURE_SINK, "true");
+  } else {
+    pw_properties_set(props, PW_KEY_TARGET_OBJECT, source);
+  }
+
+  // printf("%u/%u\n", nom, self->framerate);
+  // pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%u/%u", nom,
+  // self->framerate);
+  pw_properties_setf(props, PW_KEY_NODE_LATENCY, "1024/48000");
+
+  pw_properties_set(props, PW_KEY_NODE_ALWAYS_PROCESS, "true");
+
+  self->stream =
+      pw_stream_new_simple(pw_loop, "cava", props, &stream_events, self);
+
+  enum spa_audio_format audio_format = SPA_AUDIO_FORMAT_S16;
+
+  // switch (data.cava_audio->format) {
+  // case 8:
+  //   audio_format = SPA_AUDIO_FORMAT_S8;
+  //   break;
+  // case 16:
+  //   audio_format = SPA_AUDIO_FORMAT_S16;
+  //   break;
+  // case 24:
+  //   audio_format = SPA_AUDIO_FORMAT_S24;
+  //   break;
+  // case 32:
+  //   audio_format = SPA_AUDIO_FORMAT_S32;
+  //   break;
+  // };
+
+  params[0] = spa_format_audio_raw_build(
+      &b, SPA_PARAM_EnumFormat,
+      &SPA_AUDIO_INFO_RAW_INIT(.format = audio_format,
+                               .rate = self->framerate));
+
+  pw_stream_connect(self->stream, PW_DIRECTION_INPUT, PW_ID_ANY,
+                    PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
+                        PW_STREAM_FLAG_RT_PROCESS,
+                    params, 1);
+
+  setup_eventloop(self);
+  //
+  /* Context */
+  // self->context = pw_context_new(pw_main_loop_get_loop(data->loop), NULL, 0);
+  // if (self->context == NULL) {
+  //   LOG_ERR("failed to instantiate pipewire context");
+  //   goto err;
+  // }
+  //
+  // /* Core */
+  // self->core = pw_context_connect(data->context, NULL, 0);
+  // if (self->core == NULL) {
+  //   LOG_ERR("failed to connect to pipewire");
+  //   goto err;
+  // }
+  // pw_core_add_listener(self->core, &self->core_listener, &self, self);
+  //
+  // /* Registry */
+  // self->registry = pw_core_get_registry(data->core, PW_VERSION_REGISTRY, 0);
+  // if (data->registry == NULL) {
+  //   LOG_ERR("failed to get core registry");
+  //   goto err;
+  // }
+  // pw_registry_add_listener(data->registry, &data->registry_listener,
+  //                          &registry_events, data);
+  //
+  // /* Sync */
+  // data->sync = pw_core_sync(data->core, PW_ID_CORE, data->sync);
+  //
+  // data->module = module;
+  //
+  // /* node_events_param_data */
+  // data->node_data_sink.data = data;
+  // data->node_data_sink.is_sink = true;
+  // data->node_data_source.data = data;
+  // data->node_data_source.is_sink = false;
+
+  // err:
+  //   if (data->registry != NULL)
+  //     pw_proxy_destroy((struct pw_proxy *)data->registry);
+  //   if (data->core != NULL)
+  //     pw_core_disconnect(data->core);
+  //   if (data->context != NULL)
+  //     pw_context_destroy(data->context);
+  //   if (data->loop != NULL)
+  //     pw_main_loop_destroy(data->loop);
+  //   free(data);
+  //   return NULL;
+}
+
+GtkWidget *g_barbar_cava_new(void) {
+  return g_object_new(BARBAR_TYPE_CAVA, NULL);
 }

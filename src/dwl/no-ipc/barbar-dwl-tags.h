@@ -35,6 +35,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarDwlTags, g_barbar_dwl_tags, BARBAR, DWL_TAGS,
                      GtkWidget)
 
-GtkWidget *g_barbar_dwl_tags_new(void);
+GtkWidget *g_barbar_dwl_tags_new(const char *output);
 
 G_END_DECLS

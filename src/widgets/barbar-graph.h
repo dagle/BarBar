@@ -25,15 +25,27 @@
 
 #include <gtk/gtk.h>
 
+G_BEGIN_DECLS
+
 #define BARBAR_TYPE_GRAPH (g_barbar_graph_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH, GtkWidget)
+G_DECLARE_DERIVABLE_TYPE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH, GtkWidget)
+
+struct _BarBarGraphClass {
+  GtkWidgetClass parent_instance;
+};
 
 void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke);
 
 void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill);
 
-void g_barbar_graph_history_entries(BarBarGraph *self, guint length);
+void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue);
+
+void g_barbar_graph_set_entries_normalized(BarBarGraph *self, GQueue *queue);
+
+void g_barbar_graph_set_push_entry(BarBarGraph *self, double value);
+
+void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length);
 
 void g_barbar_graph_set_min_value(BarBarGraph *self, double min);
 
@@ -45,8 +57,10 @@ void g_barbar_graph_set_min_height(BarBarGraph *self, guint height);
 
 void g_barbar_graph_set_min_width(BarBarGraph *self, guint width);
 
-void g_barbar_graph_set_interval(BarBarGraph *self, guint interval);
+/*void g_barbar_graph_set_interval(BarBarGraph *self, guint interval);*/
 
 void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete);
 
 GtkWidget *g_barbar_graph_new(void);
+
+G_END_DECLS

@@ -323,18 +323,18 @@ GtkBuilder *g_barbar_default_builder(const char *path, GError **err) {
   return builder;
 }
 
-/**
- * barbar_default_blueprint:
- * @err: Return location for an error
- *
- * Load the builder from config
- *
- * Returns: (transfer full): returns a builder
- */
-GtkBuilder *g_barbar_default_blueprint(const char *path, GError *err) {
-  // TODO:
-  return NULL;
-}
+// /**
+//  * barbar_default_blueprint:
+//  * @err: Return location for an error
+//  *
+//  * Load the builder from config
+//  *
+//  * Returns: (transfer full): returns a builder
+//  */
+// GtkBuilder *g_barbar_default_blueprint(const char *path, GError *err) {
+//   // TODO:
+//   return NULL;
+// }
 
 G_MODULE_EXPORT void g_barbar_custom_printf(const char *format, ...) {
   va_list args;

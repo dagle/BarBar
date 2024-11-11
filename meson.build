@@ -32,6 +32,8 @@ udev = dependency('libudev')
 module = dependency('gmodule-export-2.0')
 upower_glib = dependency('upower-glib', required: get_option('upower_glib'))
 libgtop = dependency('libgtop-2.0')
+pipewire_dep = dependency('libpipewire-0.3', 
+  required: get_option('pipewire'))
 
 libgweather = dependency('gweather4')
 libgeoclue = dependency('libgeoclue-2.0')
@@ -39,6 +41,7 @@ libgeoclue = dependency('libgeoclue-2.0')
 libwireplumber = dependency('wireplumber-0.5', required: get_option('wireplumber'))
 wayland_client = dependency('wayland-client')
 template_glib = dependency('template-glib-1.0')
+fftw3 = dependency('fftw3', required: get_option('cava'))
 # xkbcommon = dependency('xkbcommon')
 
 # defaults to etc
@@ -102,7 +105,9 @@ deps = [
   libgweather,
   libgeoclue,
   soup,
+  pipewire_dep,
   cava,
+  fftw3,
   # xkbcommon,
   m_dep,
   module,

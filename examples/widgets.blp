@@ -39,22 +39,22 @@ BarBar.Bar {
       label: bind clock.time;
     }
 
-    [end]
-    Gtk.ScaleButton volume {
-      tooltip-markup: bind $g_barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
-      // tooltip-markup: bind $g_barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-      // Gtk.Label {
-      // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
-      // use-markup: true;
-      // }
-      adjustment: Adjustment {
-        lower: 0.0;
-        upper: 1.0;
-        page-increment: 0.1;
-        step-increment: 0.1;
-        value: bind plumb.percent bidirectional;
-      };
-    }
+    // [end]
+    // Gtk.ScaleButton volume {
+    //   tooltip-markup: bind $g_barbar_strdup_printf("%2.1f", plumb.percent) as <string>;
+    //   // tooltip-markup: bind $g_barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+    //   // Gtk.Label {
+    //   // label: bind $barbar_strdup_printf("%0.f°C<span color=\"#bd111f\"> </span>", temperature.temperature) as <string>;
+    //   // use-markup: true;
+    //   // }
+    //   adjustment: Adjustment {
+    //     lower: 0.0;
+    //     upper: 1.0;
+    //     page-increment: 0.1;
+    //     step-increment: 0.1;
+    //     value: bind plumb.percent bidirectional;
+    //   };
+    // }
 
     [end]
     Gtk.Label {
@@ -141,7 +141,7 @@ BarBar.Bar {
     }
 
     [end]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       value: bind cpu.percent;
     }
 
@@ -164,6 +164,9 @@ BarBar.Bar {
     //   Gtk.Label {}
     // }
     //
+
+    [end]
+    BarBar.Cava {}
 
     [end]
     Gtk.Box {
@@ -293,8 +296,7 @@ BarBar.SystemdUnits units {
 
 BarBar.RiverMode mode {}
 
-BarBar.Weather weater {}
-
+// BarBar.Weather weater {}
 BarBar.MprisPlayer mpris {
   player-instance: "mpd";
 }

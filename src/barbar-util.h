@@ -38,7 +38,7 @@ void g_barbar_search_style_provider(const char *path);
 
 GtkBuilder *g_barbar_default_builder(const char *path, GError **err);
 
-GtkBuilder *barbar_default_blueprint(const char *path, GError *err);
+/*GtkBuilder *g_barbar_default_blueprint(const char *path, GError *err);*/
 
 char *g_barbar_print_percent(gpointer *ptr, double percent, guint decimal,
                              gboolean sign);

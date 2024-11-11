@@ -140,7 +140,7 @@ static void g_barbar_weather_class_init(BarBarWeatherClass *class) {
    *
    */
   weather_props[PROP_CONTACT_INFO] = g_param_spec_string(
-      "contact-info", NULL, NULL, "per.odlund@gmail.com",
+      "contact-info", NULL, NULL, NULL,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -276,4 +276,8 @@ static void g_barbar_weather_start(BarBarSensor *sensor) {
     gclue_simple_new(g_application_get_application_id(app),
                      GCLUE_ACCURACY_LEVEL_CITY, NULL, geo_callback, weather);
   }
+}
+
+BarBarSensor *g_barbar_weather_new(const char *contact_info) {
+  return g_object_new(BARBAR_TYPE_WEATHER, "contact-info", contact_info, NULL);
 }

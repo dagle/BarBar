@@ -65,14 +65,18 @@ libbarbar_src = [
   'widgets/barbar-sensorwidget.c',
   'widgets/barbar-rotary.c',
   'widgets/barbar-graph.c',
+  'widgets/barbar-interval-graph.c',
   'widgets/barbar-valueicon.c',
   'widgets/barbar-processes.c',
   'widgets/barbar-activity-graph.c',
   'widgets/barbar-box.c',
   'widgets/barbar-eventswitcher.c',
   'widgets/barbar-playbutton.c',
+  'widgets/barbar-cava.c',
 
   'widgets/barbar-github-activity.c',
+  'barbar-output-manager.c',
+  'barbar-output-head.c',
 ]
 
 libbarbar_headers = [
@@ -120,14 +124,18 @@ libbarbar_headers = [
   'widgets/barbar-sensorwidget.h',
   'widgets/barbar-rotary.h',
   'widgets/barbar-graph.h',
+  'widgets/barbar-interval-graph.h',
   'widgets/barbar-processes.h',
   'widgets/barbar-activity-graph.h',
   'widgets/barbar-box.h',
   'widgets/barbar-valueicon.h',
   'widgets/barbar-eventswitcher.h',
   'widgets/barbar-playbutton.h',
+  'widgets/barbar-cava.h',
 
   'widgets/barbar-github-activity.h',
+  'barbar-output-manager.h',
+  'barbar-output-head.h',
 
   'hyprland/barbar-hyprland-ipc.h',
   'hyprland/barbar-hyprland-service.h',
@@ -171,6 +179,7 @@ wayland_prots = [
 	wl_protocol_dir / 'unstable/xdg-output/xdg-output-unstable-v1.xml',
   '../protocol/river-status-unstable-v1.xml',
   '../protocol/river-control-unstable-v1.xml',
+  '../protocol/wlr-output-management-unstable-v1.xml',
 ]
 
 foreach w : wayland_prots
@@ -236,6 +245,7 @@ foreach name, path: power_profile_names
   )
 endforeach
 
+# remove this
 status_notifier_prots = [
   '../protocol/dbus-menu.xml',
   '../protocol/dbus-status-notifier-watcher.xml',
