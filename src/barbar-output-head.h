@@ -36,6 +36,38 @@ G_DECLARE_FINAL_TYPE(BarBarOutputHead, g_barbar_output_head, BARBAR,
 
 GObject *g_barbar_output_head_new(struct zwlr_output_head_v1 *head);
 
-void g_barbar_output_run(BarBarOutputHead *self);
+void g_barbar_output_head_run(BarBarOutputHead *self);
+
+const char *g_barbar_output_head_get_name(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_resolution_height(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_resolution_width(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_refresh(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_height(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_width(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_pos_y(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_pos_x(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_transform(BarBarOutputHead *head);
+
+gint32 g_barbar_output_head_get_scale(BarBarOutputHead *head);
+
+gboolean g_barbar_output_head_get_sync(BarBarOutputHead *head);
+
+gboolean g_barbar_output_head_get_enabled(BarBarOutputHead *head);
+
+const char *g_barbar_output_head_get_description(BarBarOutputHead *head);
+
+const char *g_barbar_output_head_get_make(BarBarOutputHead *head);
+
+const char *g_barbar_output_head_get_model(BarBarOutputHead *head);
+
+const char *g_barbar_output_head_serial_get_number(BarBarOutputHead *head);
 
 G_END_DECLS

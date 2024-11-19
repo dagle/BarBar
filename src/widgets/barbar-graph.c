@@ -1,5 +1,10 @@
 #include "barbar-graph.h"
 
+// TODO: Mirror mode
+// Add multiple colors.
+// Block graph, it's like
+// bar graph but with
+
 enum {
   PROP_0,
 
@@ -40,7 +45,7 @@ typedef struct {
   // Values to plot
   GQueue *queue;
   gsize items;
-  gsize capasity;
+  gsize length;
   gboolean full;
 } BarBarGraphPrivate;
 
@@ -103,11 +108,11 @@ void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (private->capasity == length) {
+  if (private->length == length) {
     return;
   }
 
-  if (private->capasity > length && private->items > length) {
+  if (private->length > length && private->items > length) {
     // drop values and call it full
     private->full = TRUE;
   } else {
@@ -115,7 +120,13 @@ void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length) {
     private->full = FALSE;
   }
 
-  private->capasity = length;
+  private->length = length;
+}
+
+guint g_barbar_graph_get_entry_numbers(BarBarGraph *self) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+
+  return private->length;
 }
 
 /**
@@ -157,51 +168,51 @@ void g_barbar_graph_set_max_value(BarBarGraph *self, double max) {
   private->max_value = max;
 }
 
-GQueue *g_barbar_graph_get_queue(BarBarGraph *self) {
-  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+// GQueue *g_barbar_graph_get_queue(BarBarGraph *self) {
+//   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+//
+//   return private->queue;
+// }
 
-  return private->queue;
-}
-
-void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue) {
-  g_return_if_fail(BARBAR_IS_GRAPH(self));
-
-  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
-
-  if (private->queue != queue) {
-    if (private->queue) {
-      g_queue_free_full(queue, free);
-    }
-    private->queue = queue;
-  }
-
-  GList *link = private->queue->head;
-
-  while (link) {
-    double value = *(double *)link->data;
-    if (value > private->max_value) {
-      g_barbar_graph_set_max_value(self, value);
-    }
-    if (value < private->min_value) {
-      g_barbar_graph_set_min_value(self, value);
-    }
-    link = link->next;
-  }
-
-  if (private->discrete) {
-    update_path_discrete(self);
-  } else {
-    update_path_continuous(self);
-  }
-}
+// void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue) {
+//   g_return_if_fail(BARBAR_IS_GRAPH(self));
+//
+//   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+//
+//   if (private->queue != queue) {
+//     if (private->queue) {
+//       g_queue_free_full(queue, free);
+//     }
+//     private->queue = queue;
+//   }
+//
+//   GList *link = private->queue->head;
+//
+//   while (link) {
+//     double value = *(double *)link->data;
+//     if (value > private->max_value) {
+//       g_barbar_graph_set_max_value(self, value);
+//     }
+//     if (value < private->min_value) {
+//       g_barbar_graph_set_min_value(self, value);
+//     }
+//     link = link->next;
+//   }
+//
+//   if (private->discrete) {
+//     update_path_discrete(self);
+//   } else {
+//     update_path_continuous(self);
+//   }
+// }
 /**
- * g_barbar_graph_set_push_entry:
+ * g_barbar_graph_push_entry:
  * @self: a `BarBarGraph`
  * @value: a value
  *
  * Sets the current value of a graph.
  */
-void g_barbar_graph_set_push_entry(BarBarGraph *self, double value) {
+void g_barbar_graph_push_entry(BarBarGraph *self, double value) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
 
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
@@ -351,7 +362,7 @@ static void update_path_discrete(BarBarGraph *self) {
   double x = 0;
 
   double y = get_y(private->height, private->max_value, link);
-  double delta = private->width / private->capasity;
+  double delta = private->width / private->length;
 
   gsk_path_builder_move_to(builder, 0, y);
   double next = y;
@@ -391,7 +402,7 @@ static void update_path_continuous(BarBarGraph *self) {
   double x = 0;
 
   double y = get_y(private->height, private->max_value, link);
-  double delta = private->width / private->capasity;
+  double delta = private->width / private->length;
 
   gsk_path_builder_move_to(builder, 0, y);
   while (link) {
@@ -437,8 +448,12 @@ static void push_update(BarBarGraph *self, double value) {
     g_queue_push_tail(private->queue, v);
 
     private->items++;
-    private->full = private->items >= private->capasity;
+    private->full = private->items >= private->length;
   }
+}
+
+void g_barbar_graph_update_path(BarBarGraph *self) {
+  BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
   if (private->discrete) {
     update_path_discrete(self);
   } else {
@@ -480,7 +495,6 @@ static void g_barbar_graph_measure(GtkWidget *widget,
                                    int *natural_baseline) {
   BarBarGraph *self = BARBAR_GRAPH(widget);
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
-  printf("measure: %f\n", private->width);
 
   if (orientation == GTK_ORIENTATION_HORIZONTAL)
     *minimum = *natural = private->width;
@@ -493,7 +507,7 @@ void g_barbar_graph_size_allocate(GtkWidget *widget, int width, int height,
   BarBarGraph *self = BARBAR_GRAPH(widget);
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  printf("allocate: %f\n", private->width);
+  // printf("allocate: %f\n", private->width);
   private->width = width;
   private->height = height;
 }

@@ -1,9 +1,20 @@
 #include "barbar-output-head.h"
+#include "gdk/gdk.h"
+#include "gdk/wayland/gdkwayland.h"
 #include "glib-object.h"
+#include "glib.h"
 #include "wlr-output-management-unstable-v1-client-protocol.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <wayland-client-protocol.h>
+
+struct head_mode {
+  struct zwlr_output_mode_v1 *mode;
+  BarBarOutputHead *parent;
+  int32_t width;
+  int32_t height;
+  int32_t refresh;
+};
 
 /**
  * BarBarOutputHead:
@@ -13,20 +24,51 @@
 struct _BarBarOutputHead {
   GObject parent_instance;
   struct zwlr_output_head_v1 *head;
+  struct head_mode *current;
   char *name;
   char *description;
-  int32_t height;
-  int32_t width;
+  gint32 height;
+  gint32 width;
   gboolean enabled;
-  int32_t pos_y;
-  int32_t pos_x;
-  int32_t transform;
-  int32_t scale;
+  gint32 pos_y;
+  gint32 pos_x;
+  gint32 transform;
+  gint32 scale;
   char *make;
   char *model;
   char *serial_number;
+  GList *modes;
   gboolean sync;
 };
+
+static struct head_mode *
+g_barbar_insert_mode(BarBarOutputHead *head, struct zwlr_output_mode_v1 *mode) {
+  struct head_mode *head_mode = malloc(sizeof(struct head_mode));
+  head->modes = g_list_append(head->modes, head_mode);
+  head_mode->parent = head;
+
+  head_mode->mode = mode;
+
+  return head_mode;
+}
+
+static struct head_mode *g_barbar_find_mode(BarBarOutputHead *head,
+                                            struct zwlr_output_mode_v1 *mode) {
+
+  for (GList *list = head->modes; list; list = list->next) {
+    struct head_mode *head_mode = list->data;
+    if (head_mode->mode == mode) {
+      return head_mode;
+    }
+  }
+  return NULL;
+}
+
+static void g_barbar_free_mode(void *data) {
+  struct head_mode *head_mode = data;
+  g_clear_pointer(&head_mode->mode, zwlr_output_mode_v1_destroy);
+  g_free(head_mode);
+}
 
 enum {
   PROP_0,
@@ -34,6 +76,9 @@ enum {
   PROP_HEAD,
   PROP_NAME,
   PROP_DESCRIPTION,
+  PROP_RES_HEIGHT,
+  PROP_RES_WIDTH,
+  PROP_REFRESH,
   PROP_HEIGHT,
   PROP_WIDTH,
   PROP_ENABLED,
@@ -72,6 +117,177 @@ static void g_barbar_output_head_set_head(BarBarOutputHead *self,
   free(self->head);
   self->head = head;
   g_object_notify_by_pspec(G_OBJECT(self), props[PROP_HEAD]);
+}
+
+/**
+ * g_barbar_output_head_get_name:
+ *
+ * Gets the name of the output
+ *
+ * Returns: (transfer none): A string
+ */
+const char *g_barbar_output_head_get_name(BarBarOutputHead *head) {
+  return head->name;
+}
+
+/**
+ * g_barbar_output_head_get_resolution_height:
+ *
+ * Returns: the resolution height of the head
+ */
+gint32 g_barbar_output_head_get_resolution_height(BarBarOutputHead *head) {
+  if (!head->current) {
+    return -1;
+  }
+  return head->current->height;
+}
+
+/**
+ * g_barbar_output_head_get_resolution_width:
+ *
+ * Returns: the resolution width of the head
+ */
+gint32 g_barbar_output_head_get_resolution_width(BarBarOutputHead *head) {
+  if (!head->current) {
+    return -1;
+  }
+  return head->current->width;
+}
+/**
+ * g_barbar_output_head_get_refresh:
+ *
+ * Returns: the refresh rate of the head
+ */
+gint32 g_barbar_output_head_get_refresh(BarBarOutputHead *head) {
+  if (!head->current) {
+    return -1;
+  }
+  return head->current->refresh;
+}
+
+/**
+ * g_barbar_output_head_get_height:
+ *
+ * Returns: the height of the head
+ */
+gint32 g_barbar_output_head_get_height(BarBarOutputHead *head) {
+  return head->height;
+}
+
+/**
+ * g_barbar_output_head_get_width:
+ *
+ * Returns: the width of the head
+ */
+gint32 g_barbar_output_head_get_width(BarBarOutputHead *head) {
+  return head->width;
+}
+
+/**
+ * g_barbar_output_head_get_pos_y:
+ *
+ * Returns: the vertical position of the output
+ */
+gint32 g_barbar_output_head_get_pos_y(BarBarOutputHead *head) {
+  return head->pos_y;
+}
+
+/**
+ * g_barbar_output_head_get_pos_x:
+ *
+ * Returns: the horizontal position of the output
+ */
+gint32 g_barbar_output_head_get_pos_x(BarBarOutputHead *head) {
+  return head->pos_x;
+}
+
+/**
+ * g_barbar_output_head_get_transform:
+ *
+ * Returns: the output transform
+ */
+gint32 g_barbar_output_head_get_transform(BarBarOutputHead *head) {
+  return head->transform;
+}
+
+/**
+ * g_barbar_output_head_get_scale:
+ *
+ * Gets the name of the output
+ *
+ * Returns: get the scaling of the output
+ */
+gint32 g_barbar_output_head_get_scale(BarBarOutputHead *head) {
+  return head->scale;
+}
+
+/**
+ * g_barbar_output_head_get_sync:
+ *
+ * Describes whether adaptive sync is currently enabled for
+ * the head or not. Adaptive sync is also known as Variable Refresh
+ * Rate or VRR.
+ *
+ * Returns: %TRUE if sync is enabled
+ */
+gboolean g_barbar_output_head_get_sync(BarBarOutputHead *head) {
+  return head->sync;
+}
+
+/**
+ * g_barbar_output_head_get_enabled:
+ *
+ * Weither or not the screen has been mapped by the wayland
+ * compositor.
+ *
+ * Returns: %TRUE if the output is enabled
+ */
+gboolean g_barbar_output_head_get_enabled(BarBarOutputHead *head) {
+  return head->enabled;
+}
+
+/**
+ * g_barbar_output_head_get_description:
+ *
+ * Gets the name of the output
+ *
+ * Returns: (transfer none): A string
+ */
+const char *g_barbar_output_head_get_description(BarBarOutputHead *head) {
+  return head->description;
+}
+
+/**
+ * g_barbar_output_head_get_make:
+ *
+ * Gets the name of the output
+ *
+ * Returns: (transfer none): A string
+ */
+const char *g_barbar_output_head_get_make(BarBarOutputHead *head) {
+  return head->make;
+}
+
+/**
+ * g_barbar_output_head_get_model:
+ *
+ * Gets the name of the output
+ *
+ * Returns: (transfer none): A string
+ */
+const char *g_barbar_output_head_get_model(BarBarOutputHead *head) {
+  return head->model;
+}
+
+/**
+ * g_barbar_output_head_serial_get_number:
+ *
+ * Gets the name of the output
+ *
+ * Returns: (transfer none): A string
+ */
+const char *g_barbar_output_head_serial_get_number(BarBarOutputHead *head) {
+  return head->serial_number;
 }
 
 static void g_barbar_output_head_set_property(GObject *object,
@@ -115,6 +331,18 @@ static void g_barbar_output_head_get_property(GObject *object,
   case PROP_POS_Y:
     g_value_set_uint(value, head->pos_y);
     break;
+  case PROP_RES_HEIGHT: {
+    g_value_set_uint(value, head->current->height);
+    break;
+  }
+  case PROP_RES_WIDTH: {
+    g_value_set_uint(value, head->current->width);
+    break;
+  }
+  case PROP_REFRESH: {
+    g_value_set_uint(value, head->current->refresh);
+    break;
+  }
   case PROP_TRANSFORM:
     g_value_set_uint(value, head->transform);
     break;
@@ -147,6 +375,11 @@ static void g_barbar_output_head_finalize(GObject *object) {
   g_free(head->make);
   g_free(head->model);
   g_free(head->serial_number);
+
+  g_clear_pointer(&head->head, zwlr_output_head_v1_destroy);
+  g_list_free_full(head->modes, g_barbar_free_mode);
+
+  // g_clear_pointer(&head->current, zwlr_output_mode_v1_destroy);
 
   G_OBJECT_CLASS(g_barbar_output_head_parent_class)->finalize(object);
 }
@@ -224,6 +457,24 @@ static void g_barbar_output_head_class_init(BarBarOutputHeadClass *class) {
   props[PROP_ENABLED] =
       g_param_spec_boolean("enabled", NULL, NULL, FALSE, G_PARAM_READABLE);
 
+  /**
+   * BarBackOutputHead:resolution-height:
+   * The resolution height of the output. The output might be scaled.
+   */
+  props[PROP_RES_HEIGHT] = g_param_spec_uint("resolution-height", NULL, NULL, 0,
+                                             G_MAXUINT, 0, G_PARAM_READABLE);
+  /**
+   * BarBackOutputHead:resolution-width:
+   * The resolution width of the output. The output might be scaled.
+   */
+  props[PROP_RES_WIDTH] = g_param_spec_uint("resolution-width", NULL, NULL, 0,
+                                            G_MAXUINT, 0, G_PARAM_READABLE);
+  /**
+   * BarBackOutputHead:refresh:
+   * The refresh ratio of the output.
+   */
+  props[PROP_REFRESH] = g_param_spec_uint("refresh", NULL, NULL, 0, G_MAXUINT,
+                                          0, G_PARAM_READABLE);
   /**
    * BarBackOutputHead:pos-x:
    * The x position of the head in the global compositor
@@ -366,11 +617,66 @@ static void physical_size(void *data,
   g_object_notify_by_pspec(G_OBJECT(self), props[PROP_WIDTH]);
   g_object_notify_by_pspec(G_OBJECT(self), props[PROP_HEIGHT]);
 }
+
+static void size(void *data, struct zwlr_output_mode_v1 *zwlr_output_mode_v1,
+                 int32_t width, int32_t height) {
+  struct head_mode *self = data;
+
+  self->width = width;
+  self->height = height;
+}
+
+static void refresh(void *data, struct zwlr_output_mode_v1 *zwlr_output_mode_v1,
+                    int32_t refresh) {
+  struct head_mode *self = data;
+
+  self->refresh = refresh;
+}
+
+static void preferred(void *data,
+                      struct zwlr_output_mode_v1 *zwlr_output_mode_v1) {}
+
+static void mode_finished(void *data,
+                          struct zwlr_output_mode_v1 *zwlr_output_mode_v1) {
+  struct head_mode *mode = data;
+  BarBarOutputHead *head = mode->parent;
+
+  head->modes = g_list_remove(head->modes, mode);
+  g_barbar_free_mode(mode);
+
+  // GList *list;
+  // gboolean found = FALSE;
+  // struct head_mode *head_mode;
+  // for (list = head->modes; list; list = list->next) {
+  //   head_mode = list->data;
+  //   if (head_mode->mode == zwlr_output_mode_v1) {
+  //     break;
+  //     found = TRUE;
+  //   }
+  // }
+  //
+  // if (!found) {
+  //   return;
+  // }
+  // head->modes = g_list_remove_link(head->modes, list);
+  // g_barbar_free_mode(head_mode);
+}
+
+const struct zwlr_output_mode_v1_listener mode_listner = {
+
+    .size = size,
+    .refresh = refresh,
+    .preferred = preferred,
+    .finished = mode_finished,
+};
+
 static void mode(void *data, struct zwlr_output_head_v1 *zwlr_output_head_v1,
                  struct zwlr_output_mode_v1 *mode) {
   BarBarOutputHead *self = BARBAR_OUTPUT_HEAD(data);
+  struct head_mode *head_mode;
 
-  // g_object_notify_by_pspec(G_OBJECT(self), props[PROP_HEAD]);
+  head_mode = g_barbar_insert_mode(self, mode);
+  zwlr_output_mode_v1_add_listener(mode, &mode_listner, head_mode);
 }
 
 static void enabled(void *data, struct zwlr_output_head_v1 *zwlr_output_head_v1,
@@ -389,8 +695,11 @@ static void current_mode(void *data,
                          struct zwlr_output_head_v1 *zwlr_output_head_v1,
                          struct zwlr_output_mode_v1 *mode) {
   BarBarOutputHead *self = BARBAR_OUTPUT_HEAD(data);
+  self->current = g_barbar_find_mode(self, mode);
 
-  // g_object_notify_by_pspec(G_OBJECT(self), props[PROP_HEAD]);
+  g_object_notify_by_pspec(G_OBJECT(self), props[PROP_RES_WIDTH]);
+  g_object_notify_by_pspec(G_OBJECT(self), props[PROP_RES_HEIGHT]);
+  g_object_notify_by_pspec(G_OBJECT(self), props[PROP_REFRESH]);
 }
 
 static void position(void *data,
@@ -432,9 +741,10 @@ static void scale(void *data, struct zwlr_output_head_v1 *zwlr_output_head_v1,
   //
 }
 
-static void finished(void *data,
-                     struct zwlr_output_head_v1 *zwlr_output_head_v1) {
-  // TODO: this is a signal;
+static void head_finished(void *data,
+                          struct zwlr_output_head_v1 *zwlr_output_head_v1) {
+  BarBarOutputHead *self = BARBAR_OUTPUT_HEAD(data);
+  g_clear_pointer(&self->head, zwlr_output_head_v1_destroy);
 }
 
 static void make(void *data, struct zwlr_output_head_v1 *zwlr_output_head_v1,
@@ -489,15 +799,29 @@ static struct zwlr_output_head_v1_listener listner = {
     .position = position,
     .transform = transform,
     .scale = scale,
-    .finished = finished,
+    .finished = head_finished,
     .make = make,
     .model = model,
     .serial_number = serial_number,
     .adaptive_sync = adaptive_sync,
 };
 
-void g_barbar_output_run(BarBarOutputHead *self) {
+/**
+ * g_barbar_output_run:
+ *
+ * Starts the output. Will likely happen on construction in future.
+ *
+ */
+void g_barbar_output_head_run(BarBarOutputHead *self) {
+  GdkDisplay *gdk_display;
+  struct wl_display *wl_display;
+
+  gdk_display = gdk_display_get_default();
+  wl_display = gdk_wayland_display_get_wl_display(gdk_display);
+
   zwlr_output_head_v1_add_listener(self->head, &listner, self);
+
+  wl_display_roundtrip(wl_display);
 }
 
 /**
@@ -508,5 +832,8 @@ void g_barbar_output_run(BarBarOutputHead *self) {
  * Returns: (transfer full): a new `OutputHead`.
  */
 GObject *g_barbar_output_head_new(struct zwlr_output_head_v1 *head) {
-  return g_object_new(BARBAR_TYPE_OUTPUT_HEAD, "head", head, NULL);
+  BarBarOutputHead *self =
+      g_object_new(BARBAR_TYPE_OUTPUT_HEAD, "head", head, NULL);
+
+  return G_OBJECT(self);
 }

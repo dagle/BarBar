@@ -216,30 +216,33 @@ static void on_process(void *userdata) {
   // Execute the FFT
   fftw_execute(plan);
 
-  // int num_bands = g_barbar_graph_get_history_length();
-  // int band_size = (BUFFER_SIZE / 2) /
-  //                 num_bands; // Calculate the number of FFT bins per band
-  //
-  // GQueue *queue = g_barbar_graph_get_queue(BARBAR_GRAPH(cava));
-  // GList *head = queue->head;
-  // for (int band = 0; band < num_bands; band++) {
-  //
-  //   double sum_magnitude = 0.0;
-  //   int start = band * band_size;
-  //   int end = start + band_size;
-  //
-  //   for (int i = start; i < end; i++) {
-  //     double real = output[i][0];
-  //     double imag = output[i][1];
-  //     sum_magnitude += sqrt(real * real + imag * imag);
-  //   }
-  //
-  //   // Store average magnitude for the band
-  //   double *v = head->data;
-  //   *v = sum_magnitude / band_size;
-  //   head = head->next;
-  //   // g_queue_push_tail(queue, 5);
-  // }
+  int num_bands = g_barbar_graph_get_entry_numbers(BARBAR_GRAPH(cava));
+  int band_size = (BUFFER_SIZE / 2) /
+                  num_bands; // Calculate the number of FFT bins per band
+
+  for (int band = 0; band < num_bands; band++) {
+
+    double sum_magnitude = 0.0;
+    int start = band * band_size;
+    int end = start + band_size;
+
+    for (int i = start; i < end; i++) {
+      double real = output[i][0];
+      double imag = output[i][1];
+      sum_magnitude += sqrt(real * real + imag * imag);
+    }
+
+    g_barbar_graph_push_entry(BARBAR_GRAPH(cava), sum_magnitude);
+    // Store average magnitude for the band
+    // double *v = head->data;
+    // *v = sum_magnitude / band_size;
+    // head = head->next;
+    // g_queue_push_tail(queue, 5);
+  }
+  g_barbar_graph_update_path(BARBAR_GRAPH(cava));
+  static int i = 0;
+  printf("i: %d\n", i);
+  i++;
 
   // g_barbar_graph_set_entries(BARBAR_GRAPH(cava), cava->queue);
   gtk_widget_queue_draw(GTK_WIDGET(cava));
@@ -362,9 +365,13 @@ static void g_barbar_cava_start(GtkWidget *widget) {
   // printf("%u/%u\n", nom, self->framerate);
   // pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%u/%u", nom,
   // self->framerate);
-  pw_properties_setf(props, PW_KEY_NODE_LATENCY, "1024/48000");
+  // pw_properties_setf(props, PW_KEY_NODE_LATENCY, "1024/48000");
 
-  pw_properties_set(props, PW_KEY_NODE_ALWAYS_PROCESS, "true");
+  // pw_properties_setf(props, PW_KEY_NODE_RATE, "2205/4410");
+  pw_properties_setf(props, PW_KEY_NODE_RATE,
+                     "44100/44100"); // 44100 Hz, one second per update
+
+  // pw_properties_set(props, PW_KEY_NODE_ALWAYS_PROCESS, "true");
 
   self->stream =
       pw_stream_new_simple(pw_loop, "cava", props, &stream_events, self);

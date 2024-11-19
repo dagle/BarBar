@@ -37,15 +37,22 @@ struct _BarBarGraphClass {
 
 void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke);
 
+/*GQueue *g_barbar_graph_get_queue(BarBarGraph *self);*/
+
 void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill);
 
-void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue);
+/*void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue);*/
 
-void g_barbar_graph_set_entries_normalized(BarBarGraph *self, GQueue *queue);
+/*void g_barbar_graph_set_entries_normalized(BarBarGraph *self, GQueue
+ * *queue);*/
 
-void g_barbar_graph_set_push_entry(BarBarGraph *self, double value);
+void g_barbar_graph_push_entry(BarBarGraph *self, double value);
+
+void g_barbar_graph_update_path(BarBarGraph *self);
 
 void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length);
+
+guint g_barbar_graph_get_entry_numbers(BarBarGraph *self);
 
 void g_barbar_graph_set_min_value(BarBarGraph *self, double min);
 

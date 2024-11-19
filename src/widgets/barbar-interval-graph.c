@@ -141,7 +141,9 @@ static gboolean g_barbar_interval_graph_update(gpointer data) {
   BarBarIntervalGraph *self = BARBAR_INTERVAL_GRAPH(data);
 
   // push_update(self, self->current);
-  g_barbar_graph_set_push_entry(BARBAR_GRAPH(self), self->current);
+  g_barbar_graph_push_entry(BARBAR_GRAPH(self), self->current);
+
+  g_barbar_graph_update_path(BARBAR_GRAPH(self));
 
   gtk_widget_queue_draw(GTK_WIDGET(self));
 

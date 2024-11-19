@@ -57,7 +57,7 @@ g_barbar_output_manager_class_init(BarBarOutputManagerClass *class) {
                    NULL,                                   /* c_marshaller */
                    G_TYPE_NONE,                            /* return_type */
                    1,                                      /* n_params */
-                   G_TYPE_UINT);
+                   BARBAR_TYPE_OUTPUT_HEAD);
   /**
    * BarBarOutputManager::done:
    * @manager: this manager
@@ -142,8 +142,8 @@ static void head(void *data,
 
   BarBarOutputHead *h = BARBAR_OUTPUT_HEAD(g_barbar_output_head_new(head));
 
+  g_barbar_output_head_run(h);
   g_signal_emit(manager, signals[NEW_HEAD], 0, h);
-  g_barbar_output_run(h);
 }
 
 static void done(void *data,
