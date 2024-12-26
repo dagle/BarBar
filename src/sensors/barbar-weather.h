@@ -25,6 +25,7 @@
 #pragma once
 
 #include "barbar-sensor.h"
+#include "gclue-simple.h"
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -36,6 +37,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(BarBarWeather, g_barbar_weather, BARBAR, WEATHER,
                      BarBarSensor)
 
-BarBarSensor *g_barbar_weather_new(const char *contact_info);
+/*BarBarSensor *g_barbar_weather_new(const char *contact_info, GClueSimple
+ * *clue);*/
 
 G_END_DECLS

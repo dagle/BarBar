@@ -114,7 +114,7 @@ g_barbar_interval_graph_class_init(BarBarIntervalGraphClass *class) {
   widget_class->root = g_barbar_interval_graph_start;
 
   /**
-   * BarBarGraph:interval:
+   * BarBarIntervalGraph:interval:
    *
    * How often the graph should update
    */
@@ -123,7 +123,7 @@ g_barbar_interval_graph_class_init(BarBarIntervalGraphClass *class) {
       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY);
 
   /**
-   * BarBarGraph:value:
+   * BarBarIntervalGraph:value:
    *
    * The current value
    */

@@ -23,14 +23,13 @@
  */
 #pragma once
 
-#include "widgets/barbar-graph.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define BARBAR_TYPE_CAVA (g_barbar_cava_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarCava, g_barbar_cava, BARBAR, CAVA, BarBarGraph)
+G_DECLARE_FINAL_TYPE(BarBarCava, g_barbar_cava, BARBAR, CAVA, GtkWidget)
 
 /*GArray *g_barbar_cava_cava_get_values(BarBarCava *self);*/
 

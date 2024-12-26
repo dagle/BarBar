@@ -248,8 +248,11 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       value: bind cpu.percent;
+      interval: 3000;
+      discrete: true;
+      fill: true;
       min-height: 40;
     }
 
@@ -325,9 +328,10 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       value: bind mem.percent;
       min-height: 40;
+      fill: false;
     }
 
     Gtk.Box {
@@ -397,7 +401,7 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your disk
       // use hdparm to get this info
       value: bind disk.read-speed;
@@ -405,7 +409,7 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your disk
       // use hdparm to get this info
       value: bind disk.write-speed;
@@ -548,14 +552,14 @@ BarBar.Background background {
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your network
       value: bind net.down-speed;
       min-height: 40;
     }
 
     [child]
-    BarBar.Graph {
+    BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your network
       value: bind net.up-speed;
       min-height: 40;

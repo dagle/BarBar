@@ -1,4 +1,5 @@
 #include "barbar-graph.h"
+#include <stdlib.h>
 
 // TODO: Mirror mode
 // Add multiple colors.
@@ -16,9 +17,18 @@ enum {
   PROP_STROKE_WIDTH,
   PROP_FILL,
   PROP_DISCRETE,
+  // PROP_SPACE
 
   NUM_PROPERTIES,
 };
+
+// a ringbuffer
+typedef struct {
+  double *buffer;
+  size_t capacity;
+  size_t size;
+  size_t current;
+} ring;
 
 /**
  * BarBarGraph:
@@ -42,11 +52,7 @@ typedef struct {
   float stroke_size;
   GdkRGBA color;
 
-  // Values to plot
-  GQueue *queue;
-  gsize items;
-  gsize length;
-  gboolean full;
+  ring ring;
 } BarBarGraphPrivate;
 
 static GParamSpec *properties[NUM_PROPERTIES] = {
@@ -97,6 +103,35 @@ void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill) {
   // we need to update here? Just wait for the next tick for now
 }
 
+void print_ring(ring *ring) {
+
+  printf("ring: %p, %zu, %zu, %zu\n", ring->buffer, ring->size, ring->capacity,
+         ring->current);
+  printf("values: ");
+  for (int i = 0; i < ring->size; i++) {
+    printf("%f ", ring->buffer[i]);
+  }
+
+  printf("\n");
+}
+
+void recalloc(ring *ring, size_t length) {
+
+  if (!ring->buffer) {
+    ring->buffer = calloc(sizeof(double), length);
+    ring->capacity = length;
+    return;
+  }
+
+  ring->buffer = realloc(ring->buffer, length * sizeof(double));
+
+  // clear the new memory
+  double *ptr = ring->buffer + ring->capacity;
+  memset(ptr, 0, MAX(0, length - ring->capacity - 1));
+
+  ring->capacity = length;
+}
+
 /**
  * g_barbar_graph_set_history_entries:
  * @self: a `BarBarGraph`
@@ -108,25 +143,21 @@ void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length) {
   g_return_if_fail(BARBAR_IS_GRAPH(self));
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (private->length == length) {
+  if (private->ring.size == length) {
     return;
   }
 
-  if (private->length > length && private->items > length) {
-    // drop values and call it full
-    private->full = TRUE;
-  } else {
-    // if we increase the size, it can't be full anymore
-    private->full = FALSE;
+  if (private->ring.capacity < length) {
+    recalloc(&private->ring, length);
   }
 
-  private->length = length;
+  private->ring.size = length;
 }
 
 guint g_barbar_graph_get_entry_numbers(BarBarGraph *self) {
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  return private->length;
+  return private->ring.size;
 }
 
 /**
@@ -343,48 +374,129 @@ static void g_barbar_graph_get_property(GObject *object, guint property_id,
   }
 }
 
-static inline double get_y(double height, double max_value, GList *link) {
-  double *v = link->data;
-  return height - height * (*v / max_value);
+static inline double get_y(double height, double max_value, double v) {
+  return height - (height * (v / max_value));
 }
+static inline size_t get_current(ring *ring) {
+  if (ring->current == 0) {
+    return ring->size - 1;
+  }
+  return ring->current - 1;
+}
+
+// gsk_path_builder_move_to(builder, 10, 10);
+// gsk_path_builder_line_to(builder, 10, 20);
+//
+// gsk_path_builder_line_to(builder, 20, 20);
+//
+// gsk_path_builder_line_to(builder, 20, 10);
+// gsk_path_builder_line_to(builder, 10, 10);
+//
+// gsk_path_builder_move_to(builder, 30, 30);
+// gsk_path_builder_line_to(builder, 30, 40);
+//
+// gsk_path_builder_line_to(builder, 40, 40);
+//
+// gsk_path_builder_line_to(builder, 40, 30);
+// gsk_path_builder_line_to(builder, 30, 30);
+
+// static void draw_block(GskPathBuilder *builder, double x, double y,
+//                        double size) {
+//
+//   gsk_path_builder_move_to(builder, x, y);
+//   gsk_path_builder_line_to(builder, x, y + size);
+//
+//   gsk_path_builder_line_to(builder, x + size, y + size);
+//
+//   gsk_path_builder_line_to(builder, x + size, y);
+//   gsk_path_builder_line_to(builder, x, y);
+// }
+
+// static void update_path_blocks(BarBarGraph *self) {
+//   GskPathBuilder *builder;
+//   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+//
+//   builder = gsk_path_builder_new();
+//
+//   double x = private->width;
+//   size_t first = get_current(&private->ring);
+//
+//   double delta = private->width / private->ring.size;
+//
+//   do {
+//     double v = private->ring.buffer[first];
+//
+//     double next = get_y(private->height, private->max_value, v);
+//
+//     // draw_bar();
+//
+//     x -= delta;
+//     // gsk_path_builder_line_to(builder, x, next);
+//     //
+//     // gsk_path_builder_line_to(builder, x, next);
+//
+//     if (first == 0) {
+//       first = private->ring.size - 1;
+//     } else {
+//       first = first - 1;
+//     }
+//   } while (first != private->ring.current);
+//
+//   g_clear_pointer(&private->path, gsk_path_unref);
+//   if (!builder) {
+//     return;
+//   }
+//   private->path = gsk_path_builder_free_to_path(builder);
+// }
 
 static void update_path_discrete(BarBarGraph *self) {
   GskPathBuilder *builder;
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
   builder = gsk_path_builder_new();
-  GList *link = private->queue->head;
 
-  if (!link) {
-    return;
-  }
+  double x = private->width;
+  size_t first = get_current(&private->ring);
+  double v = private->ring.buffer[first];
 
-  double x = 0;
+  double y = get_y(private->height, private->max_value, v);
+  double delta = private->width / private->ring.size;
 
-  double y = get_y(private->height, private->max_value, link);
-  double delta = private->width / private->length;
-
-  gsk_path_builder_move_to(builder, 0, y);
+  gsk_path_builder_move_to(builder, private->width, y);
   double next = y;
-  while (link) {
 
+  // TODO: add a space between if wanted
+  do {
+    v = private->ring.buffer[first];
+
+    x -= delta;
     gsk_path_builder_line_to(builder, x, next);
-    next = get_y(private->height, private->max_value, link);
+
+    next = get_y(private->height, private->max_value, v);
     gsk_path_builder_line_to(builder, x, next);
-    link = link->next;
-    if (link) {
-      x += delta;
+
+    if (first == 0) {
+      first = private->ring.size - 1;
+    } else {
+      first = first - 1;
     }
-  }
+  } while (first != private->ring.current);
 
   if (private->fill) {
-    gsk_path_builder_line_to(builder, x, private->height);
+    gsk_path_builder_line_to(builder, 0, next);
+
     gsk_path_builder_line_to(builder, 0, private->height);
 
-    gsk_path_builder_line_to(builder, 0, y);
+    gsk_path_builder_line_to(builder, private->width, private->height);
+    gsk_path_builder_line_to(builder, private->width, y);
+  } else {
+    gsk_path_builder_line_to(builder, 0, next);
   }
 
   g_clear_pointer(&private->path, gsk_path_unref);
+  if (!builder) {
+    return;
+  }
   private->path = gsk_path_builder_free_to_path(builder);
 }
 
@@ -393,36 +505,55 @@ static void update_path_continuous(BarBarGraph *self) {
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
   builder = gsk_path_builder_new();
-  GList *link = private->queue->head;
 
-  if (!link) {
-    return;
-  }
+  double x = private->width;
+  size_t first = get_current(&private->ring);
+  double v = private->ring.buffer[first];
 
-  double x = 0;
+  double y = get_y(private->height, private->max_value, v);
+  double delta = private->width / private->ring.size;
 
-  double y = get_y(private->height, private->max_value, link);
-  double delta = private->width / private->length;
+  gsk_path_builder_move_to(builder, private->width, y);
+  double next = y;
 
-  gsk_path_builder_move_to(builder, 0, y);
-  while (link) {
-    double y = get_y(private->height, private->max_value, link);
+  do {
+    v = private->ring.buffer[first];
+    next = get_y(private->height, private->max_value, v);
 
-    gsk_path_builder_line_to(builder, x, y);
-    link = link->next;
-    if (link) {
-      x += delta;
+    gsk_path_builder_line_to(builder, x, next);
+
+    x -= delta;
+
+    if (first == 0) {
+      first = private->ring.size - 1;
+    } else {
+      first = first - 1;
     }
-  }
+  } while (first != private->ring.current);
+
+  // for (size_t idx = 0; idx < private->ring.size; idx++) {
+  //   v = private->ring.buffer[idx];
+  //   double y = get_y(private->height, private->max_value, v);
+  //
+  //   gsk_path_builder_line_to(builder, x, y);
+  //   x += delta;
+  // }
 
   if (private->fill) {
-    gsk_path_builder_line_to(builder, x, private->height);
+    gsk_path_builder_line_to(builder, 0, next);
+
     gsk_path_builder_line_to(builder, 0, private->height);
 
-    gsk_path_builder_line_to(builder, 0, y);
+    gsk_path_builder_line_to(builder, private->width, private->height);
+    gsk_path_builder_line_to(builder, private->width, y);
+  } else {
+    gsk_path_builder_line_to(builder, 0, next);
   }
 
-  g_clear_pointer(&private->path, gsk_path_unref);
+  // g_clear_pointer(&private->path, gsk_path_unref);
+  if (private->path) {
+    gsk_path_unref(private->path);
+  }
   private->path = gsk_path_builder_free_to_path(builder);
 }
 
@@ -440,16 +571,8 @@ static void rotate(GQueue *queue, double value) {
 static void push_update(BarBarGraph *self, double value) {
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
-  if (private->full) {
-    rotate(private->queue, value);
-  } else {
-    double *v = g_malloc(sizeof(double));
-    *v = value;
-    g_queue_push_tail(private->queue, v);
-
-    private->items++;
-    private->full = private->items >= private->length;
-  }
+  private->ring.buffer[private->ring.current] = value;
+  private->ring.current = ((private->ring.current + 1) % private->ring.size);
 }
 
 void g_barbar_graph_update_path(BarBarGraph *self) {
@@ -466,7 +589,7 @@ static void g_barbar_graph_dispose(GObject *object) {
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
 
   g_clear_pointer(&private->path, gsk_path_unref);
-  gsk_stroke_free(private->stroke);
+  g_clear_pointer(&private->stroke, gsk_stroke_free);
 
   G_OBJECT_CLASS(g_barbar_graph_parent_class)->dispose(object);
 }
@@ -512,6 +635,15 @@ void g_barbar_graph_size_allocate(GtkWidget *widget, int width, int height,
   private->height = height;
 }
 
+// static void g_barbar_graph_constructed(GObject *object) {
+//   BarBarGraph *self = BARBAR_GRAPH(object);
+//   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
+//
+//   private->ring.current = private->ring.length - 1;
+//
+//   G_OBJECT_CLASS(g_barbar_graph_parent_class)->constructed(object);
+// }
+
 static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(class);
@@ -520,6 +652,7 @@ static void g_barbar_graph_class_init(BarBarGraphClass *class) {
   gobject_class->get_property = g_barbar_graph_get_property;
 
   gobject_class->dispose = g_barbar_graph_dispose;
+  // gobject_class->constructed = g_barbar_graph_constructed;
 
   widget_class->snapshot = g_barbar_graph_snapshot;
   widget_class->measure = g_barbar_graph_measure;
@@ -607,8 +740,12 @@ static void g_barbar_graph_init(BarBarGraph *self) {
   BarBarGraphPrivate *private = g_barbar_graph_get_instance_private(self);
   gtk_widget_get_color(GTK_WIDGET(self), &private->color);
 
-  private->queue = g_queue_new();
-  g_queue_init(private->queue);
+  // printf("GdkRGBA(red=%.2f, green=%.2f, blue=%.2f, alpha=%.2f)\n",
+  //        private->color.red, private->color.green, private->color.blue,
+  //        private->color.alpha);
+
+  // private->queue = g_queue_new();
+  // g_queue_init(private->queue);
 
   private->min_value = 0.0;
   private->max_value = 1.0;

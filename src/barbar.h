@@ -60,6 +60,7 @@
 #include "dwl/ipc/barbar-dwl-title-ipc.h"
 
 #include "widgets/barbar-activity-graph.h"
+#include "widgets/barbar-bar-graph.h"
 #include "widgets/barbar-box.h"
 #include "widgets/barbar-cava.h"
 #include "widgets/barbar-eventswitcher.h"

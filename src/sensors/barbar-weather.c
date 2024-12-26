@@ -1,7 +1,6 @@
 #include "barbar-weather.h"
 #include <libgeoclue-2.0/geoclue.h>
 #include <libgweather/gweather.h>
-#include <math.h>
 #include <stdio.h>
 
 /**
@@ -13,6 +12,10 @@
  * It requires you to write desktop, if you don't
  * use barbar executable.
  */
+
+// TODO: Dunno what data this should contain or if it should etc
+// If it should even be a sensor or be both a helper class and a sensor etc.
+// As of now, it only displys temperature.
 
 struct _BarBarWeather {
   BarBarSensor parent_instance;
@@ -61,6 +64,7 @@ static void g_barbar_weather_set_metar(BarBarWeather *self, gboolean metar) {
   }
 
   self->metar = metar;
+  g_object_notify_by_pspec(G_OBJECT(self), weather_props[PROP_METAR]);
 }
 
 static void g_barbar_weather_set_agent(BarBarWeather *self, gboolean agent) {
@@ -71,6 +75,8 @@ static void g_barbar_weather_set_agent(BarBarWeather *self, gboolean agent) {
   }
 
   self->metar = agent;
+
+  g_object_notify_by_pspec(G_OBJECT(self), weather_props[PROP_AGENT]);
 }
 
 static void g_barbar_weather_set_contact_info(BarBarWeather *self,
@@ -194,36 +200,14 @@ static void g_barbar_weather_constructed(GObject *object) {
   G_OBJECT_CLASS(g_barbar_weather_parent_class)->constructed(object);
 }
 
-// TODO: Farenheit etc
-static double read_temp(const char *str) {
-  return strtol(str, NULL, 10) / 1000.0;
-}
-
-static void print_info(GWeatherInfo *info, gpointer data) {
-  GWeatherSky sky;
-  gboolean r = gweather_info_get_value_sky(info, &sky);
+static void update_weather(GWeatherInfo *info, gpointer data) {
+  BarBarWeather *self = BARBAR_WEATHER(data);
   double temp;
 
+  // TODO: make this a property
   gweather_info_get_value_temp(info, GWEATHER_TEMP_UNIT_CENTIGRADE, &temp);
-  const gchar *s = gweather_sky_to_string(sky);
-  char *temp2 = gweather_info_get_temp(info);
 
-  printf("sky: %d, %s\n", r, s);
-  printf("temp: %f\n", temp);
-  printf("temp2: %s\n", temp2);
-}
-
-GWeatherLocation *find_station(GWeatherLocation *location) {
-  GWeatherLocation *child = NULL;
-  while ((child = gweather_location_next_child(location, child)) != NULL) {
-    if (gweather_location_get_level(child) ==
-        GWEATHER_LOCATION_WEATHER_STATION) {
-      return child;
-    }
-    g_object_unref(child);
-  }
-
-  return NULL;
+  g_object_notify_by_pspec(G_OBJECT(self), weather_props[PROP_TEMPERATURE]);
 }
 
 static void update_location(gpointer data) {
@@ -246,7 +230,7 @@ static void update_location(gpointer data) {
   self->info = gweather_info_new(self->location);
   gweather_info_set_contact_info(self->info, self->contact_info);
 
-  g_signal_connect(self->info, "updated", G_CALLBACK(print_info), self);
+  g_signal_connect(self->info, "updated", G_CALLBACK(update_weather), self);
   gweather_info_update(self->info);
 }
 
@@ -271,13 +255,23 @@ static void g_barbar_weather_start(BarBarSensor *sensor) {
 
   GApplication *app = g_application_get_default();
 
-  if (app != NULL) {
+  if (!weather->clue) {
+    update_location(weather);
+    g_signal_connect_swapped(weather->clue, "notify::location",
+                             G_CALLBACK(update_location), weather);
 
-    gclue_simple_new(g_application_get_application_id(app),
-                     GCLUE_ACCURACY_LEVEL_CITY, NULL, geo_callback, weather);
+  } else {
+
+    if (app != NULL) {
+
+      gclue_simple_new(g_application_get_application_id(app),
+                       GCLUE_ACCURACY_LEVEL_CITY, NULL, geo_callback, weather);
+    }
   }
 }
 
-BarBarSensor *g_barbar_weather_new(const char *contact_info) {
-  return g_object_new(BARBAR_TYPE_WEATHER, "contact-info", contact_info, NULL);
-}
+// BarBarSensor *g_barbar_weather_new(const char *contact_info,
+//                                    GClueSimple *clue) {
+//   return g_object_new(BARBAR_TYPE_WEATHER, "contact-info", contact_info,
+//   NULL);
+// }

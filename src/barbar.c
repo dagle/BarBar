@@ -33,6 +33,7 @@ void g_barbar_init(void) {
 
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();
+  g_barbar_bar_graph_get_type();
   g_barbar_interval_graph_get_type();
   g_barbar_box_get_type();
   g_barbar_activity_graph_get_type();

@@ -309,7 +309,6 @@ static void on_response(SoupSession *session, GAsyncResult *res,
   if (error) {
     g_printerr("Error: %s\n", error->message);
     g_error_free(error);
-    cbdata_free(cbdata);
   } else {
     gsize size;
     const gchar *data = g_bytes_get_data(bytes, &size);

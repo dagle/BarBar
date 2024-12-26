@@ -23,15 +23,16 @@
  */
 #pragma once
 
-#include "barbar-graph.h"
+#include "gtk/gtk.h"
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_INTERVAL_GRAPH (g_barbar_interval_graph_get_type())
+#define BARBAR_TYPE_BAR_GRAPH (g_barbar_bar_graph_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarIntervalGraph, g_barbar_interval_graph, BARBAR,
-                     INTERVAL_GRAPH, BarBarGraph)
+G_DECLARE_FINAL_TYPE(BarBarLevelBar, g_barbar_level_bar, BARBAR, LEVEL_BAR,
+                     GtkWidget)
 
-GtkWidget *g_barbar_interval_graph_new(void);
+GtkWidget *g_barbar_bar_graph_new(void);
 
 G_END_DECLS

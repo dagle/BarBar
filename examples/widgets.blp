@@ -143,6 +143,8 @@ BarBar.Bar {
     [end]
     BarBar.IntervalGraph {
       value: bind cpu.percent;
+      discrete: true;
+      history-length: 10;
     }
 
     [end]
@@ -153,6 +155,10 @@ BarBar.Bar {
     [end]
     Gtk.Label {
       label: bind pomodoro.current;
+    }
+
+    BarBar.BarGraph {
+      value: bind cpu.percent;
     }
 
     // [end]
@@ -296,7 +302,9 @@ BarBar.SystemdUnits units {
 
 BarBar.RiverMode mode {}
 
-// BarBar.Weather weater {}
+// BarBar.Weather weater {
+//   contact-info: "per.odlund@gmail.com";
+// }
 BarBar.MprisPlayer mpris {
   player-instance: "mpd";
 }

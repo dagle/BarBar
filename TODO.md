@@ -1,17 +1,16 @@
 Can we create a auto-manager, that works that configure a device and presents it self
 as a device? This would be great for batteries, mpris etc since we could just read the device directly.
 
-- [x] Install icons
-
-- Add https://wayland.app/protocols/xdg-output-unstable-v1 so we can restrict stuff
-to one screen
+Close these or don't reopen them over and over
+glibtop(c=180765): [WARNING] getifaddrs failed : Too many open files
+glibtop(c=180765): [ERROR] open (/proc/meminfo): Too many open files
 
 - Figure out a way to make dynamic properties (or something like them) that work at runtime
 
 -  [x] How to change a widget on click? To have 2 alternating widgets and on click we change.
 
 - [-] Create helper functions for beings and such
--- [-] Create constructor functions for every type.
+-- [x] Create constructor functions for every type.
 
 - [ ] value icon -> value image
 -- should be a buildable that you add bounds to, with a similar C interface.

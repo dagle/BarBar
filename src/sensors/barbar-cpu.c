@@ -14,6 +14,8 @@ struct _BarBarCpu {
   double prev_total;
   double prev_idle;
   double percent;
+
+  glibtop_cpu *cpu;
 };
 
 enum {
@@ -72,6 +74,10 @@ static void g_barbar_cpu_get_property(GObject *object, guint property_id,
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
   }
 }
+static void g_barbar_cpu_finalize(GObject *object) {
+  BarBarCpu *self = BARBAR_CPU(object);
+  free(self->cpu);
+}
 
 static void g_barbar_cpu_class_init(BarBarCpuClass *class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS(class);
@@ -82,6 +88,7 @@ static void g_barbar_cpu_class_init(BarBarCpuClass *class) {
 
   gobject_class->set_property = g_barbar_cpu_set_property;
   gobject_class->get_property = g_barbar_cpu_get_property;
+  gobject_class->finalize = g_barbar_cpu_finalize;
 
   /**
    * BarBarCpu:percent:
@@ -113,19 +120,24 @@ static void g_barbar_cpu_class_init(BarBarCpuClass *class) {
       );
 }
 
-static void g_barbar_cpu_init(BarBarCpu *self) {}
+static void g_barbar_cpu_init(BarBarCpu *self) {
+  self->cpu = malloc(sizeof(glibtop_cpu));
+}
 
 static gboolean g_barbar_cpu_tick(BarBarIntervalSensor *sensor) {
   BarBarCpu *self = BARBAR_CPU(sensor);
 
+  // glibtop_cpu cpu;
   double total, idle;
 
-  glibtop_cpu cpu;
+  glibtop_get_cpu(self->cpu);
 
-  glibtop_get_cpu(&cpu);
-
-  total = ((unsigned long)cpu.total) ? ((double)cpu.total) : 1.0;
-  idle = ((unsigned long)cpu.idle) ? ((double)cpu.idle) : 1.0;
+  total = ((unsigned long)self->cpu->total) ? ((double)self->cpu->total) : 1.0;
+  idle = ((unsigned long)self->cpu->idle) ? ((double)self->cpu->idle) : 1.0;
+  // glibtop_get_cpu(&cpu);
+  //
+  // total = ((unsigned long)cpu.total) ? ((double)cpu.total) : 1.0;
+  // idle = ((unsigned long)cpu.idle) ? ((double)cpu.idle) : 1.0;
 
   self->percent = (1.0 - (idle - self->prev_idle) / (total - self->prev_total));
 
