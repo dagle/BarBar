@@ -598,53 +598,55 @@ BarBar.Background background-left {
     hexpand: true;
     orientation: vertical;
 
-    Gtk.Box {
-      orientation: horizontal;
+    BarBar.StepGraph {}
 
-      [child]
-      Gtk.Label {
-        xalign: 0;
-        label: "Github";
-        name: "dark";
-      }
-
-      [child]
-      Gtk.Separator {
-        hexpand: true;
-        name: "dark";
-      }
-    }
-
-    [child]
-    BarBar.GithubActivity {
-      user-name: "dagle";
-      auth-token: "";
-
-      [child]
-      BarBar.ActivityGraph {}
-    }
-
-    BarBar.EventSwitcher switcher {
-      Gtk.GestureClick left {
-        button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
-        released => $g_barbar_event_switcher_next(switcher) swapped;
-      }
-
-      Gtk.GestureClick right {
-        button: 3;
-        released => $g_barbar_event_switcher_previous(switcher) swapped;
-      }
-
-      Gtk.Stack stack {
-        Gtk.Label {
-          label: "apa";
-        }
-
-        Gtk.Label {
-          label: "bepa";
-        }
-      }
-    }
+    // Gtk.Box {
+    //   orientation: horizontal;
+    // 
+    //   [child]
+    //   Gtk.Label {
+    //     xalign: 0;
+    //     label: "Github";
+    //     name: "dark";
+    //   }
+    // 
+    //   [child]
+    //   Gtk.Separator {
+    //     hexpand: true;
+    //     name: "dark";
+    //   }
+    // }
+    // 
+    // [child]
+    // BarBar.GithubActivity {
+    //   user-name: "dagle";
+    //   auth-token: "";
+    // 
+    //   [child]
+    //   BarBar.ActivityGraph {}
+    // }
+    // 
+    // BarBar.EventSwitcher switcher {
+    //   Gtk.GestureClick left {
+    //     button: 1; // 1 is primary, 3 is secondary, 2 is middle etc.
+    //     released => $g_barbar_event_switcher_next(switcher) swapped;
+    //   }
+    // 
+    //   Gtk.GestureClick right {
+    //     button: 3;
+    //     released => $g_barbar_event_switcher_previous(switcher) swapped;
+    //   }
+    // 
+    //   Gtk.Stack stack {
+    //     Gtk.Label {
+    //       label: "apa";
+    //     }
+    // 
+    //     Gtk.Label {
+    //       label: "bepa";
+    //     }
+    //   }
+    // }
   }
 }
 

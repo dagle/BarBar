@@ -74,6 +74,8 @@ libbarbar_src = [
   'widgets/barbar-eventswitcher.c',
   'widgets/barbar-playbutton.c',
   'widgets/barbar-cava.c',
+  'widgets/barbar-level-bar.c',
+  'widgets/barbar-step-bar.c',
 
   'widgets/barbar-github-activity.c',
   'barbar-output-manager.c',
@@ -134,6 +136,8 @@ libbarbar_headers = [
   'widgets/barbar-eventswitcher.h',
   'widgets/barbar-playbutton.h',
   'widgets/barbar-cava.h',
+  'widgets/barbar-level-bar.h',
+  'widgets/barbar-step-bar.h',
 
   'widgets/barbar-github-activity.h',
   'barbar-output-manager.h',

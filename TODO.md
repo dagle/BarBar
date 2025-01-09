@@ -5,6 +5,8 @@ Close these or don't reopen them over and over
 glibtop(c=180765): [WARNING] getifaddrs failed : Too many open files
 glibtop(c=180765): [ERROR] open (/proc/meminfo): Too many open files
 
+- Step-bars (or what they are called), to show a value. Think wifi connection.
+
 - Figure out a way to make dynamic properties (or something like them) that work at runtime
 
 -  [x] How to change a widget on click? To have 2 alternating widgets and on click we change.

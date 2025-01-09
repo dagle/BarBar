@@ -28,11 +28,11 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_LEVEL_BAR (g_barbar_level_bar_get_type())
+#define BARBAR_TYPE_STEP_BAR (g_barbar_step_bar_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarLevelBar, g_barbar_level_bar, BARBAR, LEVEL_BAR,
+G_DECLARE_FINAL_TYPE(BarBarStepBar, g_barbar_step_bar, BARBAR, STEP_BAR,
                      GtkWidget)
 
-GtkWidget *g_barbar_level_bar_new(void);
+GtkWidget *g_barbar_step_bar_new(void);
 
 G_END_DECLS

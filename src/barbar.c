@@ -44,6 +44,8 @@ void g_barbar_init(void) {
   g_barbar_event_switcher_get_type();
   g_barbar_play_button_get_type();
   g_barbar_cava_get_type();
+  g_barbar_level_bar_get_type();
+  g_barbar_step_bar_get_type();
 
   g_barbar_github_activity_get_type();
 

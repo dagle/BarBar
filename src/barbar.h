@@ -67,10 +67,12 @@
 #include "widgets/barbar-graph.h"
 #include "widgets/barbar-interval-graph.h"
 #include "widgets/barbar-label.h"
+#include "widgets/barbar-level-bar.h"
 #include "widgets/barbar-playbutton.h"
 #include "widgets/barbar-processes.h"
 #include "widgets/barbar-rotary.h"
 #include "widgets/barbar-sensorwidget.h"
+#include "widgets/barbar-step-bar.h"
 #include "widgets/barbar-valueicon.h"
 
 #include "barbar-output-head.h"

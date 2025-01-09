@@ -29,6 +29,14 @@ static guint signals[NUM_SIGNALS] = {
 //   double value;
 // } GtkLevelBarOffset;
 
+/**
+ * BarBarLevelBar:
+ *
+ * A level bar that works like the gtk level bar but with some additional
+ * features. It adds features like shrink history (history between a high and a
+ * low value), centered bar, etc.
+ *
+ */
 struct _BarBarLevelBar {
   GtkWidget parent_instance;
 
@@ -69,6 +77,11 @@ G_DEFINE_TYPE_WITH_CODE(
     // G_IMPLEMENT_INTERFACE (GTK_TYPE_ACCESSIBLE_RANGE, NULL)
     G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
                           g_barbar_level_bar_buildable_init))
+
+static void g_barbar_level_bar_buildable_init(GtkBuildableIface *iface) {
+  // parent_buildable_iface = g_type_interface_peek_parent(iface);
+  // iface->add_child = g_barbar_step_graph_add_child;
+}
 
 static void g_barbar_level_bar_class_init(BarBarLevelBarClass *class) {}
 
