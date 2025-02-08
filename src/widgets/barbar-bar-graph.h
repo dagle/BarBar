@@ -24,6 +24,7 @@
 #pragma once
 
 #include "gtk/gtk.h"
+#include "widgets/barbar-graph.h"
 #include <glib-object.h>
 
 G_BEGIN_DECLS
@@ -31,7 +32,9 @@ G_BEGIN_DECLS
 #define BARBAR_TYPE_BAR_GRAPH (g_barbar_bar_graph_get_type())
 
 G_DECLARE_FINAL_TYPE(BarBarBarGraph, g_barbar_bar_graph, BARBAR, BAR_GRAPH,
-                     GtkWidget)
+                     GtkBox)
+/*G_DECLARE_FINAL_TYPE(BarBarBarGraph, g_barbar_bar_graph, BARBAR, BAR_GRAPH,*/
+/*                     GtkBox)*/
 
 GtkWidget *g_barbar_bar_graph_new(void);
 
@@ -39,12 +42,5 @@ void g_barbar_bar_graph_set_nums(BarBarBarGraph *graph, guint tagnums);
 guint g_barbar_bar_graph_get_nums(BarBarBarGraph *graph);
 
 void g_barbar_bar_graph_add_bar(BarBarBarGraph *self, GtkWidget *child);
-
-void g_barbar_bar_graph_set_value(BarBarBarGraph *self, double value);
-
-void g_barbar_bar_graph_set_orientation(BarBarBarGraph *graph,
-                                        GtkOrientation orientation);
-void g_barbar_bar_graph_set_values(BarBarBarGraph *self, guint num,
-                                   double values[]);
 
 G_END_DECLS

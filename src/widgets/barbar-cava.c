@@ -6,6 +6,7 @@
 #include "gtk/gtk.h"
 #include "gtk/gtkshortcut.h"
 #include "widgets/barbar-bar-graph.h"
+#include "widgets/barbar-graph.h"
 
 #include <pipewire/impl-metadata.h>
 #include <pipewire/pipewire.h>
@@ -15,6 +16,7 @@
 #include <stdint.h>
 
 #define SAMPLE_RATE 44100
+#define BUFFER_SIZE2 1024 // FFT size (must be a power of 2)
 
 struct _BarBarCava {
   GtkWidget parent_instance;
@@ -35,6 +37,23 @@ struct _BarBarCava {
   gint low_cutoff;
   gint high_cutoff;
   gint samplerate;
+
+  double *ouput;
+
+  //
+  double *in_bass_r_raw, *in_bass_l_raw;
+  double *in_mid_r_raw, *in_mid_l_raw;
+  double *in_treble_r_raw, *in_treble_l_raw;
+  double *in_bass_r, *in_bass_l;
+  double *in_mid_r, *in_mid_l;
+  double *in_treble_r, *in_treble_l;
+  double *prev_cava_out, *cava_mem;
+  double *input_buffer, *cava_peak;
+
+  // eq stuff?
+  double *bass_multiplier;
+  double *mid_multiplier;
+  double *treble_multiplier;
 
   // GArray *values;
 };
@@ -124,15 +143,23 @@ static void g_barbar_cava_class_init(BarBarCavaClass *class) {
   widget_class->root = g_barbar_cava_start;
 
   /**
+   * BarBarCava:graph:
+   *
+   * Will attempt to decrease sensitivity if the bars peak
+   */
+  properties[PROP_AUTO_SENSE] =
+      g_param_spec_object("graph", NULL, NULL, BARBAR_TYPE_GRAPH,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  /**
    * BarBarCava:auto-sense:
    *
-   * How many bars we should render
+   * Will attempt to decrease sensitivity if the bars peak
    */
   properties[PROP_AUTO_SENSE] =
       g_param_spec_boolean("auto-sense", NULL, NULL, FALSE,
                            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   /**
-   * BarBarCava:stero:
+   * BarBarCava:stereo:
    *
    * How many bars we should render
    */
@@ -196,9 +223,10 @@ static void g_barbar_cava_class_init(BarBarCavaClass *class) {
   g_object_class_install_properties(gobject_class, NUM_PROPERTIES, properties);
 }
 
-#define BUFFER_SIZE2 1024 // FFT size (must be a power of 2)
-
-static void g_barbar_cava_init(BarBarCava *self) { self->framerate = 44100; }
+static void g_barbar_cava_init(BarBarCava *self) {
+  self->framerate = 44100;
+  //
+}
 
 static void on_process(void *userdata) {
   struct pw_buffer *b;
@@ -243,15 +271,17 @@ static void on_process(void *userdata) {
 
   for (int i = 0; i < BUFFER_SIZE2; i++) {
     input[i] = data[i] / 32768.0; // Normalize 16-bit PCM
-                                  // to range -1 to 1
   }
+  // If we have 2 channels, we should take every second other output
 
   // Execute the FFT
   fftw_execute(plan);
 
-  int num_bands = g_barbar_bar_graph_get_nums(BARBAR_BAR_GRAPH(cava->graph));
+  int num_bands = g_barbar_graph_get_size(BARBAR_GRAPH(cava->graph));
   int band_size = (BUFFER_SIZE / 2) / num_bands; // Calculate the number of FFT
                                                  // bins per band
+  // TODO: move
+  cava->ouput = malloc(sizeof(double) * num_bands);
 
   for (int band = 0; band < num_bands; band++) {
 
@@ -262,35 +292,17 @@ static void on_process(void *userdata) {
     for (int i = start; i < end; i++) {
       double real = output[i][0];
       double imag = output[i][1];
-      sum_magnitude += sqrt(real * real + imag * imag);
+      sum_magnitude += hypot(real, imag);
     }
-    if (sum_magnitude < 0) {
-      printf("negative: %f\n", sum_magnitude);
-    }
-
-    // g_barbar_graph_push_entry(BARBAR_GRAPH(cava), sum_magnitude);
-    // Store average magnitude for the band
-    // double *v = head->data;
-    // *v = sum_magnitude / band_size;
-    // head = head->next;
-    // g_queue_push_tail(queue, 5);
+    // if (sum_magnitude < 0) {
+    //   printf("negative: %f\n", sum_magnitude);
+    // }
+    cava->ouput[band] = sum_magnitude;
   }
-  // g_barbar_graph_update_path(BARBAR_GRAPH(cava));
-  // static int i = 0;
-  // printf("i: %d\n", i);
-  // i++;
+  g_barbar_graph_set_values(BARBAR_GRAPH(cava), num_bands, cava->ouput);
+  free(cava->ouput);
 
-  // g_barbar_graph_set_entries(BARBAR_GRAPH(cava),
-  // cava->queue);
-  // gtk_widget_queue_draw(GTK_WIDGET(cava));
-
-  // Print the 10 frequency band magnitudes
-  // printf("Frequency Bands:\n");
-  // for (int i = 0; i < num_bands; i++) {
-  //   printf("Band %d: Magnitude %.2f\n", i + 1,
-  //   band_magnitudes[i]);
-  // }
-
+  // TODO: Move this too
   // Cleanup
   fftw_destroy_plan(plan);
   fftw_free(input);

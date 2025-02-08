@@ -1,6 +1,4 @@
 #include "barbar.h"
-#include "barbar-output-manager.h"
-#include "widgets/barbar-cava.h"
 #include <glibtop.h>
 
 void g_barbar_init(void) {
@@ -33,6 +31,7 @@ void g_barbar_init(void) {
 
   g_barbar_rotary_get_type();
   g_barbar_graph_get_type();
+  g_barbar_line_graph_get_type();
   g_barbar_bar_graph_get_type();
   g_barbar_interval_graph_get_type();
   g_barbar_box_get_type();

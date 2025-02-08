@@ -1,73 +1,45 @@
 #include "barbar-level-bar.h"
+#include "glib.h"
+#include "gtk/gtk.h"
+#include "gtk/gtkshortcut.h"
 
 #include <math.h>
 #include <stdlib.h>
 
 enum {
   PROP_VALUE = 1,
-  PROP_MIN_VALUE,
-  PROP_MAX_VALUE,
-  PROP_MODE,
-  PROP_INVERTED,
-  LAST_PROPERTY,
-  PROP_ORIENTATION /* overridden */
+  NUM_PROPERTIES,
 };
 
 enum { SIGNAL_OFFSET_CHANGED, NUM_SIGNALS };
 
-static GParamSpec *properties[LAST_PROPERTY] = {
+static GParamSpec *properties[NUM_PROPERTIES] = {
     NULL,
 };
-static guint signals[NUM_SIGNALS] = {
-    0,
-};
-
-// typedef struct _GtkLevelBarClass   GtkLevelBarClass;
-
-// typedef struct {
-//   char *name;
-//   double value;
-// } GtkLevelBarOffset;
 
 /**
  * BarBarLevelBar:
  *
  * A level bar that works like the gtk level bar but with some additional
  * features. It adds features like shrink history (history between a high and a
- * low value), centered bar, etc.
+ * low value)
  *
  */
 struct _BarBarLevelBar {
   GtkWidget parent_instance;
 
-  GtkOrientation orientation;
-
-  GtkLevelBarMode bar_mode;
-
-  double min_value;
-  double max_value;
-  double cur_value;
-
-  GList *offsets;
-
-  GtkWidget *trough_widget;
-  GtkWidget **block_widget;
-  guint n_blocks;
+  GtkWidget *overlay;
+  GtkLevelBar *bar;
 
   guint inverted : 1;
+
+  guint interval;
+  guint source_id;
 
   // start_point
 };
 
-// struct _GtkLevelBarClass {
-//   GtkWidgetClass parent_class;
-//
-//   void (* offset_changed) (GtkLevelBar *self,
-//                            const char *name);
-// };
-
-// static void g_barbar_level_bar_set_value_internal(GtkLevelBar *self, double
-// value);
+static GtkBuildableIface *parent_buildable_iface;
 
 static void g_barbar_level_bar_buildable_init(GtkBuildableIface *iface);
 
@@ -78,11 +50,60 @@ G_DEFINE_TYPE_WITH_CODE(
     G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDABLE,
                           g_barbar_level_bar_buildable_init))
 
+static void g_barbar_level_bar_add_child(GtkBuildable *buildable,
+                                         GtkBuilder *builder, GObject *child,
+                                         const char *type) {
+  g_return_if_fail(GTK_IS_WIDGET(child));
+
+  BarBarLevelBar *self = BARBAR_LEVEL_BAR(buildable);
+
+  if (g_strcmp0(type, "bar") == 0) {
+    g_barbar_level_bar_set_bar(self, GTK_LEVEL_BAR(child));
+  } else {
+    parent_buildable_iface->add_child(buildable, builder, child, type);
+  }
+}
+
 static void g_barbar_level_bar_buildable_init(GtkBuildableIface *iface) {
-  // parent_buildable_iface = g_type_interface_peek_parent(iface);
-  // iface->add_child = g_barbar_step_graph_add_child;
+  parent_buildable_iface = g_type_interface_peek_parent(iface);
+  iface->add_child = g_barbar_level_bar_add_child;
+}
+
+void g_barbar_level_bar_set_bar(BarBarLevelBar *self, GtkLevelBar *bar) {
+  g_return_if_fail(BARBAR_IS_LEVEL_BAR(self));
+
+  if (self->bar == bar) {
+    return;
+  }
+  // do something
+
+  g_object_notify_by_pspec(G_OBJECT(self), properties[PROP_VALUE]);
 }
 
 static void g_barbar_level_bar_class_init(BarBarLevelBarClass *class) {}
 
 static void g_barbar_level_bar_init(BarBarLevelBar *class) {}
+
+static gboolean g_barbar_level_bar_update(gpointer data) {
+  BarBarLevelBar *self = BARBAR_LEVEL_BAR(data);
+
+  // if (self->value >= self->historic) {
+  //   return G_SOURCE_CONTINUE;
+  // }
+
+  // self->historic
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void g_barbar_level_bar_start(GtkWidget *widget) {
+  gboolean ret;
+  BarBarLevelBar *self = BARBAR_LEVEL_BAR(widget);
+
+  if (self->source_id > 0) {
+    g_source_remove(self->source_id);
+  }
+
+  self->source_id = g_timeout_add_full(0, self->interval,
+                                       g_barbar_level_bar_update, self, NULL);
+}

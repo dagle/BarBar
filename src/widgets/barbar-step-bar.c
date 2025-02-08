@@ -20,7 +20,7 @@ struct _BarBarStepBar {
   GtkWindow parent_instance;
 
   double value;
-  double denominator;
+  double procentage;
   double treshold;
   GtkLevelBarMode mode;
 
@@ -29,8 +29,7 @@ struct _BarBarStepBar {
 
 enum {
   PROP_VALUE = 1,
-  PROP_DENOMINATOR,
-  // PROP_TRESHOLD,
+  PROP_PERCENTAGE,
   PROP_BAR,
   PROP_MODE,
   LAST_PROPERTY,
@@ -50,8 +49,8 @@ static void g_barbar_step_bar_get_property(GObject *object, guint property_id,
   case PROP_VALUE:
     g_value_set_double(value, bar->value);
     break;
-  case PROP_DENOMINATOR:
-    g_value_set_double(value, bar->denominator);
+  case PROP_PERCENTAGE:
+    g_value_set_double(value, bar->procentage);
     break;
   case PROP_MODE:
     g_value_set_enum(value, bar->mode);
@@ -61,22 +60,27 @@ static void g_barbar_step_bar_get_property(GObject *object, guint property_id,
   }
 }
 
+static inline double treshold(double upper, double lower, double percentage) {
+  return lower + (upper - lower) * percentage;
+}
+
 static void g_barbar_step_bar_set_value_internal(BarBarStepBar *self,
                                                  double value) {
 
   self->value = value;
 
-  double normalized = self->value / self->denominator;
-
   if (GTK_IS_LEVEL_BAR(self->bar)) {
-    if ((self->value > self->treshold) ||
-        self->mode == GTK_LEVEL_BAR_MODE_CONTINUOUS) {
-      gtk_level_bar_set_value(GTK_LEVEL_BAR(self->bar), normalized);
+    GtkLevelBar *bar = GTK_LEVEL_BAR(self->bar);
+    double upper = gtk_level_bar_get_max_value(bar);
+    double lower = gtk_level_bar_get_min_value(bar);
+    double t = treshold(upper, lower, self->procentage);
+
+    if (value >= t) {
+      gtk_level_bar_set_value(bar, t);
     } else {
-      gtk_level_bar_set_value(GTK_LEVEL_BAR(self->bar), 0);
+      gtk_level_bar_set_value(bar, 0);
     }
   } else if (BARBAR_IS_LEVEL_BAR(self->bar)) {
-    // g_barbar_level_bar_set_value(BARBAR_LEVEL_BAR(self->bar), normalized);
   }
 
   g_object_notify_by_pspec(G_OBJECT(self), step_bar_props[PROP_VALUE]);
@@ -119,24 +123,23 @@ void g_barbar_step_bar_set_mode(BarBarStepBar *self, GtkLevelBarMode mode) {
 }
 
 /**
- * g_barbar_step_bar_set_denominator:
+ * g_barbar_step_bar_set_percentage:
  * @self: a `BarBarStepBar`
- * @denominator: a denominator
+ * @percentage: a percentage
  *
- * Sets the `denominator` of the `BarBarLevelBar`.
+ * Sets the `percentage` of the `BarBarLevelBar`.
  */
-void g_barbar_step_bar_set_denominator(BarBarStepBar *self,
-                                       double denominator) {
-  g_return_if_fail(BARBAR_IS_LEVEL_BAR(self));
+void g_barbar_step_bar_set_percentage(BarBarStepBar *self, double percentage) {
+  g_return_if_fail(BARBAR_IS_STEP_BAR(self));
 
-  if (self->denominator == denominator) {
+  if (self->procentage == percentage) {
     return;
   }
 
-  self->denominator = denominator;
+  self->procentage = percentage;
 
   g_barbar_step_bar_set_value_internal(self, self->value);
-  g_object_notify_by_pspec(G_OBJECT(self), step_bar_props[PROP_DENOMINATOR]);
+  g_object_notify_by_pspec(G_OBJECT(self), step_bar_props[PROP_PERCENTAGE]);
 }
 
 /**
@@ -147,7 +150,7 @@ void g_barbar_step_bar_set_denominator(BarBarStepBar *self,
  * Sets the `mode` of the `BarBarLevelBar`.
  */
 void g_barbar_step_bar_set_bar(BarBarStepBar *self, GtkWidget *widget) {
-  g_return_if_fail(BARBAR_IS_LEVEL_BAR(self));
+  g_return_if_fail(BARBAR_IS_STEP_BAR(self));
 
   if (self->bar == widget) {
     return;
@@ -155,12 +158,18 @@ void g_barbar_step_bar_set_bar(BarBarStepBar *self, GtkWidget *widget) {
 
   g_return_if_fail(BARBAR_IS_LEVEL_BAR(widget) || GTK_IS_LEVEL_BAR(widget));
 
-  g_clear_pointer(&self->bar, g_object_unref);
+  if (self->bar) {
+    gtk_widget_unparent(self->bar);
+  }
 
-  self->bar = g_object_ref(widget);
+  self->bar = widget;
+
+  if (self->bar) {
+    gtk_widget_set_parent(self->bar, GTK_WIDGET(self));
+  }
 
   g_barbar_step_bar_set_value_internal(self, self->value);
-  g_object_notify_by_pspec(G_OBJECT(self), step_bar_props[PROP_DENOMINATOR]);
+  g_object_notify_by_pspec(G_OBJECT(self), step_bar_props[PROP_BAR]);
 }
 
 static void g_barbar_step_bar_set_property(GObject *object, guint property_id,
@@ -172,8 +181,8 @@ static void g_barbar_step_bar_set_property(GObject *object, guint property_id,
   case PROP_VALUE:
     g_barbar_step_bar_set_value(bar, g_value_get_double(value));
     break;
-  case PROP_DENOMINATOR:
-    g_barbar_step_bar_set_denominator(bar, g_value_get_double(value));
+  case PROP_PERCENTAGE:
+    g_barbar_step_bar_set_percentage(bar, g_value_get_double(value));
     break;
   case PROP_BAR:
     g_barbar_step_bar_set_bar(bar, g_value_get_object(value));
@@ -203,12 +212,12 @@ static void g_barbar_step_bar_class_init(BarBarStepBarClass *class) {
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   /**
-   * BarBarStepBar:denominator:
+   * BarBarStepBar:percentage:
    *
-   * The denominator to normalize the value
+   * The percentage to normalize the value
    */
-  step_bar_props[PROP_DENOMINATOR] = g_param_spec_double(
-      "denominator", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 1,
+  step_bar_props[PROP_PERCENTAGE] = g_param_spec_double(
+      "percentage", NULL, NULL, 0, 1, 1,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -216,8 +225,8 @@ static void g_barbar_step_bar_class_init(BarBarStepBarClass *class) {
    *
    * The internal bar
    */
-  step_bar_props[PROP_BAR] = g_param_spec_double(
-      "bar", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 1,
+  step_bar_props[PROP_BAR] = g_param_spec_object(
+      "bar", NULL, NULL, GTK_TYPE_LEVEL_BAR,
       G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
   /**

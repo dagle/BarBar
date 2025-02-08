@@ -5,6 +5,9 @@
  * BarBarSensor:
  *
  * An abstract class to create sensors
+ * A senssor is a class of object that
+ * contains different properterties and
+ * is used to set values of widgets.
  *
  */
 G_DEFINE_ABSTRACT_TYPE(BarBarSensor, g_barbar_sensor, G_TYPE_OBJECT)

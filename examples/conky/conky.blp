@@ -251,9 +251,28 @@ BarBar.Background background {
     BarBar.IntervalGraph {
       value: bind cpu.percent;
       interval: 3000;
-      discrete: true;
-      fill: true;
-      min-height: 40;
+
+      graph: BarBar.BarGraph {
+        orientation: horizontal;
+
+        [bar]
+        Gtk.LevelBar {
+          orientation: vertical;
+          vexpand: true;
+        }
+
+        [bar]
+        Gtk.LevelBar {
+          orientation: vertical;
+          vexpand: true;
+        }
+
+        [bar]
+        Gtk.LevelBar {
+          orientation: vertical;
+          vexpand: true;
+        }
+      };
     }
 
     //    [child]
@@ -330,8 +349,11 @@ BarBar.Background background {
     [child]
     BarBar.IntervalGraph {
       value: bind mem.percent;
-      min-height: 40;
-      fill: false;
+
+      graph: BarBar.LineGraph {
+        min-height: 40;
+        fill: false;
+      };
     }
 
     Gtk.Box {
@@ -405,7 +427,10 @@ BarBar.Background background {
       // you should set the max-value to the max speed of your disk
       // use hdparm to get this info
       value: bind disk.read-speed;
-      min-height: 40;
+
+      graph: BarBar.LineGraph {
+        min-height: 40;
+      };
     }
 
     [child]
@@ -413,7 +438,10 @@ BarBar.Background background {
       // you should set the max-value to the max speed of your disk
       // use hdparm to get this info
       value: bind disk.write-speed;
-      min-height: 40;
+
+      graph: BarBar.LineGraph {
+        min-height: 40;
+      };
     }
 
     Gtk.Box {
@@ -555,14 +583,20 @@ BarBar.Background background {
     BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your network
       value: bind net.down-speed;
-      min-height: 40;
+
+      graph: BarBar.LineGraph {
+        min-height: 40;
+      };
     }
 
     [child]
     BarBar.IntervalGraph {
       // you should set the max-value to the max speed of your network
       value: bind net.up-speed;
-      min-height: 40;
+
+      graph: BarBar.LineGraph {
+        min-height: 40;
+      };
     }
 
     Gtk.Box {
@@ -581,10 +615,10 @@ BarBar.Background background {
       }
     }
 
-    BarBar.CpuProcesses {
-      number: 5;
-      order: cpu;
-    }
+    // BarBar.CpuProcesses {
+    //   number: 5;
+    //   order: cpu;
+    // }
   }
 }
 
@@ -598,7 +632,33 @@ BarBar.Background background-left {
     hexpand: true;
     orientation: vertical;
 
-    BarBar.StepGraph {}
+    BarBar.StepBar {
+      value: 0.5;
+      percentage: 0.25;
+
+      bar: Gtk.LevelBar {};
+    }
+
+    BarBar.StepBar {
+      value: 0.5;
+      percentage: 0.5;
+
+      bar: Gtk.LevelBar {};
+    }
+
+    BarBar.StepBar {
+      value: 1.0;
+      percentage: 0.75;
+
+      bar: Gtk.LevelBar {};
+    }
+
+    BarBar.StepBar {
+      value: 1.0;
+      percentage: 1;
+
+      bar: Gtk.LevelBar {};
+    }
 
     // Gtk.Box {
     //   orientation: horizontal;

@@ -68,6 +68,7 @@
 #include "widgets/barbar-interval-graph.h"
 #include "widgets/barbar-label.h"
 #include "widgets/barbar-level-bar.h"
+#include "widgets/barbar-line-graph.h"
 #include "widgets/barbar-playbutton.h"
 #include "widgets/barbar-processes.h"
 #include "widgets/barbar-rotary.h"
@@ -78,10 +79,5 @@
 #include "barbar-output-head.h"
 #include "barbar-output-manager.h"
 #include "widgets/barbar-github-activity.h"
-
-/*#include "tray/barbar-dbusmenu.h"*/
-/*#include "tray/barbar-tray-item.h"*/
-/*#include "tray/barbar-tray.h"*/
-/*#include "tray/barbar-watcher.h"*/
 
 void g_barbar_init(void);

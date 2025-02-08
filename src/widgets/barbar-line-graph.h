@@ -28,11 +28,32 @@
 
 G_BEGIN_DECLS
 
-#define BARBAR_TYPE_INTERVAL_GRAPH (g_barbar_interval_graph_get_type())
+#define BARBAR_TYPE_LINE_GRAPH (g_barbar_line_graph_get_type())
 
-G_DECLARE_FINAL_TYPE(BarBarIntervalGraph, g_barbar_interval_graph, BARBAR,
-                     INTERVAL_GRAPH, GtkWidget)
+G_DECLARE_FINAL_TYPE(BarBarLineGraph, g_barbar_line_graph, BARBAR, LINE_GRAPH,
+                     GtkWidget)
 
-GtkWidget *g_barbar_interval_graph_new(BarBarGraph *graph);
+/*struct _BarBarGraphClass {*/
+/*  GtkWidgetClass parent_instance;*/
+/*};*/
+
+void g_barbar_graph_set_stroke_width(BarBarLineGraph *self, float stroke);
+
+void g_barbar_graph_set_fill(BarBarLineGraph *self, gboolean fill);
+
+void g_barbar_graph_set_entry_numbers(BarBarLineGraph *self, guint length);
+
+void g_barbar_graph_set_min_value(BarBarLineGraph *self, double min);
+
+void g_barbar_graph_set_max_value(BarBarLineGraph *self, double max);
+
+void g_barbar_graph_set_value(BarBarLineGraph *self, double value);
+
+void g_barbar_graph_set_min_height(BarBarLineGraph *self, guint height);
+
+void g_barbar_graph_set_min_width(BarBarLineGraph *self, guint width);
+void g_barbar_graph_set_discrete(BarBarLineGraph *self, gboolean discrete);
+
+GtkWidget *g_barbar_line_graph_new(void);
 
 G_END_DECLS

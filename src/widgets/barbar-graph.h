@@ -21,53 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 #pragma once
 
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
+/*#define BARBAR_TYPE_GRAPH (g_barbar_graph_get_type())*/
+
+/*G_DECLARE_DERIVABLE_TYPE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH,
+ * GtkWidget)*/
+
 #define BARBAR_TYPE_GRAPH (g_barbar_graph_get_type())
 
-G_DECLARE_DERIVABLE_TYPE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH, GtkWidget)
+G_DECLARE_INTERFACE(BarBarGraph, g_barbar_graph, BARBAR, GRAPH, GtkWidget)
 
-struct _BarBarGraphClass {
-  GtkWidgetClass parent_instance;
+struct _BarBarGraphInterface {
+  GTypeInterface g_iface;
+
+  void (*set_values)(BarBarGraph *self, size_t len, double *values);
+  void (*push_value)(BarBarGraph *self, double value);
+  size_t (*get_size)(BarBarGraph *self);
 };
 
-void g_barbar_graph_set_stroke_width(BarBarGraph *self, float stroke);
-
-/*GQueue *g_barbar_graph_get_queue(BarBarGraph *self);*/
-
-void g_barbar_graph_set_fill(BarBarGraph *self, gboolean fill);
-
-/*void g_barbar_graph_set_entries(BarBarGraph *self, GQueue *queue);*/
-
-/*void g_barbar_graph_set_entries_normalized(BarBarGraph *self, GQueue
- * *queue);*/
-
-void g_barbar_graph_push_entry(BarBarGraph *self, double value);
-
-void g_barbar_graph_update_path(BarBarGraph *self);
-
-void g_barbar_graph_set_entry_numbers(BarBarGraph *self, guint length);
-
-guint g_barbar_graph_get_entry_numbers(BarBarGraph *self);
-
-void g_barbar_graph_set_min_value(BarBarGraph *self, double min);
-
-void g_barbar_graph_set_max_value(BarBarGraph *self, double max);
-
-void g_barbar_graph_set_value(BarBarGraph *self, double value);
-
-void g_barbar_graph_set_min_height(BarBarGraph *self, guint height);
-
-void g_barbar_graph_set_min_width(BarBarGraph *self, guint width);
-
-/*void g_barbar_graph_set_interval(BarBarGraph *self, guint interval);*/
-
-void g_barbar_graph_set_discrete(BarBarGraph *self, gboolean discrete);
-
-GtkWidget *g_barbar_graph_new(void);
+void g_barbar_graph_set_values(BarBarGraph *self, size_t len, double *values);
+void g_barbar_graph_push_value(BarBarGraph *self, double value);
+size_t g_barbar_graph_get_size(BarBarGraph *self);
 
 G_END_DECLS
